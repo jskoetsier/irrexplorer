@@ -85,10 +85,12 @@ class SetExpansionTable extends Component {
 
     render() {
         return (
-            <table className="table mb-5 table-fixed table-striped">
-                <caption>Expansion depth is limited beyond 1000 total {this.props.objectClass}s.</caption>
-                {this.renderTableContent()}
-            </table>
+            <div className="table-responsive">
+                <table className="table mb-5 table-fixed table-striped">
+                    <caption>Expansion depth is limited beyond 1000 total {this.props.objectClass}s.</caption>
+                    {this.renderTableContent()}
+                </table>
+            </div>
         );
     }
 }

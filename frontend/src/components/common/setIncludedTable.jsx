@@ -108,9 +108,11 @@ class SetIncludedTable extends Component {
 
     render() {
         return (
-            <table style={{width: 'auto'}} className="table mb-5 table-fixed">
-                {this.renderTableContent()}
-            </table>
+            <div className="table-responsive">
+                <table style={{width: 'auto'}} className="table mb-5 table-fixed">
+                    {this.renderTableContent()}
+                </table>
+            </div>
         );
     }
 }

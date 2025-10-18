@@ -61,15 +61,17 @@ function PrefixTable(props) {
 
     return (
         <>
-            <table className="table table-sm mb-5 table-fixed table-striped">
-                <PrefixTableHeader
-                    irrSourceColumns={irrSourceColumns}
-                    onSort={handleSort}
-                    reducedColour={reducedColour}
-                />
-                {renderTableContent()}
-                <TableFooter url={apiCallUrl} />
-            </table>
+            <div className="table-responsive">
+                <table className="table table-sm mb-5 table-fixed table-striped">
+                    <PrefixTableHeader
+                        irrSourceColumns={irrSourceColumns}
+                        onSort={handleSort}
+                        reducedColour={reducedColour}
+                    />
+                    {renderTableContent()}
+                    <TableFooter url={apiCallUrl} />
+                </table>
+            </div>
             <WhoisModal ref={whoisModalRef}/>
         </>
     );

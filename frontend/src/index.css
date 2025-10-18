@@ -37,7 +37,7 @@ pre {
 #root {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
 }
 
 /* Responsive container */
