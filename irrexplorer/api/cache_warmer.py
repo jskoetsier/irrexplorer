@@ -31,7 +31,7 @@ POPULAR_ASNS = [
 ]
 
 
-async def warm_asn_cache(database: Database, asns: List[int] | None = None):
+async def warm_asn_cache(database: Database, asns: Optional[List[int]] = None):
     """
     Warm cache with popular ASN queries.
 
