@@ -1,6 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, Component } from 'react';
 import { Link } from '@reach/router';
 import Footer from './footer';
+
+// Error Boundary Component
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Visualization Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="alert alert-danger m-4">
+          <h4>Visualization Error</h4>
+          <p>Failed to load visualization: {this.state.error?.message || 'Unknown error'}</p>
+          <button 
+            className="btn btn-primary mt-2" 
+            onClick={() => window.location.reload()}
+          >
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Lazy load heavy visualization components
 const PrefixAllocation = React.lazy(() => import('./visualizations/prefixAllocation'));
@@ -88,7 +122,9 @@ const Visualizations = () => {
             </li>
           </ul>
 
-          {renderVisualization()}
+          <ErrorBoundary>
+            {renderVisualization()}
+          </ErrorBoundary>
         </div>
       </div>
       <Footer />
