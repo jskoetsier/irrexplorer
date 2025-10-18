@@ -26,7 +26,11 @@ if TESTING:
 else:  # pragma: no cover
     # IRRD_ENDPOINT is read at connection time to allow tests to change it,
     # load it here if not testing to trigger an error earlier if it's missing.
-    config("IRRD_ENDPOINT")
+    try:
+        config("IRRD_ENDPOINT")
+    except KeyError:
+        # In CI/CD environments, IRRD_ENDPOINT may not be required for migrations
+        pass
 
 RIRSTATS_URL = {
     RIR.RIPENCC: config(
