@@ -19,7 +19,8 @@ COPY pyproject.toml poetry.lock ./
 
 # Install Python dependencies
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root --only main
+    && poetry install --no-interaction --no-ansi --no-root --only main \
+    && pip install --no-cache-dir redis
 
 # Copy application code
 COPY irrexplorer/ ./irrexplorer/
