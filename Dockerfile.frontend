@@ -12,8 +12,8 @@ RUN yarn install --frozen-lockfile
 # Copy source code
 COPY frontend/ ./
 
-# Build the application
-RUN yarn build
+# Build the application (production build without source maps)
+RUN yarn build:prod
 
 # Production stage - serve with nginx
 FROM nginx:alpine
