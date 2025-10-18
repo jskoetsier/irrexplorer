@@ -1,6 +1,6 @@
 [project]
 name = "irrexplorer"
-version = "1.6.0"
+version = "1.6.1"
 description = "IRR explorer"
 authors = [{name = "Sasha Romijn", email = "github@mxsasha.eu"}]
 license = {text = "BSD-2-Clause"}

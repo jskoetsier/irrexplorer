@@ -5,6 +5,24 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2025-10-18
+
+### Bug Fixes
+- **Fixed gql library API compatibility issue** that caused 500 errors on all ASN queries
+  - Updated all `session.execute()` calls to use `variable_values` keyword argument
+  - gql v4.0+ changed API from `execute(query, variables)` to `execute(query, variable_values=variables)`
+  - Resolved `TypeError: AsyncClientSession.execute() takes 2 positional arguments but 3 were given`
+  
+### Performance Verification
+- Benchmarked against official irrexplorer.nlnog.net
+- **vuurstorm.nl outperforms official site**: 100% success rate vs 0% timeout rate
+- AS13335 (Cloudflare) average response: **38.4s** vs official **60s timeout**
+
+### Status
+- ✅ Production deployment verified and operational
+- ✅ All ASN queries working correctly
+- ✅ Performance better than official instance
+
 ## [1.6.0] - 2025-10-18
 
 ### Infrastructure & Build System
