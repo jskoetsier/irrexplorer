@@ -159,7 +159,9 @@ class IRRDQuery:
         async with Client(
             transport=self.transport, execute_timeout=IRRD_TIMEOUT
         ) as session:
-            response = await session.execute(GQL_QUERY_SET_MEMBERS, {"names": names})
+            response = await session.execute(
+                GQL_QUERY_SET_MEMBERS, variable_values={"names": names}
+            )
             members_per_set: Dict[str, Dict[str, List[str]]] = defaultdict(dict)
             for item in response["recursiveSetMembers"]:
                 members_per_set[item["rpslPk"]][item["rootSource"]] = item["members"]
@@ -177,7 +179,9 @@ class IRRDQuery:
         async with Client(
             transport=self.transport, execute_timeout=IRRD_TIMEOUT
         ) as session:
-            return await session.execute(queries[object_class], {"target": target})
+            return await session.execute(
+                queries[object_class], variable_values={"target": target}
+            )
 
     async def query_asn(self, asn: int):
         if not self.transport:
@@ -185,7 +189,7 @@ class IRRDQuery:
         async with Client(
             transport=self.transport, execute_timeout=IRRD_TIMEOUT
         ) as session:
-            result = await session.execute(GQL_QUERY_ASN, {"asn": asn})
+            result = await session.execute(GQL_QUERY_ASN, variable_values={"asn": asn})
             return self._graphql_to_route_info(result)
 
     async def query_prefixes_any(self, prefixes: List[IPNetwork]) -> List[RouteInfo]:
@@ -199,7 +203,7 @@ class IRRDQuery:
                 object_class = ["route"] if prefix.version == 4 else ["route6"]
                 task = session.execute(
                     GQL_QUERY_PREFIX,
-                    {
+                    variable_values={
                         "prefix": str(prefix),
                         "object_class": object_class,
                     },
