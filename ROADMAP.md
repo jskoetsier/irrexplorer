@@ -75,6 +75,14 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 - API documentation (Swagger/OpenAPI)
 - Bulk query support
 
+**Administration & Configuration**
+- Admin page for runtime configuration
+- Caching properties management (TTL, max size, eviction policies)
+- Redis memory configuration and monitoring
+- Worker properties tuning (count, timeout, queue size)
+- Rate limiting adjustments per endpoint
+- Real-time performance metrics dashboard
+
 ### Mid-term (6-12 months)
 
 **Enhanced Analysis**
