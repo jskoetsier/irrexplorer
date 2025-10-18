@@ -14,12 +14,7 @@ from irrexplorer.api.collectors import (
     collect_member_of,
     collect_set_expansion,
 )
-from irrexplorer.api.interfaces import (
-    MessageCategory,
-    ObjectClass,
-    PrefixSummary,
-    ReportMessage,
-)
+from irrexplorer.api.interfaces import ObjectClass
 from irrexplorer.api.report import enrich_prefix_summaries_with_report
 from irrexplorer.api.utils import DataClassJSONResponse
 from irrexplorer.backends.irrd import IRRDQuery
