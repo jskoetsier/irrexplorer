@@ -43,8 +43,8 @@ def add_cache_headers(
     response.headers["Cache-Control"] = f"public, max-age={max_age}"
 
     if content:
-        # Generate ETag from content hash
-        etag = hashlib.md5(content.encode()).hexdigest()
+        # Generate ETag from content hash (not used for security)
+        etag = hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()
         response.headers["ETag"] = f'"{etag}"'
 
     return response

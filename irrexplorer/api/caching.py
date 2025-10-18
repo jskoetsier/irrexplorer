@@ -66,7 +66,7 @@ def cache_key(prefix: str, *args, **kwargs) -> str:
         "kwargs": {k: str(v) for k, v in sorted(kwargs.items())},
     }
     key_str = json.dumps(key_data, sort_keys=True)
-    hash_key = hashlib.md5(key_str.encode()).hexdigest()
+    hash_key = hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
     return f"irrexplorer:{prefix}:{hash_key}"
 
 
