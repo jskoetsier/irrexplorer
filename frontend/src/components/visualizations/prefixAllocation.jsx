@@ -62,6 +62,10 @@ const PrefixAllocation = () => {
     );
   }
 
+  if (!allocationData) {
+    return null;
+  }
+
   const currentData = activeView === 'rir'
     ? allocationData.rir_allocations
     : allocationData.top_asns.slice(0, 50);
