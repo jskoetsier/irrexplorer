@@ -1,0 +1,246 @@
+.visualization-container {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.viz-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.viz-header h2 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.viz-header p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.viz-controls {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
+.viz-controls .btn-group {
+  margin-right: 10px;
+}
+
+.viz-content {
+  margin-top: 20px;
+}
+
+.treemap-container,
+.chart-container,
+.graph-container {
+  margin-bottom: 30px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 15px;
+  background-color: #fafafa;
+}
+
+.viz-stats {
+  margin-top: 30px;
+}
+
+.viz-stats h4 {
+  margin-bottom: 20px;
+  color: #495057;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.stat-card {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  text-align: center;
+  margin-bottom: 15px;
+  border: 1px solid #dee2e6;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h5 {
+  margin: 0 0 10px 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card .stat-value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #007bff;
+}
+
+.data-table {
+  margin-top: 30px;
+}
+
+.data-table h5 {
+  margin-bottom: 15px;
+  color: #495057;
+  font-weight: 600;
+}
+
+.data-table table {
+  background-color: #fff;
+}
+
+.data-table thead {
+  background-color: #e9ecef;
+}
+
+.data-table thead th {
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.viz-footer {
+  margin-top: 30px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.viz-tooltip {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.viz-tooltip p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.viz-tooltip strong {
+  color: #007bff;
+}
+
+.legend {
+  display: flex;
+  gap: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.legend-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.rir-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.info-card {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border-left: 4px solid #007bff;
+}
+
+.info-card h6 {
+  margin: 0 0 5px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.info-card p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.accordion-button {
+  font-weight: 500;
+}
+
+.accordion-body table {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .visualization-container {
+    padding: 15px;
+  }
+
+  .viz-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .viz-controls {
+    padding: 10px;
+  }
+
+  .viz-controls .btn-group {
+    margin-bottom: 10px;
+  }
+
+  .stat-card .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .chart-container,
+  .graph-container {
+    padding: 10px;
+  }
+
+  .legend {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .viz-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+@media print {
+  .viz-controls {
+    display: none;
+  }
+
+  .visualization-container {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}

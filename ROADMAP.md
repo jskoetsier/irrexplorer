@@ -150,15 +150,30 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 
 ---
 
+### Phase 8: Data Visualization (v1.9.0) ✅ COMPLETED
+
+**Interactive Visualizations**
+- Interactive prefix allocation maps (treemaps)
+- ASN relationship graphs (force-directed network graphs)
+- Historical timeline views (line/bar charts)
+- Geographical RIR distribution maps (pie charts and bar charts)
+- Recharts and React Force Graph libraries integration
+- Responsive visualization controls
+- Real-time data from backend APIs
+
+**Backend API**
+- `/api/viz/prefix-allocation` - Prefix allocation data by RIR and ASN
+- `/api/viz/asn-relationships/{asn}` - ASN relationship graph data
+- `/api/viz/timeline` - Historical query activity
+- `/api/viz/rir-distribution` - Geographical RIR statistics
+- `/api/viz/prefix-distribution` - Prefix size distribution
+- Cached visualization data for performance
+
+---
+
 ## Planned Enhancements
 
 ### Near-term (Next 3-6 months)
-
-**Data Visualization**
-- Interactive prefix allocation maps
-- ASN relationship graphs
-- Historical timeline views
-- Geographical RIR distribution maps
 
 **Export & Reporting**
 - CSV/JSON export functionality

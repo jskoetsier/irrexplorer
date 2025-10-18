@@ -7,7 +7,12 @@ import threading
 import traceback
 
 import databases
-from slowapi import Limiter, _rate_limit_exceeded_handler
+
+from irrexplorer.api import advanced_search, queries, search_navigation, visualization
+from irrexplorer.api.caching import clear_cache, get_cache_stats
+from irrexplorer.api.utils import DefaultIndexStaticFiles
+from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
+from slowapi import _rate_limit_exceeded_handler, Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.applications import Starlette
@@ -16,11 +21,6 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
-
-from irrexplorer.api import advanced_search, queries, search_navigation
-from irrexplorer.api.caching import clear_cache, get_cache_stats
-from irrexplorer.api.utils import DefaultIndexStaticFiles
-from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
@@ -100,6 +100,12 @@ routes = [
     # Advanced search endpoints
     Route("/api/advanced-search", advanced_search.advanced_search),
     Route("/api/filter-options", advanced_search.get_filter_options),
+    # Visualization endpoints
+    Route("/api/viz/prefix-allocation", visualization.get_prefix_allocation_data),
+    Route("/api/viz/asn-relationships/{asn}", visualization.get_asn_relationships),
+    Route("/api/viz/timeline", visualization.get_historical_timeline),
+    Route("/api/viz/rir-distribution", visualization.get_rir_distribution),
+    Route("/api/viz/prefix-distribution", visualization.get_prefix_size_distribution),
 ]
 
 # Only mount static files if not testing and directory exists
