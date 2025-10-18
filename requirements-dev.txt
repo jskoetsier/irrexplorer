@@ -5,8 +5,10 @@
 
 # Testing and related packages
 coverage>=5.4
+# Testing
 pytest>=6.2.2
 pytest-cov>=2.11.1
+pytest-asyncio>=0.21.0
 pytest-httpserver>=1.0.0
 pytest-asyncio>=0.14.0
 httpx>=0.17.0

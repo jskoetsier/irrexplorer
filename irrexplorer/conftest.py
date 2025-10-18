@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 from alembic.command import upgrade as alembic_upgrade
 from alembic.config import Config as AlembicConfig
 from asgi_lifespan import LifespanManager
@@ -28,7 +29,7 @@ def setup_test_database():
     drop_database(url)
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def client():
     # httpx client does not trigger lifespan events on it's own
     # https://github.com/encode/httpx/issues/350
