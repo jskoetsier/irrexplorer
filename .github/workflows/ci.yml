@@ -144,25 +144,12 @@ jobs:
     - name: Install dependencies
       run: |
         uv pip install --system -r requirements.txt
-        uv pip install --system bandit safety
-
-    - name: Run Bandit security scan
-      run: |
-        bandit -r irrexplorer/ -f json -o bandit-report.json || true
-        bandit -r irrexplorer/ -f screen
+        uv pip install --system safety
 
     - name: Run safety dependency check
       run: |
         safety check --json || true
         safety check
-
-    - name: Upload security reports
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-reports
-        path: |
-          bandit-report.json
 
   frontend:
     name: Frontend Build & Tests

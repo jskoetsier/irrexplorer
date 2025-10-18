@@ -16,7 +16,7 @@ from irrexplorer.api.collectors import (
 )
 from irrexplorer.api.interfaces import ObjectClass
 from irrexplorer.api.report import enrich_prefix_summaries_with_report
-from irrexplorer.api.utils import DataClassJSONResponse
+from irrexplorer.api.schema import MessageCategory, PrefixSummary, ReportMessage
 from irrexplorer.backends.irrd import IRRDQuery
 from irrexplorer.backends.metadata import get_last_data_import
 from irrexplorer.settings import MINIMUM_PREFIX_SIZE
