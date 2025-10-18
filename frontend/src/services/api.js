@@ -201,5 +201,7 @@ const api = {
     deleteBookmark,
     getPopularQueries,
     getTrendingQueries,
+    advancedSearch,
+    getFilterOptions,
 }
 export default api;

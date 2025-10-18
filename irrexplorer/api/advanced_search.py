@@ -260,7 +260,7 @@ async def advanced_search(request: Request):
     )
 
 
-async def get_filter_options(request: Request):
+async def get_filter_options(_request: Request):
     """Get available filter options for advanced search"""
     return JSONResponse(
         {

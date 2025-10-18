@@ -82,7 +82,7 @@ class AdvancedSearchFilters extends Component {
                         <div className="filter-row">
                             <div className="filter-group">
                                 <label htmlFor="resourceType">Resource Type</label>
-                                <select 
+                                <select
                                     id="resourceType"
                                     value={resourceType}
                                     onChange={(e) => this.handleFilterChange('resourceType', e.target.value)}
@@ -98,7 +98,7 @@ class AdvancedSearchFilters extends Component {
 
                             <div className="filter-group">
                                 <label htmlFor="validationStatus">Validation Status</label>
-                                <select 
+                                <select
                                     id="validationStatus"
                                     value={status}
                                     onChange={(e) => this.handleFilterChange('status', e.target.value)}
@@ -114,7 +114,7 @@ class AdvancedSearchFilters extends Component {
 
                             <div className="filter-group flex-grow">
                                 <label htmlFor="searchWithin">Search Within Results</label>
-                                <input 
+                                <input
                                     id="searchWithin"
                                     type="text"
                                     value={searchWithin}
@@ -127,7 +127,7 @@ class AdvancedSearchFilters extends Component {
                             {hasActiveFilters && (
                                 <div className="filter-group">
                                     <div className="label-spacer">&nbsp;</div>
-                                    <button 
+                                    <button
                                         className="btn-clear-filters"
                                         onClick={this.clearFilters}
                                     >
