@@ -8,6 +8,7 @@ import traceback
 import databases
 
 from irrexplorer.api import queries
+from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
 from starlette.applications import Starlette
@@ -25,8 +26,25 @@ async def lifespan(app):
     await app.state.database.disconnect()
 
 
+async def cache_stats(request):
+    """Endpoint to view cache statistics."""
+    from starlette.responses import JSONResponse
+
+    return JSONResponse(get_cache_stats())
+
+
+async def cache_clear(request):
+    """Endpoint to clear cache (admin only)."""
+    from starlette.responses import JSONResponse
+
+    clear_cache()
+    return JSONResponse({"status": "cleared"})
+
+
 routes = [
     Route("/api/metadata/", queries.metadata),
+    Route("/api/cache/stats", cache_stats),
+    Route("/api/cache/clear", cache_clear),
     Route("/api/clean_query/{query:path}", queries.clean_query),
     Route("/api/prefixes/asn/AS{asn:int}", queries.prefixes_asn),
     Route("/api/prefixes/asn/{asn:int}", queries.prefixes_asn),

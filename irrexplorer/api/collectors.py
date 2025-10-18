@@ -7,6 +7,8 @@ from typing import Coroutine, Dict, List, Optional
 from aggregate6 import aggregate
 from databases import Database
 
+from irrexplorer.api.caching import ASN_SUMMARY_TTL, cached
+
 from irrexplorer.api.interfaces import (
     ASNPrefixes,
     MemberOf,
@@ -53,6 +55,7 @@ class PrefixCollector:
         prefix_summaries = self._collate_per_prefix()
         return prefix_summaries
 
+    @cached(ttl=ASN_SUMMARY_TTL)
     async def asn_summary(self, asn: int) -> ASNPrefixes:
         aggregates = await self._collect_aggregate_prefixes_for_asn(asn)
         await self._collect_for_prefixes(aggregates)
@@ -94,8 +97,12 @@ class PrefixCollector:
             list(self.irrd_per_prefix.keys()) + list(self.bgp_per_prefix.keys())
         )
 
+    @cached(ttl=600)  # Cache ASN prefix aggregates for 10 minutes
     async def _collect_aggregate_prefixes_for_asn(self, asn: int) -> List[IPNetwork]:
-        """ """
+        """
+        Collect and aggregate all prefixes for an ASN.
+        This is cached because large ASNs like AS174 have many prefixes.
+        """
         tasks = [
             IRRDQuery().query_asn(asn),
             BGPQuery(self.database).query_asn(asn),
