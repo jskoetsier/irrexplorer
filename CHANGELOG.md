@@ -5,25 +5,61 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.1] - 2025-10-18
-
-### Bug Fixes
-- **Fixed gql library API compatibility issue** that caused 500 errors on all ASN queries
-  - Updated all `session.execute()` calls to use `variable_values` keyword argument
-  - gql v4.0+ changed API from `execute(query, variables)` to `execute(query, variable_values=variables)`
-  - Resolved `TypeError: AsyncClientSession.execute() takes 2 positional arguments but 3 were given`
-
-### Performance Verification
-- Benchmarked against official irrexplorer.nlnog.net
-- **vuurstorm.nl outperforms official site**: 100% success rate vs 0% timeout rate
-- AS13335 (Cloudflare) average response: **38.4s** vs official **60s timeout**
-
-### Status
-- ✅ Production deployment verified and operational
-- ✅ All ASN queries working correctly
-- ✅ Performance better than official instance
-
 ## [1.6.0] - 2025-10-18
+
+### Search & Navigation Features
+- **Autocomplete**: Real-time suggestions as users type in search field
+  - Shows popular queries with usage counts
+  - Keyboard navigation support (arrow keys, Enter, Escape)
+  - 300ms debounce for optimal performance
+- **Search History**: Automatic tracking of all user queries
+  - Session-based storage with cookies
+  - Recent searches display on home page
+  - Clear history functionality
+  - Last 20 queries tracked per session
+- **Bookmarks**: Save favorite queries for quick access
+  - Add/remove bookmarks with duplicate detection
+  - Persistent storage per session
+  - Display on home page with timestamps
+- **Popular Queries**: Shows most-queried resources
+  - Configurable time window (default: 7 days)
+  - Query count display
+  - Click to navigate
+- **Trending Queries**: Real-time trending based on last 24 hours
+  - Recent activity count
+  - Tab switching between popular and trending
+  - Auto-refresh on page load
+
+### Backend Infrastructure
+- New database tables: `search_history`, `bookmarks`, `query_stats`
+- Database migration: `6c73e25499d1_add_search_navigation`
+- New API endpoints:
+  - `GET /api/autocomplete/{query}` - Autocomplete suggestions
+  - `GET /api/search-history` - Get search history
+  - `POST /api/search-history` - Add to search history
+  - `DELETE /api/search-history/clear` - Clear history
+  - `GET /api/bookmarks` - Get bookmarks
+  - `POST /api/bookmarks` - Add bookmark
+  - `DELETE /api/bookmarks/{id}` - Delete bookmark
+  - `GET /api/popular` - Get popular queries
+  - `GET /api/trending` - Get trending queries
+
+### Frontend Components
+- New `Autocomplete` component with keyboard navigation
+- New `PopularQueries` component with tab interface
+- New `SearchHistory` component with management controls
+- Enhanced home page layout with new features
+- Automatic search tracking on all queries
+- Accessibility improvements (ARIA roles, keyboard support)
+
+### User Experience
+- Improved search discoverability
+- Quick access to frequently-used queries
+- Better understanding of popular resources
+- Reduced repetitive typing with autocomplete
+- Persistent session across page reloads
+
+## [1.5.0] - 2025-10-18
 
 ### Infrastructure & Build System
 - **Migrated from Poetry to uv** for 10-100x faster dependency installation

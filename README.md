@@ -7,9 +7,11 @@ Internet Routing Registry Explorer - A web application for exploring and analyzi
 - **Prefix Analysis**: Search and analyze IP prefix information
 - **ASN Lookup**: Explore Autonomous System Numbers and their associated prefixes
 - **Set Expansion**: Resolve and expand RPSL sets
+- **Smart Search**: Autocomplete, search history, and bookmarks
+- **Popular & Trending**: Discover frequently-queried resources
 - **Multi-Source Data**: Integrates BGP, IRR, RPKI, and RIR statistics
 - **Real-time Updates**: Fresh data from authoritative sources
-- **Interactive UI**: Modern React-based interface
+- **Interactive UI**: Modern responsive React-based interface
 - **RESTful API**: Full API access for automation
 
 ## Quick Start

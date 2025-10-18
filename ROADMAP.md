@@ -51,17 +51,32 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 - Enhanced footer layout
 - Print styles
 
+### Phase 4: Search & Navigation (v1.6.0) ✅ COMPLETED
+
+**Search Enhancements**
+- Auto-complete for ASN/prefix/set names with keyboard navigation
+- Search history tracking and display (last 20 queries)
+- Bookmarks functionality with session persistence
+- Popular queries display (configurable time window)
+- Trending queries based on last 24 hours
+
+**Backend Infrastructure**
+- New database tables: search_history, bookmarks, query_stats
+- Session-based tracking with cookies
+- Query statistics collection
+- RESTful API endpoints for all features
+
 ---
 
 ## Planned Enhancements
 
 ### Near-term (Next 3-6 months)
 
-**Search & Navigation**
-- Advanced search with filters
-- Auto-complete for ASN/prefix/set names
-- Search history and bookmarks
-- Popular/trending queries display
+**Advanced Search Features**
+- Filter by resource type (ASN, prefix, set)
+- Filter by status (active, valid, invalid)
+- Search within results
+- Advanced query syntax support
 
 **Data Visualization**
 - Interactive prefix allocation maps
