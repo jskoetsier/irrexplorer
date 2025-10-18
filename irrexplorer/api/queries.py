@@ -7,12 +7,11 @@ from ipaddress import ip_network
 from typing import Optional
 
 import IPy
-from dataclasses_json import dataclass_json, LetterCase
-
+from dataclasses_json import LetterCase, dataclass_json
 from irrexplorer.api.collectors import (
+    PrefixCollector,
     collect_member_of,
     collect_set_expansion,
-    PrefixCollector,
 )
 from irrexplorer.api.interfaces import ObjectClass
 from irrexplorer.api.report import enrich_prefix_summaries_with_report
