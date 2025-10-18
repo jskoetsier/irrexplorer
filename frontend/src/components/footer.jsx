@@ -8,7 +8,7 @@ function Footer() {
                 Stichting NLNOG
             </a> (<a className="link-dark" href="mailto:stichting@nlnog.net">
                 stichting@nlnog.net
-            </a>) · Source on <a className="link-dark" href="https://github.com/phreak/irrexplorer">
+            </a>) · Source on <a className="link-dark" href="https://github.com/jskoetsier/irrexplorer">
                 GitHub
             </a>
 
