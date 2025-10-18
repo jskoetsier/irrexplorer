@@ -8,6 +8,7 @@ from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import DATABASE_URL, REGISTROBR_URL
 from irrexplorer.state import RIR
 from irrexplorer.storage import tables
+
 from ..registro import RegistroRirImporter
 
 VALID_ASN_BLK = """

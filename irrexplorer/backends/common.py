@@ -9,7 +9,7 @@ from databases import Database
 
 from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import DATABASE_URL
-from irrexplorer.state import DataSource, IPNetwork, RIR, RouteInfo
+from irrexplorer.state import RIR, DataSource, IPNetwork, RouteInfo
 from irrexplorer.storage import tables
 
 logger = logging.getLogger(__name__)

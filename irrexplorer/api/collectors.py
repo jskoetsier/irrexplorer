@@ -8,20 +8,14 @@ from aggregate6 import aggregate
 from databases import Database
 
 from irrexplorer.api.caching import ASN_SUMMARY_TTL, cached
-
-from irrexplorer.api.interfaces import (
-    ASNPrefixes,
-    MemberOf,
-    ObjectClass,
-    PrefixIRRDetail,
-    PrefixSummary,
-    SetExpansion,
-)
+from irrexplorer.api.interfaces import (ASNPrefixes, MemberOf, ObjectClass,
+                                        PrefixIRRDetail, PrefixSummary,
+                                        SetExpansion)
 from irrexplorer.backends.bgp import BGPQuery
 from irrexplorer.backends.irrd import IRRDQuery
 from irrexplorer.backends.rirstats import RIRStatsQuery
 from irrexplorer.settings import MINIMUM_PREFIX_SIZE, TESTING
-from irrexplorer.state import IPNetwork, NIR, RIR, RouteInfo
+from irrexplorer.state import NIR, RIR, IPNetwork, RouteInfo
 
 logger = logging.getLogger(__name__)
 

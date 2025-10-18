@@ -3,11 +3,8 @@ import ipaddress
 import aggregate6
 from asgiref.sync import sync_to_async
 
-from irrexplorer.backends.common import (
-    LocalSQLQueryBase,
-    retrieve_url_text,
-    store_rir_prefixes,
-)
+from irrexplorer.backends.common import (LocalSQLQueryBase, retrieve_url_text,
+                                         store_rir_prefixes)
 from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import RIRSTATS_URL
 from irrexplorer.state import RIR, DataSource

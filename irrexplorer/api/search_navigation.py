@@ -9,10 +9,11 @@ API endpoints for search navigation features:
 import uuid
 from datetime import datetime, timedelta
 
-from irrexplorer.storage.tables import bookmarks, query_stats, search_history
 from sqlalchemy import and_, desc, func, or_, select
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+from irrexplorer.storage.tables import bookmarks, query_stats, search_history
 
 
 def get_or_create_session_id(request: Request) -> str:

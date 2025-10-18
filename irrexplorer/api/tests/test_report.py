@@ -1,11 +1,7 @@
 from ipaddress import ip_network
 
-from irrexplorer.api.interfaces import (
-    MessageCategory,
-    PrefixIRRDetail,
-    PrefixSummary,
-    ReportMessage,
-)
+from irrexplorer.api.interfaces import (MessageCategory, PrefixIRRDetail,
+                                        PrefixSummary, ReportMessage)
 from irrexplorer.api.report import enrich_prefix_summaries_with_report
 from irrexplorer.state import RIR, RPKIStatus
 

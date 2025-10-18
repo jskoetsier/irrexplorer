@@ -2,8 +2,8 @@ import asyncio
 from datetime import datetime, timezone
 
 from irrexplorer.backends.bgp import BGPImporter
-from irrexplorer.backends.registro import RegistroRirImporter
 from irrexplorer.backends.metadata import update_last_data_import
+from irrexplorer.backends.registro import RegistroRirImporter
 from irrexplorer.backends.rirstats import RIRStatsImporter
 from irrexplorer.state import RIR
 
