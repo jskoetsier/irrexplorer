@@ -10,12 +10,13 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 
-logger = logging.getLogger(__name__)
-
-from irrexplorer.storage.tables import bookmarks, query_stats, search_history
 from sqlalchemy import and_, desc, func, or_, select
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+from irrexplorer.storage.tables import bookmarks, query_stats, search_history
+
+logger = logging.getLogger(__name__)
 
 
 def get_or_create_session_id(request: Request) -> str:
