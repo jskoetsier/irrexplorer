@@ -36,10 +36,6 @@ function QueryForm() {
         await navigate(`/${type}/${query}`);
     }
 
-    let inputClasses = "form-control form-control-lg ";
-    if (validationError)
-        inputClasses += "is-invalid";
-
     return (
         <form className="row" onSubmit={handleSearchSubmit}>
             <div className="col-sm-10">
