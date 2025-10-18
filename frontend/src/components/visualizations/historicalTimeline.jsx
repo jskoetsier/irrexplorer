@@ -47,6 +47,10 @@ const HistoricalTimeline = () => {
     );
   }
 
+  if (!timelineData || !timelineData.timeline || timelineData.timeline.length === 0) {
+    return null;
+  }
+
   const totalQueries = timelineData.timeline.reduce((sum, day) => sum + day.total, 0);
   const avgPerDay = Math.round(totalQueries / timelineData.timeline.length);
   const peakDay = timelineData.timeline.reduce((max, day) =>

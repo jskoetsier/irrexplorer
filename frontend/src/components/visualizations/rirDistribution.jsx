@@ -51,6 +51,10 @@ const RIRDistribution = () => {
     );
   }
 
+  if (!distributionData || !distributionData.distribution) {
+    return null;
+  }
+
   const pieData = distributionData.distribution.map(rir => ({
     name: rir.rir,
     value: activeView === 'prefixes' ? rir.prefix_count :
