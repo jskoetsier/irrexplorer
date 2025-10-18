@@ -227,16 +227,23 @@ footer .container {
   }
 }
 
-/* Home page specific styles */
-.text-center img.img-fluid {
-  max-width: 200px;
+/* Home page logo sizing */
+.logo {
+  max-width: 150px;
+  width: 100%;
   height: auto;
-  margin: 1rem auto;
   display: block;
+  margin: 0 auto;
 }
 
 @media (max-width: 576px) {
-  .text-center img.img-fluid {
+  .logo {
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .logo {
     max-width: 120px;
   }
 }
