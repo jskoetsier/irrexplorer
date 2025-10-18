@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.8.1] - 2025-10-18
 
+### Performance Optimizations
+- **Docker Resource Tuning**: Optimized for 8 CPU / 16GB RAM production server
+  - PostgreSQL: 4GB shared_buffers, 12GB effective_cache_size, parallel workers optimized
+  - Redis: Increased to 2GB cache (from 256MB)
+  - Backend: 12 HTTP workers (optimized for 8 CPU cores)
+  - Resource limits and reservations configured for each service
+- **Database Configuration**: Production-grade PostgreSQL settings
+  - Max connections: 200
+  - Work memory: 64MB per operation
+  - Parallel query execution enabled
+  - Random page cost optimized for SSD (1.1)
+
+### Infrastructure
+- **Nginx Reverse Proxy**: Configured with SSL/TLS termination
+  - Let's Encrypt SSL certificates for irrexplorer.netone.nl
+  - HTTP/2 support enabled
+  - Security headers (HSTS, X-Frame-Options, CSP-related)
+  - Gzip compression for static assets
+  - Separate routing for API (/api/) and frontend (/)
+- **SELinux Configuration**: Proper permissions for nginx to proxy to backend
+
 ### Security & Code Quality
 - **Security Fixes**: Resolved Bandit security scanner issues
   - Fixed pickle usage in caching module with proper nosec annotations

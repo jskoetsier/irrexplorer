@@ -3,7 +3,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: irrexplorer-redis
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    # Optimized for 16GB RAM server - allocate 2GB for Redis cache
+    command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --save "" --appendonly no
     ports:
       - "6379:6379"
     networks:
@@ -14,6 +15,14 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2500M
+        reservations:
+          cpus: '0.5'
+          memory: 2G
 
   db:
     image: postgres:15-alpine
@@ -22,6 +31,27 @@ services:
       POSTGRES_DB: irrexplorer
       POSTGRES_USER: irrexplorer
       POSTGRES_PASSWORD: irrexplorer_password
+      # PostgreSQL tuning for 8 CPU / 16GB RAM
+      POSTGRES_SHARED_BUFFERS: "4GB"
+      POSTGRES_EFFECTIVE_CACHE_SIZE: "12GB"
+      POSTGRES_MAINTENANCE_WORK_MEM: "1GB"
+      POSTGRES_WORK_MEM: "64MB"
+      POSTGRES_MAX_WORKER_PROCESSES: "8"
+      POSTGRES_MAX_PARALLEL_WORKERS_PER_GATHER: "4"
+      POSTGRES_MAX_PARALLEL_WORKERS: "8"
+      POSTGRES_MAX_CONNECTIONS: "200"
+    command: >
+      postgres
+      -c shared_buffers=4GB
+      -c effective_cache_size=12GB
+      -c maintenance_work_mem=1GB
+      -c work_mem=64MB
+      -c max_worker_processes=8
+      -c max_parallel_workers_per_gather=4
+      -c max_parallel_workers=8
+      -c max_connections=200
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -33,6 +63,14 @@ services:
       retries: 5
     networks:
       - irrexplorer-network
+    deploy:
+      resources:
+        limits:
+          cpus: '6'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
 
   # Backend API
   backend:
@@ -49,7 +87,8 @@ services:
       BGP_SOURCE: ${BGP_SOURCE:-https://bgp.tools/table.jsonl}
       BGP_SOURCE_MINIMUM_HITS: ${BGP_SOURCE_MINIMUM_HITS:-20}
       HTTP_PORT: 8000
-      HTTP_WORKERS: ${HTTP_WORKERS:-4}
+      # Optimized for 8 CPU server: (2 * CPU) + 1 = 17 workers (capped at 12 for memory)
+      HTTP_WORKERS: ${HTTP_WORKERS:-12}
     depends_on:
       db:
         condition: service_healthy
@@ -64,6 +103,14 @@ services:
     networks:
       - irrexplorer-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
 
   # Frontend (nginx serving React build)
   frontend:
