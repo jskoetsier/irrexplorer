@@ -212,31 +212,31 @@ jobs:
 
     - name: Build Docker images
       run: |
-        docker-compose build
+        docker compose build
 
     - name: Start services
       run: |
-        docker-compose up -d
+        docker compose up -d
         sleep 30
 
     - name: Check service health
       run: |
-        docker-compose ps
+        docker compose ps
         curl -f http://localhost:8000/api/metadata/ || exit 1
 
     - name: Run integration tests
       run: |
-        docker-compose exec -T backend pytest tests/integration/ || true
+        docker compose exec -T backend pytest tests/integration/ || true
 
     - name: Check logs
       if: always()
       run: |
-        docker-compose logs backend
+        docker compose logs backend
 
     - name: Stop services
       if: always()
       run: |
-        docker-compose down -v
+        docker compose down -v
 
   documentation:
     name: Documentation Build
