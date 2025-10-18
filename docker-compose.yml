@@ -29,7 +29,7 @@ services:
     container_name: irrexplorer-backend
     environment:
       DATABASE_URL: postgresql://irrexplorer:irrexplorer_password@db:5432/irrexplorer
-      IRRD_ENDPOINT: ${IRRD_ENDPOINT:-https://irrd.nlnog.net/graphql}
+      IRRD_ENDPOINT: ${IRRD_ENDPOINT:-}
       DEBUG: ${DEBUG:-False}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:3000}
       BGP_SOURCE: ${BGP_SOURCE:-https://bgp.tools/table.jsonl}

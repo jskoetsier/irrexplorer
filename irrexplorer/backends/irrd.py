@@ -6,10 +6,10 @@ from typing import Dict, List
 
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
+from irrexplorer.api.interfaces import ObjectClass
 
 from irrexplorer.settings import config
 from irrexplorer.state import DataSource, IPNetwork, RouteInfo, RPKIStatus
-from irrexplorer.api.interfaces import ObjectClass
 
 IRRD_TIMEOUT = 600
 
@@ -133,19 +133,32 @@ GQL_QUERY_LAST_UPDATE = gql(
 class IRRDQuery:
     def __init__(self):
         # Read at this point to allow tests to change the endpoint
-        endpoint = config("IRRD_ENDPOINT")
-        self.transport = AIOHTTPTransport(url=endpoint, timeout=IRRD_TIMEOUT)
+        endpoint = config("IRRD_ENDPOINT", default=None)
+        if endpoint:
+            self.transport = AIOHTTPTransport(url=endpoint, timeout=IRRD_TIMEOUT)
+        else:
+            self.transport = None
 
     async def query_last_update(self) -> Dict[str, datetime]:
-        async with Client(transport=self.transport, execute_timeout=IRRD_TIMEOUT) as session:
+        if not self.transport:
+            return {}
+        async with Client(
+            transport=self.transport, execute_timeout=IRRD_TIMEOUT
+        ) as session:
             response = await session.execute(GQL_QUERY_LAST_UPDATE)
             return {
                 status["source"]: datetime.fromisoformat(status["lastUpdate"])
                 for status in response["databaseStatus"]
             }
 
-    async def query_set_members(self, names: List[str]) -> Dict[str, Dict[str, List[str]]]:
-        async with Client(transport=self.transport, execute_timeout=IRRD_TIMEOUT) as session:
+    async def query_set_members(
+        self, names: List[str]
+    ) -> Dict[str, Dict[str, List[str]]]:
+        if not self.transport:
+            return {}
+        async with Client(
+            transport=self.transport, execute_timeout=IRRD_TIMEOUT
+        ) as session:
             response = await session.execute(GQL_QUERY_SET_MEMBERS, {"names": names})
             members_per_set: Dict[str, Dict[str, List[str]]] = defaultdict(dict)
             for item in response["recursiveSetMembers"]:
@@ -153,23 +166,35 @@ class IRRDQuery:
             return dict(members_per_set)
 
     async def query_member_of(self, target: str, object_class: ObjectClass):
+        if not self.transport:
+            return {"set": [], "autNum": []}
         queries = {
             ObjectClass.ASSET: GQL_QUERY_AS_MEMBER_OF_AS_SET,
             ObjectClass.ROUTESET: GQL_QUERY_AS_MEMBER_OF_ROUTE_SET,
         }
         if target.isnumeric():
             target = "AS" + target
-        async with Client(transport=self.transport, execute_timeout=IRRD_TIMEOUT) as session:
+        async with Client(
+            transport=self.transport, execute_timeout=IRRD_TIMEOUT
+        ) as session:
             return await session.execute(queries[object_class], {"target": target})
 
     async def query_asn(self, asn: int):
-        async with Client(transport=self.transport, execute_timeout=IRRD_TIMEOUT) as session:
+        if not self.transport:
+            return []
+        async with Client(
+            transport=self.transport, execute_timeout=IRRD_TIMEOUT
+        ) as session:
             result = await session.execute(GQL_QUERY_ASN, {"asn": asn})
             return self._graphql_to_route_info(result)
 
     async def query_prefixes_any(self, prefixes: List[IPNetwork]) -> List[RouteInfo]:
+        if not self.transport:
+            return []
         tasks = []
-        async with Client(transport=self.transport, execute_timeout=IRRD_TIMEOUT) as session:
+        async with Client(
+            transport=self.transport, execute_timeout=IRRD_TIMEOUT
+        ) as session:
             for prefix in prefixes:
                 object_class = ["route"] if prefix.version == 4 else ["route6"]
                 task = session.execute(
@@ -182,7 +207,8 @@ class IRRDQuery:
                 tasks.append(task)
             results_lists = await asyncio.gather(*tasks)
             objects_lists = [
-                self._graphql_to_route_info(results_list) for results_list in results_lists
+                self._graphql_to_route_info(results_list)
+                for results_list in results_lists
             ]
         return [obj for objects_list in objects_lists for obj in objects_list]
 
