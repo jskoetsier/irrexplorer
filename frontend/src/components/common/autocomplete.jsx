@@ -38,7 +38,7 @@ class Autocomplete extends Component {
 
     handleKeyDown = (e) => {
         const {suggestions, selectedIndex, showSuggestions} = this.state;
-        
+
         if (!showSuggestions || suggestions.length === 0) return;
 
         if (e.key === 'ArrowDown') {
@@ -86,8 +86,11 @@ class Autocomplete extends Component {
                         {suggestions.map((suggestion, idx) => (
                             <div
                                 key={idx}
+                                role="button"
+                                tabIndex={0}
                                 className={`autocomplete-suggestion ${idx === selectedIndex ? 'selected' : ''}`}
                                 onClick={() => this.selectSuggestion(suggestion)}
+                                onKeyPress={(e) => e.key === 'Enter' && this.selectSuggestion(suggestion)}
                             >
                                 <span className="suggestion-query">{suggestion.query}</span>
                                 <span className="suggestion-type">{suggestion.type}</span>

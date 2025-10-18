@@ -20,7 +20,7 @@ class PopularQueries extends Component {
 
     async loadQueries() {
         this.setState({loading: true});
-        
+
         const [popularResult, trendingResult] = await Promise.all([
             api.getPopularQueries(10, 7),
             api.getTrendingQueries(10)
@@ -57,13 +57,13 @@ class PopularQueries extends Component {
         return (
             <div className="popular-queries-container">
                 <div className="popular-queries-tabs">
-                    <button 
+                    <button
                         className={`tab ${activeTab === 'popular' ? 'active' : ''}`}
                         onClick={() => this.setState({activeTab: 'popular'})}
                     >
                         Popular Queries
                     </button>
-                    <button 
+                    <button
                         className={`tab ${activeTab === 'trending' ? 'active' : ''}`}
                         onClick={() => this.setState({activeTab: 'trending'})}
                     >
@@ -72,10 +72,13 @@ class PopularQueries extends Component {
                 </div>
                 <div className="popular-queries-list">
                     {queries.map((item, idx) => (
-                        <div 
+                        <div
                             key={idx}
+                            role="button"
+                            tabIndex={0}
                             className="popular-query-item"
                             onClick={() => this.handleQueryClick(item.query, item.type)}
+                            onKeyPress={(e) => e.key === 'Enter' && this.handleQueryClick(item.query, item.type)}
                         >
                             <span className="query-text">{item.query}</span>
                             <span className="query-type">{item.type}</span>

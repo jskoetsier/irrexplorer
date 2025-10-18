@@ -78,11 +78,21 @@ routes = [
     # Search & Navigation endpoints
     Route("/api/autocomplete/{query:path}", search_navigation.autocomplete),
     Route("/api/search-history", search_navigation.get_search_history),
-    Route("/api/search-history", search_navigation.add_search_history, methods=["POST"]),
-    Route("/api/search-history/clear", search_navigation.clear_search_history, methods=["DELETE"]),
+    Route(
+        "/api/search-history", search_navigation.add_search_history, methods=["POST"]
+    ),
+    Route(
+        "/api/search-history/clear",
+        search_navigation.clear_search_history,
+        methods=["DELETE"],
+    ),
     Route("/api/bookmarks", search_navigation.get_bookmarks),
     Route("/api/bookmarks", search_navigation.add_bookmark, methods=["POST"]),
-    Route("/api/bookmarks/{bookmark_id:int}", search_navigation.delete_bookmark, methods=["DELETE"]),
+    Route(
+        "/api/bookmarks/{bookmark_id:int}",
+        search_navigation.delete_bookmark,
+        methods=["DELETE"],
+    ),
     Route("/api/popular", search_navigation.get_popular_queries),
     Route("/api/trending", search_navigation.get_trending_queries),
     Mount(

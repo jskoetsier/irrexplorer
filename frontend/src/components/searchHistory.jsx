@@ -20,7 +20,7 @@ class SearchHistory extends Component {
 
     async loadData() {
         this.setState({loading: true});
-        
+
         const [historyResult, bookmarksResult] = await Promise.all([
             api.getSearchHistory(20),
             api.getBookmarks()
@@ -88,23 +88,23 @@ class SearchHistory extends Component {
         return (
             <div className="search-history-container">
                 <div className="search-history-tabs">
-                    <button 
+                    <button
                         className={`tab ${activeTab === 'history' ? 'active' : ''}`}
                         onClick={() => this.setState({activeTab: 'history'})}
                     >
                         Recent Searches ({history.length})
                     </button>
-                    <button 
+                    <button
                         className={`tab ${activeTab === 'bookmarks' ? 'active' : ''}`}
                         onClick={() => this.setState({activeTab: 'bookmarks'})}
                     >
                         Bookmarks ({bookmarks.length})
                     </button>
                 </div>
-                
+
                 {activeTab === 'history' && history.length > 0 && (
                     <div className="search-history-header">
-                        <button 
+                        <button
                             className="btn-clear"
                             onClick={this.handleClearHistory}
                         >
@@ -116,7 +116,7 @@ class SearchHistory extends Component {
                 <div className="search-history-list">
                     {items.length === 0 ? (
                         <div className="empty-state">
-                            {activeTab === 'history' 
+                            {activeTab === 'history'
                                 ? 'No search history yet'
                                 : 'No bookmarks yet'
                             }
@@ -124,16 +124,19 @@ class SearchHistory extends Component {
                     ) : (
                         items.map((item) => (
                             <div key={item.id} className="search-history-item">
-                                <div 
+                                <div
+                                    role="button"
+                                    tabIndex={0}
                                     className="item-content"
                                     onClick={() => this.handleQueryClick(item.query, item.type)}
+                                    onKeyPress={(e) => e.key === 'Enter' && this.handleQueryClick(item.query, item.type)}
                                 >
                                     <span className="item-query">{item.name || item.query}</span>
                                     <span className="item-type">{item.type}</span>
                                     <span className="item-time">{this.formatTimestamp(item.timestamp)}</span>
                                 </div>
                                 {activeTab === 'bookmarks' && (
-                                    <button 
+                                    <button
                                         className="btn-delete"
                                         onClick={(e) => {
                                             e.stopPropagation();

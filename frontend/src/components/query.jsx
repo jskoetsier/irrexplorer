@@ -30,7 +30,7 @@ class Query extends Component {
         } else {
             this.setState({cleanQuery: cleanResult.cleanedValue, queryCategory: cleanResult.category})
             document.title = 'IRR explorer: ' + this.state.cleanQuery;
-            
+
             // Add to search history
             api.addSearchHistory(cleanResult.cleanedValue, cleanResult.category);
         }
@@ -38,7 +38,7 @@ class Query extends Component {
 
     handleAddBookmark = async () => {
         const result = await api.addBookmark(
-            this.state.cleanQuery, 
+            this.state.cleanQuery,
             this.state.queryCategory
         );
         if (result.success) {
