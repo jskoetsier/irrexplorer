@@ -6,7 +6,7 @@ import asyncio
 import hashlib
 import json
 import logging
-import pickle
+import pickle  # nosec B403 - Used for internal caching of trusted data only
 import time
 from functools import wraps
 from typing import Any, Callable, Dict, Optional
@@ -106,7 +106,9 @@ def cached(
                 if cached_value is not None:
                     # Cache hit
                     redis_client.incr("irrexplorer:stats:hits")
-                    result = pickle.loads(cached_value)
+                    result = pickle.loads(
+                        cached_value
+                    )  # nosec B301 - Internal cache only, trusted data
 
                     # Check if stale-while-revalidate is enabled
                     if stale_while_revalidate:
