@@ -103,12 +103,16 @@ jobs:
 
     - name: Run Bandit
       run: |
-        bandit -c .bandit -r irrexplorer/ \
+        bandit -r irrexplorer/ \
+          -x '*/tests/*,*/test_*.py' \
+          -s B101,B301,B403,B110 \
           -f json -o bandit-report.json || true
 
     - name: Display Bandit results
       run: |
-        bandit -c .bandit -r irrexplorer/ || true
+        bandit -r irrexplorer/ \
+          -x '*/tests/*,*/test_*.py' \
+          -s B101,B301,B403,B110 || true
 
     - name: Upload Bandit report
       if: always()
