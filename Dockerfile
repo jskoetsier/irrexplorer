@@ -11,16 +11,14 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry==1.7.1
+# Install uv - fast Python package installer
+RUN pip install --no-cache-dir uv
 
 # Copy dependency files
-COPY pyproject.toml poetry.lock ./
+COPY requirements.txt ./
 
-# Install Python dependencies
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root --only main \
-    && pip install --no-cache-dir redis
+# Install Python dependencies with uv (10-100x faster than pip)
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # Copy application code
 COPY irrexplorer/ ./irrexplorer/

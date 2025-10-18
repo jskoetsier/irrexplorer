@@ -1,0 +1,20 @@
+# Production dependencies for IRRExplorer
+# Generated from pyproject.toml for uv compatibility
+
+starlette>=0.41
+uvicorn[standard]>=0.34.3
+databases[postgresql]>=0.9
+alembic>=1.5
+SQLAlchemy>=2.0,<3.0
+psycopg2-binary>=2.8.6
+aiohttp==3.11.7
+aggregate6>=1.0.12
+asgiref>=3.3.1
+gql[aiohttp]>=2.0.0
+requests>=2.25.1
+aiofiles>=0.6.0
+dataclasses-json>=0.5.2
+IPy>=1.01
+gunicorn>=23.0,<24.0
+slowapi>=0.1.9
+redis>=4.5.0

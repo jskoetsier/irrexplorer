@@ -1,61 +1,26 @@
-[tool.poetry]
+[project]
 name = "irrexplorer"
 version = "1.5.0"
 description = "IRR explorer"
-authors = ["Sasha Romijn <github@mxsasha.eu>"]
-license = "BSD-2-Clause"
-readme = 'README.md'
+authors = [{name = "Sasha Romijn", email = "github@mxsasha.eu"}]
+license = {text = "BSD-2-Clause"}
+readme = "README.md"
+requires-python = ">=3.9"
 
-[tool.poetry.dependencies]
-python = "^3.9"
-starlette = ">=0.41"
-uvicorn = {extras = ["standard"], version = "^0.34.3"}
-databases = {extras = ["postgresql"], version = "^0.9"}
-alembic = ">=1.5"
-SQLAlchemy = "^2.0"
-psycopg2-binary = ">=2.8.6"
-aiohttp = "3.11.7"
-aggregate6 = ">=1.0.12"
-asgiref = ">=3.3.1"
-gql = {extras = ["aiohttp"], version = ">=2.0.0", allow-prereleases = true}
-requests = ">=2.25.1"
-aiofiles = ">=0.6.0"
-dataclasses-json = ">=0.5.2"
-IPy = ">=1.01"
-gunicorn = "^23.0"
-slowapi = ">=0.1.9"
-redis = ">=4.5.0"
+# Dependencies are now managed in requirements.txt and requirements-dev.txt
+# This allows using uv (10-100x faster than Poetry) for installations
 
-[tool.poetry.dev-dependencies]
-# Testing and related packages
-coverage = ">=5.4"
-pytest = ">=6.2.2"
-pytest-cov = ">=2.11.1"
-pytest-httpserver = ">=1.0.0"
-pytest-asyncio = ">=0.14.0"
-httpx = ">=0.17.0"
-asgi-lifespan = ">=1.0.1"
-SQLAlchemy-Utils = ">=0.36.8"
-
-# Code style and type checks
-mypy = ">=0.812"
-flake8 = ">=3.8.4"
-pep8-naming = ">=0.11.1"
-isort = ">=5.8"
-black = ">=20.8b1"
-aioresponses = ">=0.7.1"
-
-[build-system]
-requires = ["poetry-core>==1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
+[project.scripts]
 reformat = "scripts:reformat"
 lint = "scripts:lint"
 frontend-build = "scripts:frontend_build"
 frontend-install = "scripts:frontend_install"
 import-data = "scripts:import_data"
 http = "scripts:run_http"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 
 [tool.coverage.report]

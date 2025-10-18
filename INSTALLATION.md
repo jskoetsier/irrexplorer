@@ -162,24 +162,23 @@ brew install python@3.11 postgresql@15 node
 brew services start postgresql@15
 ```
 
-### 2. Install Poetry
+### 2. Install uv (Fast Python Package Installer)
 
 ```bash
-curl -sSL https://install.python-poetry.org | python3 -
-export PATH="$HOME/.local/bin:$PATH"
+pip install uv
 ```
 
 ### 3. Clone and Setup Backend
 
 ```bash
-git clone https://github.com/yourusername/irrexplorer.git
+git clone https://github.com/jskoetsier/irrexplorer.git
 cd irrexplorer
 
-# Install Python dependencies
-poetry install
+# Install Python dependencies (10-100x faster than pip)
+uv pip install -r requirements.txt
 
-# Activate virtual environment
-poetry shell
+# For development
+uv pip install -r requirements-dev.txt
 ```
 
 ### 4. Setup PostgreSQL Database

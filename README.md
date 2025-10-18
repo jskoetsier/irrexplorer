@@ -302,8 +302,8 @@ See [INSTALLATION.md](INSTALLATION.md#troubleshooting) for more solutions.
 docker-compose -f docker-compose.dev.yml up
 
 # Or manually
-poetry install
-poetry shell
+pip install uv
+uv pip install -r requirements-dev.txt
 uvicorn irrexplorer.app:app --reload
 
 # Frontend
