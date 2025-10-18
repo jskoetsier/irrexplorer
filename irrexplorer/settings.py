@@ -77,4 +77,4 @@ SPECIAL_USE_SPACE: Tuple[Tuple[str, Union[IPv4Network, IPv6Network]], ...] = (
     ("IPv4-mapped", IPv6Network("::ffff:0:0/96")),
     ("IPv4-compatible", IPv6Network("::/96")),
     ("IPv6-ULA", IPv6Network("fc00::/7")),
-]
+)
