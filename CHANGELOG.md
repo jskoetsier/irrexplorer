@@ -5,6 +5,38 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2025-10-18
+
+### Advanced Search Features
+- **Resource Type Filtering**: Filter search results by ASN, prefix, as-set, or route-set
+- **Status Filtering**: Filter by validation status (valid, invalid, unknown)
+- **Search Within Results**: Real-time filtering of displayed results
+- **Advanced Query Syntax**: Inline filter syntax support
+  - `type:asn <query>` - Filter by resource type
+  - `status:valid <query>` - Filter by status
+  - Combined filters: `type:prefix status:invalid 10.0.0.0/8`
+- **Filter UI Component**: Collapsible advanced filter panel
+  - Visual filter toggles
+  - Active filter badge counter
+  - Clear all filters button
+  - Query syntax examples
+- **API Endpoints**:
+  - `GET /api/advanced-search` - Advanced search with filters
+  - `GET /api/filter-options` - Get available filter options
+
+### Backend Enhancements
+- Query parser for advanced syntax
+- Status determination logic for results
+- Search-within-results functionality
+- Filter validation and type checking
+
+### User Experience
+- Non-intrusive filter UI (toggle to show/hide)
+- Real-time filter application
+- Clear visual feedback for active filters
+- Syntax help integrated in UI
+- Responsive filter layout for mobile
+
 ## [1.6.0] - 2025-10-18
 
 ### Search & Navigation Features

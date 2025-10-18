@@ -161,6 +161,29 @@ export async function getTrendingQueries(limit = 10) {
     }
 }
 
+export async function advancedSearch(query, filters = {}) {
+    try {
+        const params = new URLSearchParams({q: query});
+        if (filters.type && filters.type !== 'all') params.append('type', filters.type);
+        if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+        if (filters.search) params.append('search', filters.search);
+
+        const response = await axios.get(`${apiUrl}/advanced-search?${params.toString()}`);
+        return {data: response.data, url: `${apiUrl}/advanced-search`};
+    } catch (exc) {
+        return {data: null, url: null, error: exc.response?.data?.error || 'Search failed'};
+    }
+}
+
+export async function getFilterOptions() {
+    try {
+        const response = await axios.get(`${apiUrl}/filter-options`);
+        return {data: response.data, url: `${apiUrl}/filter-options`};
+    } catch (exc) {
+        return {data: null, url: null};
+    }
+}
+
 const api = {
     getMetadata,
     getPrefixesForPrefix,

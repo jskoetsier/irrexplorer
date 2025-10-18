@@ -66,17 +66,31 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 - Query statistics collection
 - RESTful API endpoints for all features
 
+### Phase 5: Advanced Search (v1.7.0) ✅ COMPLETED
+
+**Advanced Filtering**
+- Filter by resource type (ASN, prefix, as-set, route-set)
+- Filter by validation status (valid, invalid, unknown)
+- Search within results functionality
+- Advanced query syntax support (type:, status: modifiers)
+
+**UI Components**
+- Collapsible advanced filter panel
+- Active filter badge counter
+- Clear all filters button
+- Inline syntax help and examples
+
+**API Enhancements**
+- `/api/advanced-search` endpoint with filter support
+- `/api/filter-options` endpoint for UI configuration
+- Query parser for advanced syntax
+- Status determination logic
+
 ---
 
 ## Planned Enhancements
 
 ### Near-term (Next 3-6 months)
-
-**Advanced Search Features**
-- Filter by resource type (ASN, prefix, set)
-- Filter by status (active, valid, invalid)
-- Search within results
-- Advanced query syntax support
 
 **Data Visualization**
 - Interactive prefix allocation maps

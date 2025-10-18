@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 
 import QueryForm from "./common/queryForm";
+import AdvancedSearchFilters from "./advancedSearchFilters";
 
 import logo from "../logo.png";
 import {Link, navigate} from "@reach/router";
@@ -10,7 +11,13 @@ import ASNQuery from "./asnQuery";
 import setQuery from "./setQuery";
 
 class Query extends Component {
-    state = {cleanQuery: '', queryCategory: '', reducedColour: false, filterWarningError: false};
+    state = {
+        cleanQuery: '',
+        queryCategory: '',
+        reducedColour: false,
+        filterWarningError: false,
+        filters: {type: 'all', status: 'all', search: ''}
+    };
 
     async componentDidUpdate(prevProps, prevState, snapshot) {
         if (prevProps === this.props) return;
@@ -75,6 +82,10 @@ class Query extends Component {
         this.setState({filterWarningError: input.checked});
     }
 
+    handleFilterChange = (filters) => {
+        this.setState({filters});
+    }
+
     render() {
         const ContentClass = this.contentClass();
         return (
@@ -107,9 +118,16 @@ class Query extends Component {
                         <label htmlFor="filterWarningError">Show only error/warning</label>
                     </form>
                 </div>
+                <AdvancedSearchFilters onFilterChange={this.handleFilterChange} />
                 {
                     this.state.cleanQuery
-                    && <ContentClass query={this.state.cleanQuery} reducedColour={this.state.reducedColour} filterWarningError={this.state.filterWarningError} queryCategory={this.state.queryCategory} />
+                    && <ContentClass
+                        query={this.state.cleanQuery}
+                        reducedColour={this.state.reducedColour}
+                        filterWarningError={this.state.filterWarningError}
+                        queryCategory={this.state.queryCategory}
+                        filters={this.state.filters}
+                    />
                 }
             </div>
         );

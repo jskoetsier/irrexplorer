@@ -8,7 +8,7 @@ import traceback
 
 import databases
 
-from irrexplorer.api import queries, search_navigation
+from irrexplorer.api import advanced_search, queries, search_navigation
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
@@ -95,6 +95,9 @@ routes = [
     ),
     Route("/api/popular", search_navigation.get_popular_queries),
     Route("/api/trending", search_navigation.get_trending_queries),
+    # Advanced search endpoints
+    Route("/api/advanced-search", advanced_search.advanced_search),
+    Route("/api/filter-options", advanced_search.get_filter_options),
     Mount(
         "/",
         DefaultIndexStaticFiles(
