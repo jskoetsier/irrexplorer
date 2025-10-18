@@ -75,8 +75,9 @@ def cached(ttl: int = DEFAULT_TTL, key_prefix: Optional[str] = None):
             if redis_client is None:
                 return await func(*args, **kwargs)
 
-            # Generate cache key
-            key = cache_key(prefix, *args, **kwargs)
+            # Generate cache key - skip 'self' for instance methods
+            cache_args = args[1:] if args and hasattr(args[0], '__dict__') else args
+            key = cache_key(prefix, *cache_args, **kwargs)
 
             try:
                 # Try to get from cache
