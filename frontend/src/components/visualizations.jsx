@@ -1,28 +1,25 @@
 import React, { useState } from 'react';
 import { Link } from '@reach/router';
-import PrefixAllocation from './visualizations/prefixAllocation';
-import ASNRelationships from './visualizations/asnRelationships';
-import HistoricalTimeline from './visualizations/historicalTimeline';
-import RIRDistribution from './visualizations/rirDistribution';
 import Footer from './footer';
-import './visualizations/visualization.css';
+
+// Lazy load heavy visualization components
+const PrefixAllocation = React.lazy(() => import('./visualizations/prefixAllocation'));
+const ASNRelationships = React.lazy(() => import('./visualizations/asnRelationships'));
+const HistoricalTimeline = React.lazy(() => import('./visualizations/historicalTimeline'));
+const RIRDistribution = React.lazy(() => import('./visualizations/rirDistribution'));
 
 const Visualizations = () => {
   const [activeTab, setActiveTab] = useState('prefix-allocation');
 
   const renderVisualization = () => {
-    switch (activeTab) {
-      case 'prefix-allocation':
-        return <PrefixAllocation />;
-      case 'asn-relationships':
-        return <ASNRelationships />;
-      case 'timeline':
-        return <HistoricalTimeline />;
-      case 'rir-distribution':
-        return <RIRDistribution />;
-      default:
-        return <PrefixAllocation />;
-    }
+    return (
+      <React.Suspense fallback={<div className="text-center p-5"><div className="spinner-border" role="status"><span className="sr-only">Loading...</span></div></div>}>
+        {activeTab === 'prefix-allocation' && <PrefixAllocation />}
+        {activeTab === 'asn-relationships' && <ASNRelationships />}
+        {activeTab === 'timeline' && <HistoricalTimeline />}
+        {activeTab === 'rir-distribution' && <RIRDistribution />}
+      </React.Suspense>
+    );
   };
 
   return (
