@@ -67,11 +67,12 @@ See [INSTALLATION.md](INSTALLATION.md) for detailed instructions.
 - **Disk**: 10GB free space
 - **OS**: Linux, macOS, or Windows (WSL2)
 
-### Recommended
-- **CPU**: 4+ cores
-- **RAM**: 8GB+
-- **Disk**: 20GB+ SSD
-- **OS**: Ubuntu 20.04+ or similar
+### Recommended (Production)
+- **CPU**: 8+ cores
+- **RAM**: 16GB+
+- **Disk**: 50GB+ SSD
+- **OS**: Ubuntu 22.04+ or RHEL 9+
+- **Network**: High-bandwidth connection for data imports
 
 ## Documentation
 

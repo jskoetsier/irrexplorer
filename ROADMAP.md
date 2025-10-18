@@ -103,12 +103,10 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 
 **Security**
 - CodeQL static analysis
-- Bandit security scanning
-- Dependency vulnerability scanning (safety, pip-audit)
-- TruffleHog secret detection
 - Semgrep pattern scanning
 - Trivy filesystem and container scanning
 - NPM audit for frontend dependencies
+- TruffleHog secret detection
 - Daily scheduled security audits
 
 **Documentation**
@@ -116,6 +114,39 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 - Workflow configuration documentation
 - Local testing instructions
 - Security compliance documentation
+
+### Phase 7: Production Deployment (v1.8.1 - v1.8.2) ✅ COMPLETED
+
+**Security Hardening**
+- Fixed all Bandit security scanner issues
+- Proper exception handling for race conditions
+- Replaced assertions with runtime checks
+- Pickle usage properly documented and secured
+
+**Performance Optimization**
+- Docker Compose v2 compatibility
+- PostgreSQL tuning for 8 CPU / 16GB RAM servers
+  - 4GB shared_buffers, 12GB effective_cache_size
+  - Parallel query execution enabled
+  - Max 200 connections configured
+- Redis cache increased to 2GB (from 256MB)
+- Backend workers optimized to 12 (for 8 CPU cores)
+- Resource limits and reservations for all services
+
+**Production Infrastructure**
+- Nginx reverse proxy with SSL/TLS termination
+- Let's Encrypt SSL certificate automation
+- HTTP/2 and modern TLS protocols (1.2, 1.3)
+- Security headers (HSTS, X-Frame-Options, CSP)
+- Gzip compression for static assets
+- SELinux configuration for production environments
+- Health check dependencies in Docker Compose
+
+**Deployment**
+- Production site deployed at https://irrexplorer.netone.nl
+- 8 CPU / 16GB RAM server configuration
+- All CI/CD tests passing including integration tests
+- Python 3.9+ compatibility maintained
 
 ---
 
