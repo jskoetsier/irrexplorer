@@ -4,13 +4,11 @@ function Footer() {
     return (
         <>
             <div className="container">
-                IRR explorer v2 · Developed by <a className="link-dark" href="https://www.dashcare.nl/">
-                DashCare BV
-            </a> for <a className="link-dark" href="https://www.nlnog.net/">
+                IRR explorer v1.4.0 · <a className="link-dark" href="https://www.nlnog.net/">
                 Stichting NLNOG
             </a> (<a className="link-dark" href="mailto:stichting@nlnog.net">
                 stichting@nlnog.net
-            </a>) · Source on <a className="link-dark" href="https://github.com/nlnog/irrexplorer">
+            </a>) · Source on <a className="link-dark" href="https://github.com/phreak/irrexplorer">
                 GitHub
             </a>
 
