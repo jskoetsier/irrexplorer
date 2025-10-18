@@ -228,14 +228,16 @@ footer .container {
 }
 
 /* Home page specific styles */
-.logo {
+.text-center img.img-fluid {
   max-width: 200px;
   height: auto;
+  margin: 1rem auto;
+  display: block;
 }
 
 @media (max-width: 576px) {
-  .logo {
-    max-width: 150px;
+  .text-center img.img-fluid {
+    max-width: 120px;
   }
 }
 

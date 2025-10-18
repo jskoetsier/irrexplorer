@@ -2,21 +2,26 @@ import React, {useState} from 'react';
 import {Link, navigate} from "@reach/router";
 
 import api from "../../services/api";
+import Spinner from "./spinner";
 
 function QueryForm() {
     const [search, setSearch] = useState('');
     const [validationError, setValidationError] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     const handleSearchSubmit = async (event) => {
         await api.cancelAllRequests();
         event.preventDefault();
         if (!search) return;
 
+        setIsSearching(true);
         const cleanResult = await api.cleanQuery(search);
         if (cleanResult.error) {
             setValidationError(cleanResult.error);
+            setIsSearching(false);
         } else {
             await navigate(`/${cleanResult.category}/${cleanResult.cleanedValue}`);
+            // Keep spinner showing as page navigates
         }
     }
 
@@ -47,10 +52,11 @@ function QueryForm() {
             </div>
 
             <div className="col-sm-2">
-                <button type="submit" className="btn btn-success btn-lg" disabled={!search}>Search
+                <button type="submit" className="btn btn-success btn-lg" disabled={!search || isSearching}>
+                    {isSearching ? <Spinner /> : 'Search'}
                 </button>
             </div>
-            <Link to="/status/">Data source status</Link>
+            {!isSearching && <Link to="/status/">Data source status</Link>}
         </form>
     );
 }
