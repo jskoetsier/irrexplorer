@@ -5,7 +5,7 @@ Pre-populates cache with popular queries on startup to improve initial response 
 """
 
 import logging
-from typing import List
+from typing import List, Optional
 
 from databases import Database
 
