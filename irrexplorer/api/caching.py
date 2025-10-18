@@ -20,24 +20,30 @@ _redis_client: Optional[redis.Redis] = None
 
 # Cache TTL in seconds
 DEFAULT_TTL = 300  # 5 minutes
+PREFIX_SUMMARY_TTL = 300  # 5 minutes for prefix summaries
 ASN_SUMMARY_TTL = 600  # 10 minutes for ASN summaries
 METADATA_TTL = 3600  # 1 hour for metadata
 
 
 def get_redis() -> Optional[redis.Redis]:
-    """Get Redis client, create if doesn't exist."""
+    """Get or create a Redis client instance with connection pooling."""
     global _redis_client
 
     if _redis_client is None:
         redis_url = config("REDIS_URL", default=None)
         if redis_url:
             try:
-                _redis_client = redis.from_url(
+                # Create connection pool for better performance
+                pool = redis.ConnectionPool.from_url(
                     redis_url,
                     decode_responses=False,
                     socket_connect_timeout=2,
                     socket_timeout=2,
+                    max_connections=50,  # Pool size
+                    retry_on_timeout=True,
+                    health_check_interval=30,  # Check connection health every 30s
                 )
+                _redis_client = redis.Redis(connection_pool=pool)
                 # Test connection
                 _redis_client.ping()
             except (redis.ConnectionError, redis.TimeoutError) as e:

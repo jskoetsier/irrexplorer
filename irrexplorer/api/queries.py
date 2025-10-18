@@ -1,4 +1,5 @@
 import enum
+import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -25,6 +26,27 @@ RE_RPSL_NAME = re.compile(r"^[A-Z][A-Z0-9_:-]*[A-Z0-9]$", re.IGNORECASE)
 
 # Maximum query length to prevent DoS
 MAX_QUERY_LENGTH = 255
+
+
+def add_cache_headers(
+    response: Response, max_age: int = 300, content: str | None = None
+):
+    """
+    Add HTTP cache headers to response.
+
+    Args:
+        response: Starlette Response object
+        max_age: Cache duration in seconds (default: 300 = 5 minutes)
+        content: Optional content for ETag generation
+    """
+    response.headers["Cache-Control"] = f"public, max-age={max_age}"
+
+    if content:
+        # Generate ETag from content hash
+        etag = hashlib.md5(content.encode()).hexdigest()
+        response.headers["ETag"] = f'"{etag}"'
+
+    return response
 
 
 class InvalidQueryError(Exception):
@@ -96,7 +118,9 @@ async def metadata(request):
             "importer": await get_last_data_import(),
         }
     }
-    return Response(json.dumps(data, default=str), media_type="application/json")
+    content = json.dumps(data, default=str)
+    response = Response(content, media_type="application/json")
+    return add_cache_headers(response, max_age=60, content=content)  # 1 minute cache
 
 
 async def clean_query(request):
@@ -115,7 +139,9 @@ async def prefixes_prefix(request):
         parameter
     )
     enrich_prefix_summaries_with_report(summaries)
-    return DataClassJSONResponse(summaries)
+    response = DataClassJSONResponse(summaries)
+    # Cache prefix queries for 5 minutes
+    return add_cache_headers(response, max_age=300, content=response.body.decode())
 
 
 async def prefixes_asn(request):
@@ -124,7 +150,9 @@ async def prefixes_asn(request):
     )
     enrich_prefix_summaries_with_report(asn_prefixes.direct_origin)
     enrich_prefix_summaries_with_report(asn_prefixes.overlaps)
-    return DataClassJSONResponse(asn_prefixes)
+    response = DataClassJSONResponse(asn_prefixes)
+    # Cache ASN queries for 5 minutes
+    return add_cache_headers(response, max_age=300, content=response.body.decode())
 
 
 async def member_of(request):
@@ -137,9 +165,13 @@ async def member_of(request):
             status_code=404, content=f"Unknown object class: {object_class_str}"
         )
     sets = await collect_member_of(request.path_params["target"], object_class)
-    return DataClassJSONResponse(sets)
+    response = DataClassJSONResponse(sets)
+    # Cache set membership queries for 5 minutes
+    return add_cache_headers(response, max_age=300, content=response.body.decode())
 
 
 async def set_expansion(request):
     result = await collect_set_expansion(request.path_params["target"])
-    return DataClassJSONResponse(result)
+    response = DataClassJSONResponse(result)
+    # Cache set expansion queries for 5 minutes
+    return add_cache_headers(response, max_age=300, content=response.body.decode())

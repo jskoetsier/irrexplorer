@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import os
 import signal
@@ -36,6 +37,13 @@ async def lifespan(app):
         max_inactive_connection_lifetime=300,
     )
     await app.state.database.connect()
+
+    # Warm cache on startup (run in background)
+    if not TESTING:
+        from irrexplorer.api.cache_warmer import warm_cache_on_startup
+
+        asyncio.create_task(warm_cache_on_startup(app.state.database))
+
     yield
     await app.state.database.disconnect()
 
