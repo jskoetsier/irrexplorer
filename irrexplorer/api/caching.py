@@ -106,9 +106,8 @@ def cached(
                 if cached_value is not None:
                     # Cache hit
                     redis_client.incr("irrexplorer:stats:hits")
-                    result = pickle.loads(
-                        cached_value
-                    )  # nosec B301 - Internal cache only, trusted data
+                    # nosec B301 - Internal cache only, trusted data
+                    result = pickle.loads(cached_value)
 
                     # Check if stale-while-revalidate is enabled
                     if stale_while_revalidate:
