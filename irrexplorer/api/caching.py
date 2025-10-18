@@ -105,7 +105,7 @@ def cached(
                 cached_value = redis_client.get(key)
                 if cached_value is not None:
                     # Cache hit
-                    redis_client.incr(f"irrexplorer:stats:hits")
+                    redis_client.incr("irrexplorer:stats:hits")
                     result = pickle.loads(cached_value)
 
                     # Check if stale-while-revalidate is enabled
@@ -127,7 +127,7 @@ def cached(
                     return result
 
                 # Cache miss
-                redis_client.incr(f"irrexplorer:stats:misses")
+                redis_client.incr("irrexplorer:stats:misses")
 
             except (redis.ConnectionError, redis.TimeoutError, Exception) as e:
                 logger.error(f"Redis get error: {e}", exc_info=True)

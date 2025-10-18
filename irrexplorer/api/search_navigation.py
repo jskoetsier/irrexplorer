@@ -101,7 +101,7 @@ async def add_search_history(request: Request):
         )
         try:
             await database.execute(insert_stmt)
-        except:
+        except Exception:
             # Race condition: another request already inserted
             pass
 

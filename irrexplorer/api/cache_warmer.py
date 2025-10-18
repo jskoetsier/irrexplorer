@@ -4,7 +4,6 @@ Cache warming module for IRRExplorer.
 Pre-populates cache with popular queries on startup to improve initial response times.
 """
 
-import asyncio
 import logging
 from typing import List
 

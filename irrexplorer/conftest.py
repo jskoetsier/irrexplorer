@@ -2,15 +2,15 @@ import pytest
 from alembic.command import upgrade as alembic_upgrade
 from alembic.config import Config as AlembicConfig
 from asgi_lifespan import LifespanManager
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from starlette.config import environ
 
 # Must be set before settings is imported
 environ["TESTING"] = "TRUE"
 
-from irrexplorer import settings
-from irrexplorer.app import app
+from irrexplorer import settings  # noqa: E402
+from irrexplorer.app import app  # noqa: E402
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -33,6 +33,8 @@ async def client():
     # httpx client does not trigger lifespan events on it's own
     # https://github.com/encode/httpx/issues/350
     async with LifespanManager(app):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as test_client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://testserver"
+        ) as test_client:
             test_client.app = app
             yield test_client
