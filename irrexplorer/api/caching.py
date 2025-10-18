@@ -4,6 +4,7 @@ Redis-based caching utilities for IRRExplorer.
 
 import hashlib
 import json
+import logging
 import pickle
 from functools import wraps
 from typing import Any, Callable, Dict, Optional
@@ -11,6 +12,8 @@ from typing import Any, Callable, Dict, Optional
 import redis
 
 from irrexplorer.settings import config
+
+logger = logging.getLogger(__name__)
 
 # Redis connection
 _redis_client: Optional[redis.Redis] = None
@@ -38,7 +41,7 @@ def get_redis() -> Optional[redis.Redis]:
                 # Test connection
                 _redis_client.ping()
             except (redis.ConnectionError, redis.TimeoutError) as e:
-                print(f"Redis connection failed: {e}. Caching disabled.")
+                logger.warning(f"Redis connection failed: {e}. Caching disabled.")
                 _redis_client = None
 
     return _redis_client
@@ -91,7 +94,7 @@ def cached(ttl: int = DEFAULT_TTL, key_prefix: Optional[str] = None):
                 redis_client.incr(f"irrexplorer:stats:misses")
 
             except (redis.ConnectionError, redis.TimeoutError, Exception) as e:
-                print(f"Redis get error: {e}")
+                logger.error(f"Redis get error: {e}", exc_info=True)
                 # Continue without cache on error
 
             # Execute function
@@ -102,7 +105,7 @@ def cached(ttl: int = DEFAULT_TTL, key_prefix: Optional[str] = None):
                 serialized = pickle.dumps(result)
                 redis_client.setex(key, ttl, serialized)
             except (redis.ConnectionError, redis.TimeoutError, Exception) as e:
-                print(f"Redis set error: {e}")
+                logger.error(f"Redis set error: {e}", exc_info=True)
                 # Continue without caching on error
 
             return result

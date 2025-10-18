@@ -1,11 +1,16 @@
 import json
+import logging
 from typing import List, Tuple
 
 from asgiref.sync import sync_to_async
 from asyncpg import DataError
 from databases import Database
 
-from irrexplorer.backends.common import LocalSQLQueryBase, retrieve_url_text
+from irrexplorer.backends.common import (
+    LocalSQLQueryBase,
+    MAX_QUERY_RESULTS,
+    retrieve_url_text,
+)
 from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import (
     BGP_IPV4_LENGTH_CUTOFF,
@@ -16,6 +21,8 @@ from irrexplorer.settings import (
 )
 from irrexplorer.state import DataSource, RouteInfo
 from irrexplorer.storage import tables
+
+logger = logging.getLogger(__name__)
 
 
 class BGPImporter:
@@ -95,7 +102,14 @@ class BGPQuery(LocalSQLQueryBase):
     async def query_asn(self, asn: int):
         results = []
         query = self.table.select().where(self.table.c.asn == asn)
+
+        count = 0
         async for row in self.database.iterate(query=query):
+            if count >= MAX_QUERY_RESULTS:
+                logger.warning(
+                    f"ASN query limit {MAX_QUERY_RESULTS} reached for AS{asn}"
+                )
+                break
             results.append(
                 RouteInfo(
                     source=self.source,
@@ -103,6 +117,7 @@ class BGPQuery(LocalSQLQueryBase):
                     asn=row["asn"],
                 )
             )
+            count += 1
         return results
 
 

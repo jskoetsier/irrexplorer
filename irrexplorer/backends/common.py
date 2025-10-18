@@ -1,3 +1,4 @@
+import logging
 from abc import ABCMeta
 from typing import List
 
@@ -10,6 +11,8 @@ from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import DATABASE_URL
 from irrexplorer.state import DataSource, IPNetwork, RIR, RouteInfo
 from irrexplorer.storage import tables
+
+logger = logging.getLogger(__name__)
 
 # Maximum number of results to prevent memory exhaustion
 MAX_QUERY_RESULTS = 10000
@@ -36,7 +39,14 @@ class LocalSQLQueryBase(metaclass=ABCMeta):
         prefix_selectors += [self.table.c.prefix.op(">>")(p) for p in prefixes_cidr]
         # noinspection PyPropertyAccess
         query = self.table.select().where(sa.or_(*prefix_selectors))
+
+        count = 0
         async for row in self.database.iterate(query=query):
+            if count >= MAX_QUERY_RESULTS:
+                logger.warning(
+                    f"Query result limit {MAX_QUERY_RESULTS} reached for {self.source}"
+                )
+                break
             results.append(
                 RouteInfo(
                     source=self.source,
@@ -45,6 +55,7 @@ class LocalSQLQueryBase(metaclass=ABCMeta):
                     **{self.prefix_info_field: row[self.prefix_info_field]},
                 )
             )
+            count += 1
         return results
 
 

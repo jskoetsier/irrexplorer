@@ -11,16 +11,30 @@ from irrexplorer.api import queries
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
+from slowapi import _rate_limit_exceeded_handler, Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZIPMiddleware
 from starlette.routing import Mount, Route
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app):
     signal.signal(signal.SIGUSR1, sigusr1_handler)
-    app.state.database = databases.Database(DATABASE_URL, force_rollback=TESTING)
+    app.state.database = databases.Database(
+        DATABASE_URL,
+        force_rollback=TESTING,
+        min_size=5,
+        max_size=20,
+        max_queries=50000,
+        max_inactive_connection_lifetime=300,
+    )
     await app.state.database.connect()
     yield
     await app.state.database.disconnect()
@@ -64,13 +78,14 @@ routes = [
 ]
 
 middleware = [
+    Middleware(GZIPMiddleware, minimum_size=1000),
     Middleware(
         CORSMiddleware,
         allow_origins=ALLOWED_ORIGINS,
         allow_headers=["Cache-Control", "Pragma", "Expires"],
         allow_methods=["GET", "OPTIONS"],
         max_age=3600,
-    )
+    ),
 ]
 
 app = Starlette(
@@ -79,6 +94,10 @@ app = Starlette(
     middleware=middleware,
     lifespan=lifespan,
 )
+
+# Add rate limiter state and exception handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 def sigusr1_handler(signal, frame):  # pragma: no cover

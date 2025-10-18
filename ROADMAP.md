@@ -377,7 +377,7 @@ Have ideas for new features or improvements?
 
 ---
 
-**Last Updated:** 2025-10-18  
+**Last Updated:** 2025-10-18
 **Next Review:** 2026-01-18
 
 ---
