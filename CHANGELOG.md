@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated all `session.execute()` calls to use `variable_values` keyword argument
   - gql v4.0+ changed API from `execute(query, variables)` to `execute(query, variable_values=variables)`
   - Resolved `TypeError: AsyncClientSession.execute() takes 2 positional arguments but 3 were given`
-  
+
 ### Performance Verification
 - Benchmarked against official irrexplorer.nlnog.net
 - **vuurstorm.nl outperforms official site**: 100% success rate vs 0% timeout rate

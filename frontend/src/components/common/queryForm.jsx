@@ -3,6 +3,7 @@ import {Link, navigate} from "@reach/router";
 
 import api from "../../services/api";
 import Spinner from "./spinner";
+import Autocomplete from "./autocomplete";
 
 function QueryForm() {
     const [search, setSearch] = useState('');
@@ -21,14 +22,20 @@ function QueryForm() {
             setIsSearching(false);
         } else {
             await navigate(`/${cleanResult.category}/${cleanResult.cleanedValue}`);
-            // Keep spinner showing as page navigates
         }
     }
 
-    const handleSearchChange = ({currentTarget: input}) => {
+    const handleSearchChange = (value) => {
         setValidationError('');
-        setSearch(input.value);
+        setSearch(value);
     }
+
+    const handleAutocompleteSelect = async (query, type) => {
+        setSearch(query);
+        setIsSearching(true);
+        await navigate(`/${type}/${query}`);
+    }
+
     let inputClasses = "form-control form-control-lg ";
     if (validationError)
         inputClasses += "is-invalid";
@@ -38,12 +45,11 @@ function QueryForm() {
             <div className="col-sm-10">
                 <label className="visually-hidden" htmlFor="search">Search input</label>
                 <div className="input-group has-validation">
-                    <input
-                        type="text"
-                        id="search"
+                    <Autocomplete
+                        value={search}
                         placeholder="Prefix, IP, ASN or AS/route-set"
-                        onChange={handleSearchChange}
-                        className={inputClasses}
+                        onInputChange={handleSearchChange}
+                        onSelect={handleAutocompleteSelect}
                     />
                     <div className="invalid-feedback">
                         {validationError}

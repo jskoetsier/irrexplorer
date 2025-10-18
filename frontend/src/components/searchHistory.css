@@ -1,0 +1,124 @@
+.search-history-container {
+    margin: 30px 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.search-history-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-history-tabs .tab {
+    flex: 1;
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.search-history-tabs .tab:hover {
+    background: #e9ecef;
+}
+
+.search-history-tabs .tab.active {
+    background: white;
+    color: #007bff;
+    border-bottom: 2px solid #007bff;
+}
+
+.search-history-header {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: flex-end;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.btn-clear {
+    padding: 6px 12px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s ease;
+}
+
+.btn-clear:hover {
+    background: #c82333;
+}
+
+.search-history-list {
+    padding: 10px;
+}
+
+.search-history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.search-history-item:hover {
+    background-color: #f8f9fa;
+}
+
+.item-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.item-query {
+    font-weight: 500;
+    flex: 1;
+    color: #007bff;
+}
+
+.item-type {
+    font-size: 0.85em;
+    color: #666;
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+.item-time {
+    font-size: 0.8em;
+    color: #999;
+}
+
+.btn-delete {
+    width: 24px;
+    height: 24px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: background 0.2s ease;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+}

@@ -8,7 +8,7 @@ import traceback
 
 import databases
 
-from irrexplorer.api import queries
+from irrexplorer.api import queries, search_navigation
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
@@ -75,6 +75,16 @@ routes = [
     # legacy endpoint before object class was added:
     Route("/api/sets/member-of/{target}", queries.member_of),
     Route("/api/sets/expand/{target}", queries.set_expansion),
+    # Search & Navigation endpoints
+    Route("/api/autocomplete/{query:path}", search_navigation.autocomplete),
+    Route("/api/search-history", search_navigation.get_search_history),
+    Route("/api/search-history", search_navigation.add_search_history, methods=["POST"]),
+    Route("/api/search-history/clear", search_navigation.clear_search_history, methods=["DELETE"]),
+    Route("/api/bookmarks", search_navigation.get_bookmarks),
+    Route("/api/bookmarks", search_navigation.add_bookmark, methods=["POST"]),
+    Route("/api/bookmarks/{bookmark_id:int}", search_navigation.delete_bookmark, methods=["DELETE"]),
+    Route("/api/popular", search_navigation.get_popular_queries),
+    Route("/api/trending", search_navigation.get_trending_queries),
     Mount(
         "/",
         DefaultIndexStaticFiles(

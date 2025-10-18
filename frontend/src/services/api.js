@@ -81,6 +81,86 @@ export async function cancelAllRequests() {
     source = axios.CancelToken.source();
 }
 
+export async function autocomplete(query, limit = 10) {
+    try {
+        const response = await axios.get(`${apiUrl}/autocomplete/${query}?limit=${limit}`);
+        return {data: response.data, url: `${apiUrl}/autocomplete/${query}`};
+    } catch (exc) {
+        return {data: null, url: null};
+    }
+}
+
+export async function addSearchHistory(query, queryType) {
+    try {
+        await axios.post(`${apiUrl}/search-history`, {query, query_type: queryType});
+    } catch (exc) {
+        console.error('Failed to add search history', exc);
+    }
+}
+
+export async function getSearchHistory(limit = 20) {
+    try {
+        const response = await axios.get(`${apiUrl}/search-history?limit=${limit}`);
+        return {data: response.data, url: `${apiUrl}/search-history`};
+    } catch (exc) {
+        return {data: null, url: null};
+    }
+}
+
+export async function clearSearchHistory() {
+    try {
+        await axios.delete(`${apiUrl}/search-history/clear`);
+        return {success: true};
+    } catch (exc) {
+        return {success: false};
+    }
+}
+
+export async function addBookmark(query, queryType, name = '') {
+    try {
+        await axios.post(`${apiUrl}/bookmarks`, {query, query_type: queryType, name});
+        return {success: true};
+    } catch (exc) {
+        return {success: false, error: exc.response?.data?.error || 'Failed to add bookmark'};
+    }
+}
+
+export async function getBookmarks() {
+    try {
+        const response = await axios.get(`${apiUrl}/bookmarks`);
+        return {data: response.data, url: `${apiUrl}/bookmarks`};
+    } catch (exc) {
+        return {data: null, url: null};
+    }
+}
+
+export async function deleteBookmark(bookmarkId) {
+    try {
+        await axios.delete(`${apiUrl}/bookmarks/${bookmarkId}`);
+        return {success: true};
+    } catch (exc) {
+        return {success: false};
+    }
+}
+
+export async function getPopularQueries(limit = 10, days = 7) {
+    try {
+        const response = await axios.get(`${apiUrl}/popular?limit=${limit}&days=${days}`);
+        return {data: response.data, url: `${apiUrl}/popular`};
+    } catch (exc) {
+        return {data: null, url: null};
+    }
+}
+
+export async function getTrendingQueries(limit = 10) {
+    try {
+        const response = await axios.get(`${apiUrl}/trending?limit=${limit}`);
+        return {data: response.data, url: `${apiUrl}/trending`};
+    } catch (exc) {
+        return {data: null, url: null};
+    }
+}
+
 const api = {
     getMetadata,
     getPrefixesForPrefix,
@@ -89,5 +169,14 @@ const api = {
     getSetMemberOf,
     getSetExpansion,
     cancelAllRequests,
+    autocomplete,
+    addSearchHistory,
+    getSearchHistory,
+    clearSearchHistory,
+    addBookmark,
+    getBookmarks,
+    deleteBookmark,
+    getPopularQueries,
+    getTrendingQueries,
 }
 export default api;
