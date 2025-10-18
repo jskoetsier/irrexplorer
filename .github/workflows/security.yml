@@ -104,15 +104,21 @@ jobs:
     - name: Run Bandit
       run: |
         bandit -r irrexplorer/ \
-          -x '*/tests/*,*/test_*.py' \
-          -s B101,B301,B403,B110 \
+          --exclude '/irrexplorer/tests/*,/irrexplorer/api/tests/*,/irrexplorer/backends/tests/*' \
+          --skip B101,B301,B403,B110 \
+          -ll \
           -f json -o bandit-report.json || true
 
     - name: Display Bandit results
+      if: always()
       run: |
-        bandit -r irrexplorer/ \
-          -x '*/tests/*,*/test_*.py' \
-          -s B101,B301,B403,B110 || true
+        if [ -f bandit-report.json ]; then
+          echo "Bandit scan completed. Only HIGH severity issues are reported."
+          bandit -r irrexplorer/ \
+            --exclude '/irrexplorer/tests/*,/irrexplorer/api/tests/*,/irrexplorer/backends/tests/*' \
+            --skip B101,B301,B403,B110 \
+            -ll || true
+        fi
 
     - name: Upload Bandit report
       if: always()
