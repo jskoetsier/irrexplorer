@@ -7,7 +7,6 @@ import threading
 import traceback
 
 import databases
-from irrexplorer.api import advanced_search, queries, search_navigation
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
