@@ -103,21 +103,19 @@ jobs:
 
     - name: Run Bandit
       run: |
-        bandit -r irrexplorer/ \
-          --exclude '/irrexplorer/tests/*,/irrexplorer/api/tests/*,/irrexplorer/backends/tests/*' \
-          --skip B101,B301,B403,B110 \
-          -ll \
-          -f json -o bandit-report.json || true
+        # Skip false positives:
+        # B101: assert - used in tests
+        # B301/B403: pickle - safe for internal cache only  
+        # B110: try/except/pass - acceptable for cache race conditions
+        bandit -r irrexplorer/ -s B101,B301,B403,B110 -f json -o bandit-report.json || true
 
     - name: Display Bandit results
       if: always()
       run: |
         if [ -f bandit-report.json ]; then
-          echo "Bandit scan completed. Only HIGH severity issues are reported."
-          bandit -r irrexplorer/ \
-            --exclude '/irrexplorer/tests/*,/irrexplorer/api/tests/*,/irrexplorer/backends/tests/*' \
-            --skip B101,B301,B403,B110 \
-            -ll || true
+          echo "=== Bandit Security Scan Results ==="
+          echo "Skipping: B101 (assert), B301/B403 (pickle-internal cache), B110 (try/except/pass)"
+          bandit -r irrexplorer/ -s B101,B301,B403,B110 || true
         fi
 
     - name: Upload Bandit report
