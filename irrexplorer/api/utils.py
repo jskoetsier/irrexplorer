@@ -39,7 +39,9 @@ class DefaultIndexStaticFiles(StaticFiles):
         try:
             response = await super().get_response(path, *args, **kwargs)
         except HTTPException as exc:
-            if exc.status_code == 404 and any([path.startswith(p) for p in self.defaulted_paths]):
+            if exc.status_code == 404 and any(
+                [path.startswith(p) for p in self.defaulted_paths]
+            ):
                 return await super().get_response("index.html", *args, **kwargs)
             raise
         return response

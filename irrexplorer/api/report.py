@@ -37,13 +37,18 @@ def enrich_prefix_summaries_with_report(prefix_summaries: List[PrefixSummary]):
                 f"Expected route object in {s.irr_expected_rir}, but BGP origin does not "
                 f"match. Objects from other IRRs do match BGP origin"
             )
-        elif s.irr_origins_not_expected_rir and s.bgp_origins - s.irr_origins_not_expected_rir:
+        elif (
+            s.irr_origins_not_expected_rir
+            and s.bgp_origins - s.irr_origins_not_expected_rir
+        ):
             s.warning(
                 f"Expected route object in {s.irr_expected_rir} matches BGP origin, "
                 f"but non-matching objects exist in other IRRs"
             )
         elif len(s.irr_origins) > 1 and len(s.bgp_origins) == 1:
-            s.warning("Multiple route objects exist with different origins, but DFZ only has one")
+            s.warning(
+                "Multiple route objects exist with different origins, but DFZ only has one"
+            )
 
         # Detect RPKI situation
         if s.rpki_origins and s.bgp_origins - s.rpki_origins:
@@ -57,6 +62,8 @@ def enrich_prefix_summaries_with_report(prefix_summaries: List[PrefixSummary]):
 
         for name, special_use_prefix in SPECIAL_USE_SPACE:
             if s.prefix.overlaps(special_use_prefix):
-                s.danger(f"Overlaps with {name} special use prefix {special_use_prefix}")
+                s.danger(
+                    f"Overlaps with {name} special use prefix {special_use_prefix}"
+                )
 
         s.finalise_status()

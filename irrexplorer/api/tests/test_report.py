@@ -40,8 +40,13 @@ def test_report_good():
     assert summary.messages == [
         ReportMessage(category=MessageCategory.SUCCESS, text="Everything looks good"),
     ]
-    assert summary.prefix_sort_key_ip_prefix == "42540766411282592856903984951653826560/48"
-    assert summary.prefix_sort_key_reverse_networklen_ip == "80-42540766411282592856903984951653826560"
+    assert (
+        summary.prefix_sort_key_ip_prefix == "42540766411282592856903984951653826560/48"
+    )
+    assert (
+        summary.prefix_sort_key_reverse_networklen_ip
+        == "80-42540766411282592856903984951653826560"
+    )
 
 
 def test_report_no_origin():
@@ -76,7 +81,8 @@ def test_report_no_origin():
             text="Route objects exist, but prefix not seen in DFZ",
         ),
         ReportMessage(
-            category=MessageCategory.INFO, text="RPKI ROA exists, but prefix not seen in DFZ"
+            category=MessageCategory.INFO,
+            text="RPKI ROA exists, but prefix not seen in DFZ",
         ),
     ]
 
@@ -105,10 +111,12 @@ def test_report_no_origin_no_roa():
             text="Expected route object in RIPE, but only found in other IRRs",
         ),
         ReportMessage(
-            category=MessageCategory.INFO, text="Route objects exist, but prefix not seen in DFZ"
+            category=MessageCategory.INFO,
+            text="Route objects exist, but prefix not seen in DFZ",
         ),
         ReportMessage(
-            category=MessageCategory.INFO, text="No (covering) RPKI ROA found for route objects"
+            category=MessageCategory.INFO,
+            text="No (covering) RPKI ROA found for route objects",
         ),
     ]
 
@@ -150,9 +158,12 @@ def test_report_rpki_invalid():
     assert summary.goodness_overall == 0
     assert summary.messages == [
         ReportMessage(
-            category=MessageCategory.DANGER, text="RPKI origin does not match BGP origin"
+            category=MessageCategory.DANGER,
+            text="RPKI origin does not match BGP origin",
         ),
-        ReportMessage(category=MessageCategory.DANGER, text="RPKI-invalid route objects found"),
+        ReportMessage(
+            category=MessageCategory.DANGER, text="RPKI-invalid route objects found"
+        ),
     ]
 
 

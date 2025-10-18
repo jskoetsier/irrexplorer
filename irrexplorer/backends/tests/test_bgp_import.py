@@ -39,7 +39,9 @@ async def test_importer_valid():
 async def test_importer_invalid_json():
     with aioresponses() as http_mock:
         http_mock.get(
-            BGP_SOURCE, status=200, body="""{"CIDR":"192.0.2.0/24","ASN":64500,Hits":1000}"""
+            BGP_SOURCE,
+            status=200,
+            body="""{"CIDR":"192.0.2.0/24","ASN":64500,Hits":1000}""",
         )
         with pytest.raises(ImporterError):
             await BGPImporter().run_import()
@@ -47,7 +49,11 @@ async def test_importer_invalid_json():
 
 async def test_importer_invalid_prefix():
     with aioresponses() as http_mock:
-        http_mock.get(BGP_SOURCE, status=200, body="""{"CIDR":"invalid","ASN":64500,"Hits":1000}""")
+        http_mock.get(
+            BGP_SOURCE,
+            status=200,
+            body="""{"CIDR":"invalid","ASN":64500,"Hits":1000}""",
+        )
         with pytest.raises(ImporterError):
             await BGPImporter().run_import()
 
@@ -55,7 +61,9 @@ async def test_importer_invalid_prefix():
 async def test_importer_invalid_prefix_ip():
     with aioresponses() as http_mock:
         http_mock.get(
-            BGP_SOURCE, status=200, body="""{"CIDR":"invalid/24","ASN":64500,"Hits":1000}"""
+            BGP_SOURCE,
+            status=200,
+            body="""{"CIDR":"invalid/24","ASN":64500,"Hits":1000}""",
         )
         with pytest.raises(ImporterError):
             await BGPImporter().run_import()

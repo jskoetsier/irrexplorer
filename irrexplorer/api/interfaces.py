@@ -72,7 +72,9 @@ class PrefixSummary:
     rpki_routes: List[PrefixIRRDetail] = field(default_factory=list)
     bgp_origins: Set[int] = field(default_factory=set)
     # Key for irr_routes is the IRR source (not including RPKI)
-    irr_routes: Dict[str, List[PrefixIRRDetail]] = field(default_factory=lambda: defaultdict(list))
+    irr_routes: Dict[str, List[PrefixIRRDetail]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
     # Message from the report module, set through the
     # convenience method info(), warning(), etc.
@@ -93,8 +95,12 @@ class PrefixSummary:
         Set a few properties that depend on others.
         Should be called before returning to the user.
         """
-        self.prefix_sort_key_ip_prefix = f"{self.prefix.network_address._ip}/{self.prefix.prefixlen}"
-        self.prefix_sort_key_reverse_networklen_ip = f"{128 - self.prefix.prefixlen}-{self.prefix.network_address._ip}"
+        self.prefix_sort_key_ip_prefix = (
+            f"{self.prefix.network_address._ip}/{self.prefix.prefixlen}"
+        )
+        self.prefix_sort_key_reverse_networklen_ip = (
+            f"{128 - self.prefix.prefixlen}-{self.prefix.network_address._ip}"
+        )
         if not self.messages:
             self.success("Everything looks good")
 

@@ -5,6 +5,7 @@ Revises: 5b62d14388b0
 Create Date: 2023-03-30 15:51:13.935002
 
 """
+
 from alembic import op
 from sqlalchemy.exc import ProgrammingError
 

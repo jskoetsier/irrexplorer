@@ -49,7 +49,11 @@ IRRD_DEEP_RESPONSE_MEMBERS = ["AS64500"] + [f"AS-DEMO-{i}" for i in range(2000)]
 IRRD_SET_DEEP_RESPONSE = {
     "data": {
         "recursiveSetMembers": [
-            {"rpslPk": "AS-DEMO-1", "rootSource": "DEMO", "members": IRRD_DEEP_RESPONSE_MEMBERS},
+            {
+                "rpslPk": "AS-DEMO-1",
+                "rootSource": "DEMO",
+                "members": IRRD_DEEP_RESPONSE_MEMBERS,
+            },
             {
                 "rpslPk": "AS-DEMO-2",
                 "rootSource": "DEMO",

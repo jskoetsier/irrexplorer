@@ -93,8 +93,7 @@ class Query:
             minimum_length = MINIMUM_PREFIX_SIZE[prefix.version()]
             if minimum_length > prefix.prefixlen():
                 raise InvalidQueryError(
-                    f"Query too large: the minimum prefix length is "
-                    f"{minimum_length}."
+                    f"Query too large: the minimum prefix length is {minimum_length}."
                 )
             return
         except ValueError:

@@ -15,6 +15,7 @@ class RegistroRirImporter:
     Beyond that, it gets added to the same table and therefore
     counts as an "RIR" in all other code.
     """
+
     rir = RIR.REGISTROBR
 
     async def run_import(self):
@@ -31,6 +32,6 @@ class RegistroRirImporter:
         try:
             return aggregate6.aggregate(prefixes)
         except Exception as exc:
-            if 'invalid IP prefix' in str(exc):
+            if "invalid IP prefix" in str(exc):
                 raise ImporterError(f"Invalid IP: {exc}")
             raise  # pragma: no cover

@@ -3,7 +3,11 @@ import ipaddress
 import aggregate6
 from asgiref.sync import sync_to_async
 
-from irrexplorer.backends.common import LocalSQLQueryBase, retrieve_url_text, store_rir_prefixes
+from irrexplorer.backends.common import (
+    LocalSQLQueryBase,
+    retrieve_url_text,
+    store_rir_prefixes,
+)
 from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import RIRSTATS_URL
 from irrexplorer.state import RIR, DataSource
@@ -53,7 +57,9 @@ class RIRStatsImporter:
 
             try:
                 # ARIN includes a signature, so extra fields are ignored
-                rir, country, af_string, start_ip, size, date, status = line.split("|")[:7]
+                rir, country, af_string, start_ip, size, date, status = line.split("|")[
+                    :7
+                ]
             except ValueError:
                 if line.split("|")[-1] == "summary":
                     continue  # The summary line has a different length and can be ignored

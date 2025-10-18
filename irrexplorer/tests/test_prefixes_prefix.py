@@ -65,7 +65,9 @@ async def test_prefix_too_large(client):
 
 async def test_prefix_valid(client, httpserver):
     environ["IRRD_ENDPOINT"] = httpserver.url_for("/graphql")
-    httpserver.expect_oneshot_request("/graphql").respond_with_json(IRRD_PREFIX_VALID_RESPONSE)
+    httpserver.expect_oneshot_request("/graphql").respond_with_json(
+        IRRD_PREFIX_VALID_RESPONSE
+    )
 
     await client.app.state.database.execute(
         query=tables.rirstats.insert(),
@@ -175,7 +177,9 @@ async def test_prefix_valid_rpki_as0(client, httpserver):
 
 async def test_prefix_no_data(client, httpserver):
     environ["IRRD_ENDPOINT"] = httpserver.url_for("/graphql")
-    httpserver.expect_oneshot_request("/graphql").respond_with_json(IRRD_PREFIX_EMPTY_RESPONSE)
+    httpserver.expect_oneshot_request("/graphql").respond_with_json(
+        IRRD_PREFIX_EMPTY_RESPONSE
+    )
 
     await client.app.state.database.execute(
         query=tables.bgp.insert(),

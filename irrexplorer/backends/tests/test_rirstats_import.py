@@ -43,7 +43,9 @@ async def test_importer_valid():
 
 async def test_importer_invalid():
     with aioresponses() as http_mock:
-        http_mock.get(RIRSTATS_URL[RIR.RIPENCC], status=200, body="invalid|number|fields")
+        http_mock.get(
+            RIRSTATS_URL[RIR.RIPENCC], status=200, body="invalid|number|fields"
+        )
         with pytest.raises(ImporterError):
             await RIRStatsImporter(RIR.RIPENCC).run_import()
 
