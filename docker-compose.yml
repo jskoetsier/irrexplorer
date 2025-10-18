@@ -2,6 +2,21 @@ version: '3.3'
 
 services:
   # PostgreSQL Database
+  redis:
+    image: redis:7-alpine
+    container_name: irrexplorer-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    networks:
+      - irrexplorer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   db:
     image: postgres:15-alpine
     container_name: irrexplorer-db
@@ -29,6 +44,7 @@ services:
     container_name: irrexplorer-backend
     environment:
       DATABASE_URL: postgresql://irrexplorer:irrexplorer_password@db:5432/irrexplorer
+      REDIS_URL: redis://redis:6379/0
       IRRD_ENDPOINT: ${IRRD_ENDPOINT:-}
       DEBUG: ${DEBUG:-False}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:3000}
@@ -38,6 +54,7 @@ services:
       HTTP_WORKERS: ${HTTP_WORKERS:-4}
     depends_on:
       - db
+      - redis
     ports:
       - "8000:8000"
     volumes:
