@@ -101,7 +101,6 @@ const PrefixAllocation = () => {
               nameKey={activeView === 'rir' ? 'name' : 'asn'}
               stroke="#fff"
               fill="#8884d8"
-              content={<CustomizedContent activeView={activeView} />}
             >
               <Tooltip content={<CustomTooltip />} />
             </Treemap>

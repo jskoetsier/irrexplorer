@@ -25,14 +25,14 @@ function Home() {
                         Enter a prefix, IP address, AS number or AS/route set name.
                     </p>
                     <QueryForm/>
-                    
+
                     <div className="text-center my-4">
                         <Link to="/visualizations" className="btn btn-outline-primary btn-lg">
                             <i className="fas fa-chart-bar me-2"></i>
                             Explore Data Visualizations
                         </Link>
                     </div>
-                    
+
                     <SearchHistory/>
                     <PopularQueries/>
                 </div>
