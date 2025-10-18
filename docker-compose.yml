@@ -43,6 +43,7 @@ services:
     volumes:
       - ./irrexplorer:/app/irrexplorer
       - ./alembic.ini:/app/alembic.ini
+      - ./.env:/app/.env
     networks:
       - irrexplorer-network
     restart: unless-stopped
