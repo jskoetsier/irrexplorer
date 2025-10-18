@@ -5,6 +5,44 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-10-18
+
+### CI/CD Infrastructure
+- **GitHub Actions Workflows**: Comprehensive automated testing and security scanning
+- **CI/CD Pipeline** (`.github/workflows/ci.yml`):
+  - Multi-Python version testing (3.9, 3.10, 3.11, 3.12)
+  - Automated testing with pytest and coverage reporting
+  - Code quality checks (ruff, black, isort, mypy)
+  - Security scanning (Bandit, safety)
+  - Frontend build validation
+  - Integration testing with Docker
+  - Documentation validation
+  - Coverage reporting to Codecov
+- **Security Scanning** (`.github/workflows/security.yml`):
+  - CodeQL static analysis for Python and JavaScript
+  - Dependency vulnerability scanning (safety, pip-audit)
+  - Bandit security checks for Python
+  - TruffleHog secret detection
+  - Semgrep security pattern scanning
+  - Trivy vulnerability scanning
+  - Docker image security scans
+  - NPM audit for frontend dependencies
+  - Daily scheduled security scans at 2 AM UTC
+  - Security audit reports and PR comments
+
+### Documentation
+- New `CI_CD.md` comprehensive CI/CD documentation
+- Workflow descriptions and configuration details
+- Local testing instructions
+- Troubleshooting guide
+- Security compliance documentation
+
+### Development Workflow
+- Automated quality gates for all commits
+- Pre-merge validation for pull requests
+- Scheduled daily security audits
+- Artifact collection for all security reports
+
 ## [1.7.1] - 2025-10-18
 
 ### Bug Fixes

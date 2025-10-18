@@ -1,0 +1,332 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'python', 'javascript' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: security-extended,security-and-quality
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv pip install --system -r requirements.txt
+        uv pip install --system safety pip-audit
+
+    - name: Run safety check
+      run: |
+        safety check --json --output safety-report.json || true
+        safety check --output safety-report.txt || true
+
+    - name: Run pip-audit
+      run: |
+        pip-audit --format json --output pip-audit.json || true
+        pip-audit || true
+
+    - name: Upload vulnerability reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-scan-reports
+        path: |
+          safety-report.json
+          safety-report.txt
+          pip-audit.json
+
+  bandit-scan:
+    name: Bandit Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install Bandit
+      run: |
+        pip install bandit[toml]
+
+    - name: Run Bandit
+      run: |
+        bandit -r irrexplorer/ \
+          -f json -o bandit-report.json \
+          --confidence-level medium \
+          --severity-level medium || true
+
+    - name: Display Bandit results
+      run: |
+        bandit -r irrexplorer/ \
+          --confidence-level medium \
+          --severity-level medium || true
+
+    - name: Upload Bandit report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+  trufflehog-scan:
+    name: TruffleHog Secret Detection
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  semgrep-scan:
+    name: Semgrep Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Semgrep
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/python
+          p/docker
+          p/javascript
+        generateSarif: true
+
+    - name: Upload Semgrep results to GitHub
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: semgrep.sarif
+
+  trivy-scan:
+    name: Trivy Vulnerability Scanner
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner in repo mode
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+
+    - name: Upload Trivy results to GitHub Security tab
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Trivy vulnerability scanner (table output)
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'table'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+
+  docker-scan:
+    name: Docker Image Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        docker build -t irrexplorer-backend:test -f Dockerfile .
+        docker build -t irrexplorer-frontend:test -f Dockerfile.frontend ./frontend
+
+    - name: Run Trivy on backend image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'irrexplorer-backend:test'
+        format: 'sarif'
+        output: 'trivy-backend-image.sarif'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Run Trivy on frontend image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'irrexplorer-frontend:test'
+        format: 'sarif'
+        output: 'trivy-frontend-image.sarif'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Upload backend image scan results
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-backend-image.sarif'
+        category: 'docker-backend'
+
+    - name: Upload frontend image scan results
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-frontend-image.sarif'
+        category: 'docker-frontend'
+
+    - name: Display backend image vulnerabilities
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'irrexplorer-backend:test'
+        format: 'table'
+        severity: 'CRITICAL,HIGH'
+
+  npm-audit:
+    name: NPM Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      working-directory: frontend
+      run: yarn install --frozen-lockfile
+
+    - name: Run npm audit
+      working-directory: frontend
+      run: |
+        yarn audit --json > npm-audit.json || true
+        yarn audit || true
+
+    - name: Upload npm audit report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: npm-audit-report
+        path: frontend/npm-audit.json
+
+  security-summary:
+    name: Security Audit Summary
+    runs-on: ubuntu-latest
+    needs: [codeql, dependency-scan, bandit-scan, trufflehog-scan, semgrep-scan, trivy-scan, docker-scan, npm-audit]
+    if: always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: security-reports
+
+    - name: Generate security summary
+      run: |
+        echo "# Security Scan Summary" > security-summary.md
+        echo "" >> security-summary.md
+        echo "## Scan Results" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "- CodeQL Analysis: ${{ needs.codeql.result }}" >> security-summary.md
+        echo "- Dependency Scan: ${{ needs.dependency-scan.result }}" >> security-summary.md
+        echo "- Bandit Scan: ${{ needs.bandit-scan.result }}" >> security-summary.md
+        echo "- TruffleHog Scan: ${{ needs.trufflehog-scan.result }}" >> security-summary.md
+        echo "- Semgrep Scan: ${{ needs.semgrep-scan.result }}" >> security-summary.md
+        echo "- Trivy Scan: ${{ needs.trivy-scan.result }}" >> security-summary.md
+        echo "- Docker Image Scan: ${{ needs.docker-scan.result }}" >> security-summary.md
+        echo "- NPM Audit: ${{ needs.npm-audit.result }}" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "Scan completed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> security-summary.md
+        cat security-summary.md
+
+    - name: Upload security summary
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-summary
+        path: security-summary.md
+
+    - name: Comment PR with security summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('security-summary.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
