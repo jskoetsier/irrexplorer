@@ -14,6 +14,7 @@ from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
 from irrexplorer.api import advanced_search, queries, search_navigation
@@ -50,17 +51,18 @@ async def lifespan(app):
 
 async def cache_stats(request):
     """Endpoint to view cache statistics."""
-    from starlette.responses import JSONResponse
-
     return JSONResponse(get_cache_stats())
 
 
 async def cache_clear(request):
     """Endpoint to clear cache (admin only)."""
-    from starlette.responses import JSONResponse
-
     clear_cache()
     return JSONResponse({"status": "cleared"})
+
+
+async def root_handler(request):
+    """Root handler for testing or when frontend not built."""
+    return JSONResponse({"status": "ok", "testing": TESTING})
 
 
 routes = [
@@ -98,15 +100,23 @@ routes = [
     # Advanced search endpoints
     Route("/api/advanced-search", advanced_search.advanced_search),
     Route("/api/filter-options", advanced_search.get_filter_options),
-    Mount(
-        "/",
-        DefaultIndexStaticFiles(
-            directory="frontend/build",
-            html=True,
-            defaulted_paths=["prefix/", "asn/", "as-set/", "status"],
-        ),
-    ),
 ]
+
+# Only mount static files if not testing and directory exists
+if not TESTING and os.path.exists("frontend/build"):
+    routes.append(
+        Mount(
+            "/",
+            DefaultIndexStaticFiles(
+                directory="frontend/build",
+                html=True,
+                defaulted_paths=["prefix/", "asn/", "as-set/", "status"],
+            ),
+        )
+    )
+else:
+    # In testing or when frontend not built, add a simple root route
+    routes.append(Route("/", root_handler))
 
 middleware = [
     Middleware(GZipMiddleware, minimum_size=1000),
