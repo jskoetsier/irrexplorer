@@ -1,13 +1,13 @@
 [bandit]
 # Bandit configuration for IRRExplorer
 
-# Exclude test directories as assert statements are expected in tests
-exclude_dirs = /tests,/api/tests,/backends/tests
+# Exclude test directories - use glob patterns
+exclude = */tests/*,*/test_*.py
 
-# Skip specific checks
+# Skip specific checks globally
 skips = B101,B301,B403,B110
 
-# B101: assert_used - Normal in tests, excluded via exclude_dirs
+# B101: assert_used - Normal in tests
 # B301: pickle - Used safely for internal caching, not for untrusted data
 # B403: import_pickle - Used safely for internal caching
-# B110: try_except_pass - Acceptable for race condition handling
+# B110: try_except_pass - Acceptable for race condition handling in cache operations
