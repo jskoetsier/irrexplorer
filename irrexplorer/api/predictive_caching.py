@@ -40,9 +40,10 @@ async def prefetch_asn_neighbors(database: Database, asn: int) -> List[int]:
         # Extract unique ASNs from overlapping prefixes
         neighbor_asns: Set[int] = set()
         for prefix_summary in asn_summary.overlaps[:10]:  # Limit to first 10 overlaps
-            for route in prefix_summary.routes:
-                if route.asn and route.asn != asn:
-                    neighbor_asns.add(route.asn)
+            # Get ASNs from BGP origins
+            for bgp_asn in prefix_summary.bgp_origins:
+                if bgp_asn and bgp_asn != asn:
+                    neighbor_asns.add(bgp_asn)
 
         # Pre-fetch up to 5 neighbor ASNs
         cached_asns = []
