@@ -1,4 +1,5 @@
 from ipaddress import IPv4Network, IPv6Network
+from typing import Tuple, Union
 
 import databases
 
