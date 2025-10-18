@@ -62,7 +62,7 @@ const PrefixAllocation = () => {
     );
   }
 
-  if (!allocationData) {
+  if (!allocationData || !allocationData.rir_allocations || !allocationData.top_asns) {
     return null;
   }
 

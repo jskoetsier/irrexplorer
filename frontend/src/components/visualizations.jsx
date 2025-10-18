@@ -23,8 +23,8 @@ class ErrorBoundary extends Component {
         <div className="alert alert-danger m-4">
           <h4>Visualization Error</h4>
           <p>Failed to load visualization: {this.state.error?.message || 'Unknown error'}</p>
-          <button 
-            className="btn btn-primary mt-2" 
+          <button
+            className="btn btn-primary mt-2"
             onClick={() => window.location.reload()}
           >
             Reload Page
