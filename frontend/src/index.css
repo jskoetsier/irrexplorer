@@ -227,15 +227,38 @@ footer .container {
   }
 }
 
-/* Home page search */
-.home-search {
-  max-width: 600px;
-  margin: 2rem auto;
+/* Home page specific styles */
+.logo {
+  max-width: 200px;
+  height: auto;
 }
 
 @media (max-width: 576px) {
-  .home-search {
-    margin: 1rem auto;
+  .logo {
+    max-width: 150px;
+  }
+}
+
+.container-fluid {
+  padding: 2rem 1rem;
+}
+
+@media (max-width: 576px) {
+  .container-fluid {
+    padding: 1rem 0.5rem;
+  }
+}
+
+/* Improve lead text */
+.lead {
+  font-size: 1.125rem;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+@media (max-width: 576px) {
+  .lead {
+    font-size: 1rem;
   }
 }
 
