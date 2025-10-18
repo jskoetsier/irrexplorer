@@ -20,7 +20,7 @@ from irrexplorer.backends.bgp import BGPQuery
 from irrexplorer.backends.irrd import IRRDQuery
 from irrexplorer.backends.rirstats import RIRStatsQuery
 from irrexplorer.settings import MINIMUM_PREFIX_SIZE, TESTING
-from irrexplorer.state import NIR, RIR, IPNetwork, RouteInfo
+from irrexplorer.state import IPNetwork, NIR, RIR, RouteInfo
 
 logger = logging.getLogger(__name__)
 

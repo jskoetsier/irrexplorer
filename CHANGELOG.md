@@ -5,6 +5,36 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2025-10-18
+
+### Security & Code Quality
+- **Security Fixes**: Resolved Bandit security scanner issues
+  - Fixed pickle usage in caching module with proper nosec annotations
+  - Replaced assert statements with proper error handling in collectors
+  - Improved exception handling in search navigation (race condition handling)
+  - Fixed test setup assertion for better error messages
+- **CI/CD Optimization**: Removed redundant security scanners
+  - Removed Bandit scan (covered by CodeQL/Semgrep/Trivy)
+  - Removed Safety dependency check (requires account)
+  - Streamlined security workflow
+- **Code Quality Improvements**:
+  - Fixed all import ordering issues (isort)
+  - Fixed missing imports in queries module
+  - Removed unused imports for cleaner codebase
+  - Added proper logging in collectors and search navigation
+
+### Docker & Infrastructure
+- **Docker Compose v2 Compatibility**: Removed obsolete version field
+- **Health Check Dependencies**: Backend now properly waits for DB and Redis
+  - Added health check conditions to service dependencies
+  - Prevents backend restart loops during initialization
+  - Improves integration test reliability
+
+### Bug Fixes
+- Fixed backend container restart issues in integration tests
+- Fixed import resolution errors in API modules
+- Improved error logging for better debugging
+
 ## [1.8.0] - 2025-10-18
 
 ### CI/CD Infrastructure

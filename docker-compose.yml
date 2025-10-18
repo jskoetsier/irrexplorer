@@ -1,7 +1,5 @@
-version: '3.3'
-
 services:
-  # PostgreSQL Database
+  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: irrexplorer-redis
@@ -53,8 +51,10 @@ services:
       HTTP_PORT: 8000
       HTTP_WORKERS: ${HTTP_WORKERS:-4}
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8000:8000"
     volumes:
