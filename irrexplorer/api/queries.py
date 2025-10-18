@@ -145,12 +145,17 @@ async def prefixes_prefix(request):
 
 
 async def prefixes_asn(request):
-    asn_prefixes = await PrefixCollector(request.app.state.database).asn_summary(
-        request.path_params["asn"]
-    )
+    asn = request.path_params["asn"]
+    asn_prefixes = await PrefixCollector(request.app.state.database).asn_summary(asn)
     enrich_prefix_summaries_with_report(asn_prefixes.direct_origin)
     enrich_prefix_summaries_with_report(asn_prefixes.overlaps)
     response = DataClassJSONResponse(asn_prefixes)
+
+    # Predictive caching: pre-fetch neighbor ASNs in background
+    from irrexplorer.api.predictive_caching import schedule_predictive_cache
+
+    schedule_predictive_cache(request.app.state.database, "asn", asn)
+
     # Cache ASN queries for 5 minutes
     return add_cache_headers(response, max_age=300, content=response.body.decode())
 
