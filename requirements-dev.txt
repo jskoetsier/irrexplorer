@@ -15,8 +15,11 @@ SQLAlchemy-Utils>=0.36.8
 
 # Code style and type checks
 mypy>=0.812
-flake8>=3.8.4
-pep8-naming>=0.11.1
+ruff>=0.1.0
 isort>=5.8
-black>=20.8b1
 aioresponses>=0.7.1
+
+# Security scanning
+bandit>=1.7.0
+safety>=2.0.0
+pip-audit>=2.0.0
