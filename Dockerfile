@@ -37,5 +37,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/api/metadata/ || exit 1
 
-# Run migrations and start server
-CMD ["sh", "-c", "alembic upgrade head && uvicorn irrexplorer.app:app --host 0.0.0.0 --port 8000"]
+# Run migrations and start server with gunicorn and multiple workers
+CMD ["sh", "-c", "alembic upgrade head && gunicorn irrexplorer.app:app --workers ${HTTP_WORKERS:-4} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120"]
