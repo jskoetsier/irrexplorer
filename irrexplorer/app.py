@@ -17,7 +17,7 @@ from slowapi.util import get_remote_address
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GZIPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.routing import Mount, Route
 
 # Initialize rate limiter
@@ -78,7 +78,7 @@ routes = [
 ]
 
 middleware = [
-    Middleware(GZIPMiddleware, minimum_size=1000),
+    Middleware(GZipMiddleware, minimum_size=1000),
     Middleware(
         CORSMiddleware,
         allow_origins=ALLOWED_ORIGINS,
