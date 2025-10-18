@@ -81,8 +81,9 @@ class AdvancedSearchFilters extends Component {
                     <div className="filter-panel">
                         <div className="filter-row">
                             <div className="filter-group">
-                                <label>Resource Type</label>
-                                <select
+                                <label htmlFor="resourceType">Resource Type</label>
+                                <select 
+                                    id="resourceType"
                                     value={resourceType}
                                     onChange={(e) => this.handleFilterChange('resourceType', e.target.value)}
                                     className="filter-select"
@@ -96,8 +97,9 @@ class AdvancedSearchFilters extends Component {
                             </div>
 
                             <div className="filter-group">
-                                <label>Validation Status</label>
-                                <select
+                                <label htmlFor="validationStatus">Validation Status</label>
+                                <select 
+                                    id="validationStatus"
                                     value={status}
                                     onChange={(e) => this.handleFilterChange('status', e.target.value)}
                                     className="filter-select"
@@ -111,8 +113,9 @@ class AdvancedSearchFilters extends Component {
                             </div>
 
                             <div className="filter-group flex-grow">
-                                <label>Search Within Results</label>
-                                <input
+                                <label htmlFor="searchWithin">Search Within Results</label>
+                                <input 
+                                    id="searchWithin"
                                     type="text"
                                     value={searchWithin}
                                     onChange={(e) => this.handleFilterChange('searchWithin', e.target.value)}
@@ -123,8 +126,8 @@ class AdvancedSearchFilters extends Component {
 
                             {hasActiveFilters && (
                                 <div className="filter-group">
-                                    <label>&nbsp;</label>
-                                    <button
+                                    <div className="label-spacer">&nbsp;</div>
+                                    <button 
                                         className="btn-clear-filters"
                                         onClick={this.clearFilters}
                                     >
