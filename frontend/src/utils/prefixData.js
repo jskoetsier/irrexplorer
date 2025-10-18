@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { uniq, orderBy } from 'lodash';
 
 export function findIrrSourceColumns(prefixesData) {
     // Other than a few fixed columns, there are columns for each source
@@ -9,7 +9,7 @@ export function findIrrSourceColumns(prefixesData) {
         const sourcesForPrefix = Object.keys(prefixData.irrRoutes);
         irrSources.push(...sourcesForPrefix);
     }
-    return _.uniq(irrSources).sort();
+    return uniq(irrSources).sort();
 }
 
 export function findLeastSpecific(queryPrefix, prefixesData) {
@@ -39,5 +39,5 @@ export function sortPrefixesDataBy(prefixesData, key, order = 'asc') {
     if (key === 'rpkiRoutes') key = 'rpkiRoutes.0.asn';
     if (key.startsWith('irrRoutes')) key += '.0.asn';
     if (key === 'messages') key = 'goodnessOverall';
-    return _.orderBy(prefixesData, [key], [order]);
+    return orderBy(prefixesData, [key], [order]);
 }

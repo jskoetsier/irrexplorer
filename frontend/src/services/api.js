@@ -7,10 +7,9 @@ if (!apiUrl) {
     apiUrl = window.location.origin + "/api";
 }
 
-axios.defaults.headers = {
-    'Cache-Control': 'no-cache',
-    'Pragma': 'no-cache',
-    'Expires': '0',
+// Default headers for requests - allow selective caching per endpoint
+axios.defaults.headers.common = {
+    'Accept': 'application/json',
 };
 
 axios.interceptors.response.use(null, error => {

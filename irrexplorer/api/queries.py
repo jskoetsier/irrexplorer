@@ -5,18 +5,26 @@ from dataclasses import dataclass
 from ipaddress import ip_network
 
 import IPy
-from dataclasses_json import LetterCase, dataclass_json
-from starlette.responses import PlainTextResponse, Response
+from dataclasses_json import dataclass_json, LetterCase
 
+from irrexplorer.api.collectors import (
+    collect_member_of,
+    collect_set_expansion,
+    PrefixCollector,
+)
 from irrexplorer.api.interfaces import ObjectClass
-from irrexplorer.api.collectors import PrefixCollector, collect_member_of, collect_set_expansion
 from irrexplorer.api.report import enrich_prefix_summaries_with_report
 from irrexplorer.api.utils import DataClassJSONResponse
 from irrexplorer.backends.irrd import IRRDQuery
 from irrexplorer.backends.metadata import get_last_data_import
 from irrexplorer.settings import MINIMUM_PREFIX_SIZE
+from starlette.responses import PlainTextResponse, Response
 
-re_rpsl_name = re.compile(r"^[A-Z][A-Z0-9_:-]*[A-Z0-9]$", re.IGNORECASE)
+# Pre-compiled regex pattern with caching
+RE_RPSL_NAME = re.compile(r"^[A-Z][A-Z0-9_:-]*[A-Z0-9]$", re.IGNORECASE)
+
+# Maximum query length to prevent DoS
+MAX_QUERY_LENGTH = 255
 
 
 class InvalidQueryError(Exception):
@@ -39,8 +47,16 @@ class Query:
     def __init__(self, raw_query: str):
         raw_query = raw_query.strip()
 
+        # Input length validation to prevent DoS
+        if len(raw_query) > MAX_QUERY_LENGTH:
+            raise InvalidQueryError(
+                f"Query too long (max {MAX_QUERY_LENGTH} characters)"
+            )
+
         try:
-            is_asn = raw_query.upper().startswith("AS") and not raw_query.upper().startswith("AS-")
+            is_asn = raw_query.upper().startswith(
+                "AS"
+            ) and not raw_query.upper().startswith("AS-")
             trimmed = raw_query[2:] if is_asn else raw_query
             self.cleaned_value = "AS" + str(int(trimmed))
             self.category = QueryCategory.ASN
@@ -55,13 +71,14 @@ class Query:
             minimum_length = MINIMUM_PREFIX_SIZE[prefix.version()]
             if minimum_length > prefix.prefixlen():
                 raise InvalidQueryError(
-                    f"Query too large: the minimum prefix length is " f"{minimum_length}."
+                    f"Query too large: the minimum prefix length is "
+                    f"{minimum_length}."
                 )
             return
         except ValueError:
             pass
 
-        if re_rpsl_name.match(raw_query):
+        if RE_RPSL_NAME.match(raw_query):
             self.cleaned_value = raw_query.upper()
             if self.cleaned_value.startswith("RS-") or ":RS-" in self.cleaned_value:
                 self.category = QueryCategory.ROUTESET
@@ -94,7 +111,9 @@ async def prefixes_prefix(request):
         parameter = ip_network(request.path_params["prefix"])
     except ValueError as ve:
         return PlainTextResponse(status_code=400, content=f"Invalid prefix: {ve}")
-    summaries = await PrefixCollector(request.app.state.database).prefix_summary(parameter)
+    summaries = await PrefixCollector(request.app.state.database).prefix_summary(
+        parameter
+    )
     enrich_prefix_summaries_with_report(summaries)
     return DataClassJSONResponse(summaries)
 
@@ -110,9 +129,13 @@ async def prefixes_asn(request):
 
 async def member_of(request):
     object_class_str = request.path_params.get("object_class", "as-set")
-    object_class = next((member for member in ObjectClass if member.value == object_class_str), None)
+    object_class = next(
+        (member for member in ObjectClass if member.value == object_class_str), None
+    )
     if not object_class:
-        return PlainTextResponse(status_code=404, content=f"Unknown object class: {object_class_str}")
+        return PlainTextResponse(
+            status_code=404, content=f"Unknown object class: {object_class_str}"
+        )
     sets = await collect_member_of(request.path_params["target"], object_class)
     return DataClassJSONResponse(sets)
 

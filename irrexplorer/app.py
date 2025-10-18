@@ -6,14 +6,14 @@ import threading
 import traceback
 
 import databases
+
+from irrexplorer.api import queries
+from irrexplorer.api.utils import DefaultIndexStaticFiles
+from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
-
-from irrexplorer.api import queries
-from irrexplorer.api.utils import DefaultIndexStaticFiles
-from irrexplorer.settings import DATABASE_URL, DEBUG, TESTING
 
 
 @contextlib.asynccontextmanager
@@ -48,8 +48,10 @@ routes = [
 middleware = [
     Middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=ALLOWED_ORIGINS,
         allow_headers=["Cache-Control", "Pragma", "Expires"],
+        allow_methods=["GET", "OPTIONS"],
+        max_age=3600,
     )
 ]
 

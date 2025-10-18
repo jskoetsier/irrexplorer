@@ -2,14 +2,17 @@ from ipaddress import IPv4Network, IPv6Network
 from typing import List, Tuple, Union
 
 import databases
-from starlette.config import Config
 
 from irrexplorer.state import RIR
+from starlette.config import Config
 
 config = Config(".env")
 
 DEBUG = config("DEBUG", cast=bool, default=False)
 TESTING = config("TESTING", cast=bool, default=False)
+
+# CORS Configuration
+ALLOWED_ORIGINS = ["*"] if DEBUG else config("ALLOWED_ORIGINS", default="").split(",")
 
 HTTP_PORT = config("HTTP_PORT", cast=int, default=8000)
 HTTP_WORKERS = config("HTTP_WORKERS", cast=int, default=4)
@@ -43,7 +46,8 @@ RIRSTATS_URL = {
         default="https://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-latest",
     ),
     RIR.APNIC: config(
-        key="RIRSTATS_URL_APNIC", default="https://ftp.apnic.net/stats/apnic/delegated-apnic-latest"
+        key="RIRSTATS_URL_APNIC",
+        default="https://ftp.apnic.net/stats/apnic/delegated-apnic-latest",
     ),
 }
 REGISTROBR_URL = "https://ftp.registro.br/pub/numeracao/origin/nicbr-asn-blk-latest.txt"
@@ -56,7 +60,7 @@ MINIMUM_PREFIX_SIZE = {
     6: config("MINIMUM_PREFIX_SIZE_IPV6", cast=int, default=29),
 }
 
-SPECIAL_USE_SPACE: List[Tuple[str, Union[IPv4Network, IPv6Network]]] = [
+SPECIAL_USE_SPACE: Tuple[Tuple[str, Union[IPv4Network, IPv6Network]], ...] = (
     ("RFC1122", IPv4Network("0.0.0.0/8")),
     ("RFC1918", IPv4Network("10.0.0.0/8")),
     ("RFC6598", IPv4Network("100.64.0.0/10")),

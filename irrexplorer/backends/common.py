@@ -8,8 +8,11 @@ from databases import Database
 
 from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import DATABASE_URL
-from irrexplorer.state import RIR, DataSource, IPNetwork, RouteInfo
+from irrexplorer.state import DataSource, IPNetwork, RIR, RouteInfo
 from irrexplorer.storage import tables
+
+# Maximum number of results to prevent memory exhaustion
+MAX_QUERY_RESULTS = 10000
 
 
 class LocalSQLQueryBase(metaclass=ABCMeta):
@@ -53,7 +56,9 @@ async def retrieve_url_text(url: str):
     async with aiohttp.ClientSession(headers={"User-Agent": "IRRExplorer"}) as session:
         async with session.get(url) as response:
             if response.status != 200:
-                raise ImporterError(f"Failed import from {url}: status {response.status}")
+                raise ImporterError(
+                    f"Failed import from {url}: status {response.status}"
+                )
             return await response.text()
 
 
@@ -74,4 +79,6 @@ async def store_rir_prefixes(rir: RIR, prefixes: List[str]):
                     }
                     for prefix in prefixes
                 ]
-                await database.execute_many(query=tables.rirstats.insert(), values=values)
+                await database.execute_many(
+                    query=tables.rirstats.insert(), values=values
+                )

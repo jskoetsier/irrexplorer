@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {useMemo, useRef, useState, useCallback} from 'react';
 import PropTypes from 'prop-types';
 
 import Spinner from "../common/spinner";
@@ -9,56 +9,33 @@ import WhoisModal from "./whoisModal";
 import TableFooter from "../common/tableFooter";
 
 
-class PrefixTable extends Component {
-    state = {sortedPrefixesData: [], irrSourceColumns: []}
+function PrefixTable(props) {
+    const {prefixesData, hasLoaded, reducedColour, filterWarningError, apiCallUrl, defaultSortSmallestFirst} = props;
 
-    constructor(props) {
-        super(props);
-        this.whoisModalRef = React.createRef();
-    }
+    const whoisModalRef = useRef();
+    const [sortKey, setSortKey] = useState(defaultSortSmallestFirst ? 'prefixSmallestFirst' : 'prefix');
+    const [sortOrder, setSortOrder] = useState('asc');
 
-    componentDidMount() {
-        this.updateState();
-    }
+    // Memoize IRR source columns calculation to avoid recalculating on every render
+    const irrSourceColumns = useMemo(() => {
+        return findIrrSourceColumns(prefixesData);
+    }, [prefixesData]);
 
-    componentDidUpdate(prevProps) {
-        if (prevProps.prefixesData !== this.props.prefixesData)
-            this.updateState();
-    }
+    // Memoize sorted data to avoid redundant sorting operations
+    const sortedPrefixesData = useMemo(() => {
+        return sortPrefixesDataBy(prefixesData, sortKey, sortOrder);
+    }, [prefixesData, sortKey, sortOrder]);
 
-    updateState() {
-        const defaultKey = this.props.defaultSortSmallestFirst ? 'prefixSmallestFirst' : 'prefix';
-        this.setState({
-            sortedPrefixesData: sortPrefixesDataBy(this.props.prefixesData, defaultKey),
-            irrSourceColumns: findIrrSourceColumns(this.props.prefixesData),
-        });
+    const handleSort = useCallback(({key, order}) => {
+        setSortKey(key);
+        setSortOrder(order);
+    }, []);
 
-    }
+    const handleIrrRouteSelect = useCallback((prefix, asn, sourceName, rpslText, rpkiStatus) => {
+        whoisModalRef.current.openWithContent(prefix, asn, sourceName, rpslText, rpkiStatus);
+    }, []);
 
-    handleSort = ({key, order}) => {
-        const sortedPrefixesData = sortPrefixesDataBy(this.props.prefixesData, key, order);
-        this.setState({sortedPrefixesData});
-    }
-
-    handleIrrRouteSelect = (prefix, asn, sourceName, rpslText, rpkiStatus) => {
-        this.whoisModalRef.current.openWithContent(prefix, asn, sourceName, rpslText, rpkiStatus);
-    }
-
-    renderTableContent() {
-        if (!this.props.hasLoaded)
-            return this.renderTablePlaceholder(<Spinner/>);
-        if (!this.props.prefixesData.length)
-            return this.renderTablePlaceholder("No prefixes were found or query was too large to execute.");
-        return <PrefixTableBody
-            irrSourceColumns={this.state.irrSourceColumns}
-            prefixesData={this.state.sortedPrefixesData}
-            reducedColour={this.props.reducedColour}
-            filterWarningError={this.props.filterWarningError}
-            handleIrrRouteSelect={this.handleIrrRouteSelect}
-        />
-    }
-
-    renderTablePlaceholder(placeholder) {
+    const renderTablePlaceholder = (placeholder) => {
         return (
             <tbody>
             <tr>
@@ -66,24 +43,36 @@ class PrefixTable extends Component {
             </tr>
             </tbody>
         );
-    }
+    };
 
-    render() {
-        return (
-            <>
-                <table className="table table-sm mb-5 table-fixed table-striped">
-                    <PrefixTableHeader
-                        irrSourceColumns={this.state.irrSourceColumns}
-                        onSort={this.handleSort}
-                        reducedColour={this.props.reducedColour}
-                    />
-                    {this.renderTableContent()}
-                    <TableFooter url={this.props.apiCallUrl} />
-                </table>
-                <WhoisModal ref={this.whoisModalRef}/>
-            </>
-        );
-    }
+    const renderTableContent = () => {
+        if (!hasLoaded)
+            return renderTablePlaceholder(<Spinner/>);
+        if (!prefixesData.length)
+            return renderTablePlaceholder("No prefixes were found or query was too large to execute.");
+        return <PrefixTableBody
+            irrSourceColumns={irrSourceColumns}
+            prefixesData={sortedPrefixesData}
+            reducedColour={reducedColour}
+            filterWarningError={filterWarningError}
+            handleIrrRouteSelect={handleIrrRouteSelect}
+        />
+    };
+
+    return (
+        <>
+            <table className="table table-sm mb-5 table-fixed table-striped">
+                <PrefixTableHeader
+                    irrSourceColumns={irrSourceColumns}
+                    onSort={handleSort}
+                    reducedColour={reducedColour}
+                />
+                {renderTableContent()}
+                <TableFooter url={apiCallUrl} />
+            </table>
+            <WhoisModal ref={whoisModalRef}/>
+        </>
+    );
 }
 
 PrefixTable.propTypes = {

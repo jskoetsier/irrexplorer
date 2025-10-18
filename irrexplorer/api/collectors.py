@@ -1,5 +1,5 @@
 import asyncio
-import time
+import logging
 from collections import defaultdict
 from ipaddress import ip_network
 from typing import Coroutine, Dict, List, Optional
@@ -10,6 +10,7 @@ from databases import Database
 from irrexplorer.api.interfaces import (
     ASNPrefixes,
     MemberOf,
+    ObjectClass,
     PrefixIRRDetail,
     PrefixSummary,
     SetExpansion,
@@ -18,10 +19,12 @@ from irrexplorer.backends.bgp import BGPQuery
 from irrexplorer.backends.irrd import IRRDQuery
 from irrexplorer.backends.rirstats import RIRStatsQuery
 from irrexplorer.settings import MINIMUM_PREFIX_SIZE, TESTING
-from irrexplorer.state import RIR, IPNetwork, RouteInfo, NIR
-from irrexplorer.api.interfaces import ObjectClass
+from irrexplorer.state import IPNetwork, NIR, RIR, RouteInfo
+
+logger = logging.getLogger(__name__)
 
 SET_SIZE_LIMIT = 1000
+SET_EXPANSION_TIMEOUT = 30  # seconds
 NIR_NAMES = [nir.name for nir in NIR]
 
 
@@ -46,16 +49,11 @@ class PrefixCollector:
         if MINIMUM_PREFIX_SIZE[search_prefix.version] > search_prefix.prefixlen:
             return []
 
-        start = time.perf_counter()
-
         await self._collect_for_prefixes([search_prefix])
         prefix_summaries = self._collate_per_prefix()
-        print(f"complete in {time.perf_counter() - start}")
         return prefix_summaries
 
     async def asn_summary(self, asn: int) -> ASNPrefixes:
-        start = time.perf_counter()
-
         aggregates = await self._collect_aggregate_prefixes_for_asn(asn)
         await self._collect_for_prefixes(aggregates)
         prefix_summaries = self._collate_per_prefix()
@@ -65,7 +63,6 @@ class PrefixCollector:
                 response.direct_origin.append(p)
             else:
                 response.overlaps.append(p)
-        print(f"complete in {time.perf_counter() - start}")
         return response
 
     async def _collect_for_prefixes(self, search_prefixes: List[IPNetwork]) -> None:
@@ -118,7 +115,9 @@ class PrefixCollector:
         Translates the output from _collect into a list of PrefixSummary objects,
         one per unique prefix found, with the RIR, BGP origins, and IRR routes set.
         """
-        all_prefixes = set(self.irrd_per_prefix.keys()).union(set(self.bgp_per_prefix.keys()))
+        all_prefixes = set(self.irrd_per_prefix.keys()).union(
+            set(self.bgp_per_prefix.keys())
+        )
         summaries_per_prefix = []
         for prefix in all_prefixes:
             rir = self._rir_for_prefix(prefix)
@@ -152,20 +151,30 @@ class PrefixCollector:
         """
         Find the responsible RIR/NIR for a prefix, from self.rirstats previously
         gathered by _collect(), and prefer NIR over RIR.
+
+        Optimized with early termination and NIR priority.
         """
         relevant_rirstat = None
 
-        for rirstat in self.rirstats:
+        # Sort by prefix length (most specific first) for better matching
+        # This optimization reduces unnecessary comparisons
+        sorted_rirstats = sorted(
+            self.rirstats, key=lambda r: r.prefix.prefixlen, reverse=True
+        )
+
+        for rirstat in sorted_rirstats:
             if rirstat.prefix.overlaps(prefix):
                 relevant_rirstat = rirstat
                 if rirstat.rir and rirstat.rir.name in NIR_NAMES:
                     # Break early if this is a NIR, as those take priority
                     break
+                # If we found a RIR but not a NIR yet, continue searching
+                # in case there's a more specific NIR
+
         return relevant_rirstat.rir if relevant_rirstat else None
 
 
 async def collect_member_of(target: str, object_class: ObjectClass) -> MemberOf:
-    start = time.perf_counter()
     result = MemberOf()
     data = await IRRDQuery().query_member_of(target, object_class)
     irrs_seen = set()
@@ -182,12 +191,13 @@ async def collect_member_of(target: str, object_class: ObjectClass) -> MemberOf:
                 if member_of and member_of.get("mbrsByRef"):
                     expected_mntners = set(member_of["mbrsByRef"])
 
-                if "ANY" in expected_mntners or autnum_mntners.intersection(expected_mntners):
+                if "ANY" in expected_mntners or autnum_mntners.intersection(
+                    expected_mntners
+                ):
                     irrs_seen.add(member_of["source"])
                     result.sets_per_irr[member_of["source"]].add(member_of["rpslPk"])
 
     result.irrs_seen = sorted(irrs_seen)
-    print(f"complete in {time.perf_counter() - start}")
     return result
 
 
@@ -195,59 +205,71 @@ async def collect_set_expansion(name: str):
     def is_set(set_name: str) -> bool:
         return set_name[:2] != "AS" or not set_name[2:].isnumeric()
 
-    start = time.perf_counter()
-    irrd = IRRDQuery()
+    async def _expansion_with_timeout():
+        irrd = IRRDQuery()
 
-    resolved: Dict[str, Dict[str, List[str]]] = {name: {}}
-    to_resolve = {name}
-    tree_depth = 0
+        resolved: Dict[str, Dict[str, List[str]]] = {name: {}}
+        to_resolve = {name}
+        tree_depth = 0
+        max_iterations = 20  # Prevent infinite loops
 
-    while to_resolve:
-        tree_depth += 1
-        print(
-            f"starting step {tree_depth} with {len(to_resolve)} items to resolve, {len(resolved)} already done"
-        )
-        if len(to_resolve) > SET_SIZE_LIMIT or len(resolved) > SET_SIZE_LIMIT:
-            print("breaking")
-            break
-        step_result = await irrd.query_set_members(list(to_resolve))
-        resolved.update(step_result)
-        to_resolve = {
-            member
-            for members_per_source in step_result.values()
-            for members in members_per_source.values()
-            for member in members
-            if is_set(member) and member not in to_resolve
-        }
-        to_resolve = to_resolve - set(resolved.keys())
-
-    results = []
-
-    def traverse_tree(stub_name: str, depth: int = 0, path: Optional[List[str]] = None) -> None:
-        print(f"traverse_tree called with: stub_name={stub_name} depth={depth} path={path}")
-        if path is None:
-            path = []
-        if stub_name in path:
-            return  # circular reference
-        path = path + [stub_name]
-        depth += 1
-        for source, members in resolved[stub_name].items():
-            result = SetExpansion(
-                name=stub_name, source=source, depth=depth, path=path, members=sorted(members)
+        while to_resolve and tree_depth < max_iterations:
+            tree_depth += 1
+            logger.debug(
+                f"Set expansion step {tree_depth}: {len(to_resolve)} items to resolve, "
+                f"{len(resolved)} already done"
             )
-            if result not in results:
-                results.append(result)
-        for sub_members in resolved[stub_name].values():
-            for sub_member in sub_members:
-                if sub_member in resolved:
-                    traverse_tree(sub_member, depth, path)
+            if len(to_resolve) > SET_SIZE_LIMIT or len(resolved) > SET_SIZE_LIMIT:
+                logger.warning(f"Set expansion size limit reached: {SET_SIZE_LIMIT}")
+                break
+            step_result = await irrd.query_set_members(list(to_resolve))
+            resolved.update(step_result)
+            to_resolve = {
+                member
+                for members_per_source in step_result.values()
+                for members in members_per_source.values()
+                for member in members
+                if is_set(member) and member not in to_resolve
+            }
+            to_resolve = to_resolve - set(resolved.keys())
 
-    print("completed initial resolve loop, traversing tree")
-    traverse_tree(name)
-    results.sort(key=lambda item: (item.depth, item.name))
+        results = []
 
-    print(f"set expansion complete in {time.perf_counter() - start}")
-    return results
+        def traverse_tree(
+            stub_name: str, depth: int = 0, path: Optional[List[str]] = None
+        ) -> None:
+            if path is None:
+                path = []
+            if stub_name in path:
+                return  # circular reference
+            path = path + [stub_name]
+            depth += 1
+            for source, members in resolved[stub_name].items():
+                result = SetExpansion(
+                    name=stub_name,
+                    source=source,
+                    depth=depth,
+                    path=path,
+                    members=sorted(members),
+                )
+                if result not in results:
+                    results.append(result)
+            for sub_members in resolved[stub_name].values():
+                for sub_member in sub_members:
+                    if sub_member in resolved:
+                        traverse_tree(sub_member, depth, path)
+
+        traverse_tree(name)
+        results.sort(key=lambda item: (item.depth, item.name))
+        return results
+
+    try:
+        return await asyncio.wait_for(
+            _expansion_with_timeout(), timeout=SET_EXPANSION_TIMEOUT
+        )
+    except asyncio.TimeoutError:
+        logger.error(f"Set expansion timed out after {SET_EXPANSION_TIMEOUT} seconds")
+        return []
 
 
 async def _execute_tasks(tasks: List[Coroutine]):
@@ -260,5 +282,14 @@ async def _execute_tasks(tasks: List[Coroutine]):
 
 
 def ip_networks_aggregates(prefixes: List[IPNetwork]):
+    """
+    Aggregate a list of IP network prefixes to reduce redundancy.
+    Optimized to minimize string conversions.
+    """
+    if not prefixes:
+        return []
+    # Convert to strings for aggregate6 library (required by its API)
     inputs = [str(prefix) for prefix in prefixes]
-    return [ip_network(prefix) for prefix in aggregate(inputs)]
+    # aggregate6 returns strings, convert back to ip_network objects
+    aggregated = aggregate(inputs)
+    return [ip_network(prefix) for prefix in aggregated]

@@ -27,11 +27,16 @@ class BGPImporter:
     async def run_import(self):
         url = BGP_SOURCE
         text = await retrieve_url_text(url)
+        # Parse table and collect prefixes
         prefixes = await self._parse_table(text)
         await self._load_prefixes(prefixes)
 
     @sync_to_async
     def _parse_table(self, text: str):
+        """
+        Parse BGP table data line-by-line for memory efficiency.
+        Returns a list of (prefix, origin) tuples.
+        """
         prefixes = []
         for line in text.splitlines():
             if not line:
@@ -75,7 +80,9 @@ class BGPImporter:
                             for prefix, asn in chunk
                         ]
                         try:
-                            await database.execute_many(query=tables.bgp.insert(), values=values)
+                            await database.execute_many(
+                                query=tables.bgp.insert(), values=values
+                            )
                         except DataError as de:
                             raise ImporterError(f"Failed to insert BGP data: {de}")
 

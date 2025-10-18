@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: irrexplorer-db
+    environment:
+      POSTGRES_DB: irrexplorer
+      POSTGRES_USER: irrexplorer
+      POSTGRES_PASSWORD: irrexplorer_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U irrexplorer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - irrexplorer-network
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: irrexplorer-backend
+    environment:
+      DATABASE_URL: postgresql://irrexplorer:irrexplorer_password@db:5432/irrexplorer
+      IRRD_ENDPOINT: ${IRRD_ENDPOINT:-https://irrd.nlnog.net/graphql}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:3000}
+      BGP_SOURCE: ${BGP_SOURCE:-https://bgp.tools/table.jsonl}
+      BGP_SOURCE_MINIMUM_HITS: ${BGP_SOURCE_MINIMUM_HITS:-20}
+      HTTP_PORT: 8000
+      HTTP_WORKERS: ${HTTP_WORKERS:-4}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./irrexplorer:/app/irrexplorer
+      - ./alembic.ini:/app/alembic.ini
+    networks:
+      - irrexplorer-network
+    restart: unless-stopped
+
+  # Frontend (nginx serving React build)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: irrexplorer-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - irrexplorer-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  irrexplorer-network:
+    driver: bridge
