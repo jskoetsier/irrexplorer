@@ -20,7 +20,7 @@ from irrexplorer.backends.bgp import BGPQuery
 from irrexplorer.backends.irrd import IRRDQuery
 from irrexplorer.backends.rirstats import RIRStatsQuery
 from irrexplorer.settings import MINIMUM_PREFIX_SIZE, TESTING
-from irrexplorer.state import NIR, RIR, IPNetwork, RouteInfo
+from irrexplorer.state import IPNetwork, NIR, RIR, RouteInfo
 
 logger = logging.getLogger(__name__)
 
@@ -135,8 +135,12 @@ class PrefixCollector:
                 irr_entries = self.irrd_per_prefix[prefix]
                 irr_entries.sort(key=lambda r: r.asn if r.asn else 0)
                 for entry in irr_entries:
-                    assert entry.asn is not None, entry
-                    assert entry.irr_source, entry
+                    if entry.asn is None:
+                        logger.error(f"IRR entry missing ASN: {entry}")
+                        continue
+                    if not entry.irr_source:
+                        logger.error(f"IRR entry missing source: {entry}")
+                        continue
                     if entry.irr_source == "RPKI":
                         target = summary.rpki_routes
                     else:

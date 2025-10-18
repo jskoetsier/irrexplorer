@@ -105,7 +105,7 @@ jobs:
       run: |
         # Skip false positives:
         # B101: assert - used in tests
-        # B301/B403: pickle - safe for internal cache only  
+        # B301/B403: pickle - safe for internal cache only
         # B110: try/except/pass - acceptable for cache race conditions
         bandit -r irrexplorer/ -s B101,B301,B403,B110 -f json -o bandit-report.json || true
 

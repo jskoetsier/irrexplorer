@@ -18,7 +18,8 @@ from irrexplorer.app import app  # noqa: E402
 def setup_test_database():
     url = str(settings.DATABASE_URL)
 
-    assert not database_exists(url), "Test database already exists. Aborting tests."
+    if database_exists(url):  # nosec B101
+        raise RuntimeError("Test database already exists. Aborting tests.")
     create_database(url)
 
     alembic_cfg = AlembicConfig("alembic.ini")

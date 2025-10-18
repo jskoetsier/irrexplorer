@@ -6,14 +6,16 @@ API endpoints for search navigation features:
 - Popular/trending queries
 """
 
+import logging
 import uuid
 from datetime import datetime, timedelta
 
+logger = logging.getLogger(__name__)
+
+from irrexplorer.storage.tables import bookmarks, query_stats, search_history
 from sqlalchemy import and_, desc, func, or_, select
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-
-from irrexplorer.storage.tables import bookmarks, query_stats, search_history
 
 
 def get_or_create_session_id(request: Request) -> str:
@@ -102,9 +104,10 @@ async def add_search_history(request: Request):
         )
         try:
             await database.execute(insert_stmt)
-        except Exception:
-            # Race condition: another request already inserted
-            pass
+        except Exception as e:
+            # Race condition: another request already inserted this record
+            # This is expected in high-concurrency scenarios and can be safely ignored
+            logger.debug(f"Query stats insert race condition: {e}")
 
     response = JSONResponse({"status": "success"})
     response.set_cookie("session_id", session_id, max_age=31536000)
