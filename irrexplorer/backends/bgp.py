@@ -6,12 +6,19 @@ from asgiref.sync import sync_to_async
 from asyncpg import DataError
 from databases import Database
 
-from irrexplorer.backends.common import (MAX_QUERY_RESULTS, LocalSQLQueryBase,
-                                         retrieve_url_text)
+from irrexplorer.backends.common import (
+    MAX_QUERY_RESULTS,
+    LocalSQLQueryBase,
+    retrieve_url_text,
+)
 from irrexplorer.exceptions import ImporterError
-from irrexplorer.settings import (BGP_IPV4_LENGTH_CUTOFF,
-                                  BGP_IPV6_LENGTH_CUTOFF, BGP_SOURCE,
-                                  BGP_SOURCE_MINIMUM_HITS, DATABASE_URL)
+from irrexplorer.settings import (
+    BGP_IPV4_LENGTH_CUTOFF,
+    BGP_IPV6_LENGTH_CUTOFF,
+    BGP_SOURCE,
+    BGP_SOURCE_MINIMUM_HITS,
+    DATABASE_URL,
+)
 from irrexplorer.state import DataSource, RouteInfo
 from irrexplorer.storage import tables
 
