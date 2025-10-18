@@ -39,8 +39,11 @@ async def client():
         ) as test_client:
             test_client.app = app
             yield test_client
-            # Clean up database after each test to ensure test isolation
+            # Clean up database and cache after each test to ensure test isolation
+            from irrexplorer.api import caching
             from irrexplorer.storage import tables
 
             await test_client.app.state.database.execute(tables.bgp.delete())
             await test_client.app.state.database.execute(tables.rirstats.delete())
+            # Clear Redis cache
+            caching.clear_cache()
