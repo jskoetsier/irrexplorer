@@ -76,10 +76,9 @@ See [INSTALLATION.md](INSTALLATION.md) for detailed instructions.
 | [INSTALLATION.md](INSTALLATION.md) | Complete installation guide for Docker and native setups |
 | [DOCKER.md](DOCKER.md) | Docker deployment and operations guide |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow and coding standards |
-| [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) | Security hardening and configuration options |
-| [SECURITY_WORKFLOW.md](SECURITY_WORKFLOW.md) | Security practices and incident response |
 | [ROADMAP.md](ROADMAP.md) | Development roadmap and planned features |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
+| [frontend/OPTIMIZATION.md](frontend/OPTIMIZATION.md) | Frontend optimization guide |
 
 ## Architecture
 
@@ -361,6 +360,26 @@ This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICE
 - **RPKI** - Route Origin Authorization data
 
 ## Changelog
+
+### Version 1.5.0 (2025-10-17) - Responsive Design & UX Release
+
+**Added:**
+- **Responsive Design**: Complete mobile-first CSS overhaul
+- **Logo Sizing**: Optimized for all screen sizes (150px homepage, 60px queries)
+- **Loading Indicators**: Search button shows spinner during queries
+- **Table Responsiveness**: Horizontal scrolling for large tables on mobile
+- **Enhanced Footer**: Better layout for small screens with proper line breaks
+- **Print Styles**: Optimized for documentation printing
+
+**Performance:**
+- Responsive breakpoints: 576px, 768px, 1200px
+- Optimized font sizes and spacing for all devices
+- Better form handling on mobile
+- Improved overall user experience
+
+**Documentation:**
+- Updated footer to v1.5.0
+- Removed DashCare attribution
 
 ### Version 1.4.0 (2025-10-17) - Smart Caching Strategies Release
 
