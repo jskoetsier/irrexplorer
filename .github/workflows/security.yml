@@ -103,16 +103,12 @@ jobs:
 
     - name: Run Bandit
       run: |
-        bandit -r irrexplorer/ \
-          -f json -o bandit-report.json \
-          --confidence-level medium \
-          --severity-level medium || true
+        bandit -c .bandit -r irrexplorer/ \
+          -f json -o bandit-report.json || true
 
     - name: Display Bandit results
       run: |
-        bandit -r irrexplorer/ \
-          --confidence-level medium \
-          --severity-level medium || true
+        bandit -c .bandit -r irrexplorer/ || true
 
     - name: Upload Bandit report
       if: always()
