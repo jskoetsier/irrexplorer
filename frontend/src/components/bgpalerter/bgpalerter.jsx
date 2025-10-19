@@ -9,20 +9,20 @@ function BGPalerter() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    
+
     // Auth form state
     const [isRegisterMode, setIsRegisterMode] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
-    
+
     // Dashboard state
     const [stats, setStats] = useState(null);
     const [monitoredAsns, setMonitoredAsns] = useState([]);
     const [alerts, setAlerts] = useState([]);
     const [userEmails, setUserEmails] = useState([]);
     const [alertConfigs, setAlertConfigs] = useState([]);
-    
+
     // Form state
     const [newAsn, setNewAsn] = useState('');
     const [newAsnDescription, setNewAsnDescription] = useState('');
@@ -32,7 +32,7 @@ function BGPalerter() {
 
     const loadDashboardData = useCallback(async () => {
         if (!isAuthenticated) return;
-        
+
         setLoading(true);
         setError('');
 
@@ -191,7 +191,7 @@ function BGPalerter() {
 
     const handleAddAlertConfig = async (e) => {
         e.preventDefault();
-        
+
         let config = {};
         if (newAlertChannel === 'email') {
             if (!newAlertConfig.email) {
@@ -267,7 +267,7 @@ function BGPalerter() {
                 <div className="login-container">
                     <h2>{isRegisterMode ? 'Create Account' : 'Sign In'}</h2>
                     <p style={{ textAlign: 'center', marginBottom: '30px', color: '#7f8c8d' }}>
-                        {isRegisterMode 
+                        {isRegisterMode
                             ? 'Register to start monitoring BGP changes for your ASNs'
                             : 'Sign in to manage your BGP monitoring'}
                     </p>
@@ -316,9 +316,9 @@ function BGPalerter() {
                                 </small>
                             )}
                         </div>
-                        <button 
-                            type="submit" 
-                            className="btn btn-primary" 
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
                             style={{ width: '100%' }}
                             disabled={loading}
                         >
@@ -326,7 +326,7 @@ function BGPalerter() {
                         </button>
                     </form>
                     <div className="login-footer">
-                        <button 
+                        <button
                             onClick={() => {
                                 setIsRegisterMode(!isRegisterMode);
                                 setError('');
@@ -360,31 +360,31 @@ function BGPalerter() {
             </div>
 
             <div className="tabs">
-                <button 
+                <button
                     className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`}
                     onClick={() => setActiveTab('dashboard')}
                 >
                     Dashboard
                 </button>
-                <button 
+                <button
                     className={`tab ${activeTab === 'asns' ? 'active' : ''}`}
                     onClick={() => setActiveTab('asns')}
                 >
                     Monitored ASNs ({monitoredAsns.length})
                 </button>
-                <button 
+                <button
                     className={`tab ${activeTab === 'alerts' ? 'active' : ''}`}
                     onClick={() => setActiveTab('alerts')}
                 >
                     Alerts ({stats?.unacknowledged_alerts || 0})
                 </button>
-                <button 
+                <button
                     className={`tab ${activeTab === 'emails' ? 'active' : ''}`}
                     onClick={() => setActiveTab('emails')}
                 >
                     Notification Emails ({userEmails.length})
                 </button>
-                <button 
+                <button
                     className={`tab ${activeTab === 'channels' ? 'active' : ''}`}
                     onClick={() => setActiveTab('channels')}
                 >
@@ -437,7 +437,7 @@ function BGPalerter() {
                                         </div>
                                         <div className="alert-message">{alert.message}</div>
                                         {!alert.is_acknowledged && (
-                                            <button 
+                                            <button
                                                 onClick={() => handleAcknowledgeAlert(alert.id)}
                                                 className="btn btn-primary"
                                                 style={{ marginTop: '10px' }}
@@ -543,7 +543,7 @@ function BGPalerter() {
                                     </div>
                                     <div className="alert-message">{alert.message}</div>
                                     {!alert.is_acknowledged && (
-                                        <button 
+                                        <button
                                             onClick={() => handleAcknowledgeAlert(alert.id)}
                                             className="btn btn-primary"
                                             style={{ marginTop: '10px' }}
@@ -622,7 +622,7 @@ function BGPalerter() {
                     </div>
 
                     <form onSubmit={handleAddAlertConfig} className="add-asn-form">
-                        <select 
+                        <select
                             className="form-input"
                             value={newAlertChannel}
                             onChange={(e) => {

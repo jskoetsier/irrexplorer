@@ -189,10 +189,11 @@ async def update_user(request: Request):
             return JSONResponse({"error": "User not found"}, status_code=404)
 
         # Build update values
-        update_values = {"updated_at": datetime.utcnow()}
+        update_values = {}
 
         if "full_name" in data:
             update_values["full_name"] = data["full_name"]
+            update_values["updated_at"] = datetime.utcnow()
 
         if "is_active" in data:
             update_values["is_active"] = data["is_active"]
