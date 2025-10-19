@@ -347,28 +347,28 @@ const DataSourcesModal = ({ query, type, onClose }) => {
     }
   };
 
-  const handleOverlayKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      onClose();
-    }
-  };
+  React.useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
   return (
-    <div
-      className="modal-overlay"
+    <div 
+      className="modal-overlay" 
       onClick={onClose}
-      onKeyDown={handleOverlayKeyDown}
-      role="button"
-      tabIndex={0}
-      aria-label="Close modal"
+      role="presentation"
     >
-      <div
-        className="modal-content"
+      <div 
+        className="modal-content" 
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
         role="dialog"
         aria-modal="true"
-        tabIndex={-1}
       >
         <div className="modal-header">
           <h3>External Data Sources - {query}</h3>
