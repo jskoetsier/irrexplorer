@@ -6,8 +6,8 @@ from typing import Dict, List, Optional, Set
 
 import marshmallow
 from dataclasses_json import LetterCase, config, dataclass_json
-from irrexplorer.state import RIR, RIR_EXPECTED_IRR, IPNetwork, RPKIStatus
 
+from irrexplorer.state import RIR, RIR_EXPECTED_IRR, IPNetwork, RPKIStatus
 
 """
 This file defines a number of properties that essentially form the

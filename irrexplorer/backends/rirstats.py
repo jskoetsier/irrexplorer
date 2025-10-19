@@ -2,6 +2,7 @@ import ipaddress
 
 import aggregate6
 from asgiref.sync import sync_to_async
+
 from irrexplorer.backends.common import (
     LocalSQLQueryBase,
     retrieve_url_text,

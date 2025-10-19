@@ -8,7 +8,6 @@ import os
 from typing import Dict
 
 import yaml
-
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 

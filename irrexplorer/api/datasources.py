@@ -9,11 +9,12 @@ Provides endpoints for:
 
 import logging
 
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
 from irrexplorer.backends.lookingglass import get_looking_glass_client
 from irrexplorer.backends.peeringdb import get_peeringdb_client
 from irrexplorer.backends.rdap import get_rdap_client
-from starlette.requests import Request
-from starlette.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 

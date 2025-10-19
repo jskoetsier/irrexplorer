@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from databases import Database
+
 from irrexplorer.settings import DATABASE_URL
 from irrexplorer.storage import tables
 

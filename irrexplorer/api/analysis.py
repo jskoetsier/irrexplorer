@@ -14,9 +14,10 @@ Provides endpoints for:
 from datetime import datetime
 from typing import Optional
 
-from irrexplorer.api.caching import cached
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+from irrexplorer.api.caching import cached
 
 
 @cached(ttl=1800, key_prefix="analysis:rpki_dashboard")

@@ -9,6 +9,7 @@ import logging
 from typing import List, Set
 
 from databases import Database
+
 from irrexplorer.api.collectors import PrefixCollector
 
 logger = logging.getLogger(__name__)

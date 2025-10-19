@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 import sqlalchemy.dialects.postgresql as pg
+
 from irrexplorer.state import RIR
 
 sa_metadata = sa.MetaData()
