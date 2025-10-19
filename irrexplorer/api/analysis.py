@@ -25,23 +25,29 @@ from irrexplorer.api.caching import cached
 async def _get_rpki_dashboard_data(database):
     """Fetch routing statistics dashboard."""
 
-    # Get BGP statistics
+    # Get BGP statistics with RPKI status
     bgp_stats_query = """
         SELECT
             COUNT(*) as total_routes,
             COUNT(DISTINCT asn) as unique_asns,
-            COUNT(DISTINCT prefix) as unique_prefixes
+            COUNT(DISTINCT prefix) as unique_prefixes,
+            COUNT(CASE WHEN rpki_status = 'valid' THEN 1 END) as valid_count,
+            COUNT(CASE WHEN rpki_status = 'invalid' THEN 1 END) as invalid_count,
+            COUNT(CASE WHEN rpki_status = 'not_found' THEN 1 END) as not_found_count,
+            COUNT(CASE WHEN rpki_status IS NULL OR rpki_status = 'unknown' THEN 1 END) as unknown_count
         FROM bgp
     """
 
     bgp_row = await database.fetch_one(bgp_stats_query)
 
-    # Get RIR statistics
+    # Get RIR statistics with RPKI status
     rir_stats_query = """
         SELECT
             r.rir::text as rir,
             COUNT(DISTINCT r.prefix) as total_prefixes,
-            COUNT(DISTINCT b.prefix) as announced_prefixes
+            COUNT(CASE WHEN b.rpki_status = 'valid' THEN 1 END) as valid_count,
+            COUNT(CASE WHEN b.rpki_status = 'invalid' THEN 1 END) as invalid_count,
+            COUNT(CASE WHEN b.rpki_status = 'not_found' OR b.prefix IS NULL THEN 1 END) as not_found_count
         FROM rirstats r
         LEFT JOIN bgp b ON r.prefix = b.prefix
         GROUP BY r.rir
@@ -50,39 +56,61 @@ async def _get_rpki_dashboard_data(database):
 
     rir_rows = await database.fetch_all(rir_stats_query)
 
-    # Since we don't have rpki_status field, we'll show basic routing stats
-    # Format as if we have status breakdown for UI compatibility
     total_routes = bgp_row["total_routes"] or 0
-
-    status_breakdown = {
-        "announced": {
-            "count": total_routes,
-            "unique_asns": bgp_row["unique_asns"] or 0,
-            "percentage": 100.0
-        }
-    }
+    
+    # Build status breakdown
+    status_breakdown = {}
+    
+    if total_routes > 0:
+        valid_count = bgp_row["valid_count"] or 0
+        invalid_count = bgp_row["invalid_count"] or 0
+        not_found_count = bgp_row["not_found_count"] or 0
+        unknown_count = bgp_row["unknown_count"] or 0
+        
+        if valid_count > 0:
+            status_breakdown["valid"] = {
+                "count": valid_count,
+                "percentage": round((valid_count / total_routes) * 100, 2)
+            }
+        if invalid_count > 0:
+            status_breakdown["invalid"] = {
+                "count": invalid_count,
+                "percentage": round((invalid_count / total_routes) * 100, 2)
+            }
+        if not_found_count > 0:
+            status_breakdown["not_found"] = {
+                "count": not_found_count,
+                "percentage": round((not_found_count / total_routes) * 100, 2)
+            }
+        if unknown_count > 0:
+            status_breakdown["unknown"] = {
+                "count": unknown_count,
+                "percentage": round((unknown_count / total_routes) * 100, 2)
+            }
 
     # Format RIR coverage
     roa_coverage = []
     for row in rir_rows:
         total = row["total_prefixes"]
-        announced = row["announced_prefixes"] or 0
+        valid = row["valid_count"] or 0
+        invalid = row["invalid_count"] or 0
+        not_found = row["not_found_count"] or 0
+        
         if total > 0:
             roa_coverage.append({
                 "rir": row["rir"],
                 "total_prefixes": total,
-                "valid": announced,
-                "invalid": 0,
-                "not_found": total - announced,
-                "coverage_percentage": round((announced / total) * 100, 2)
+                "valid": valid,
+                "invalid": invalid,
+                "not_found": not_found,
+                "coverage_percentage": round((valid / total) * 100, 2)
             })
 
     return {
         "status_breakdown": status_breakdown,
         "total_prefixes": total_routes,
         "roa_coverage_by_rir": roa_coverage,
-        "timestamp": datetime.utcnow().isoformat(),
-        "note": "Displaying basic routing statistics. Full RPKI validation requires rpki_status field."
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 

@@ -19,7 +19,7 @@ def upgrade():
     # Add rpki_status column to bgp table
     op.add_column('bgp', sa.Column('rpki_status', sa.String(20), nullable=True))
     op.create_index('ix_bgp_rpki_status', 'bgp', ['rpki_status'])
-    
+
     # Set default value to 'unknown' for existing rows
     op.execute("UPDATE bgp SET rpki_status = 'unknown' WHERE rpki_status IS NULL")
 

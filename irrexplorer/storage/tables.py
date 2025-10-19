@@ -10,6 +10,7 @@ bgp = sa.Table(
     sa_metadata,
     sa.Column("asn", sa.BigInteger, index=True, nullable=False),
     sa.Column("prefix", pg.CIDR, nullable=False),
+    sa.Column("rpki_status", sa.String(20), index=True, nullable=True),
     sa.Index("ix_bgp_prefix", sa.text("prefix inet_ops"), postgresql_using="gist"),
 )
 
