@@ -277,22 +277,21 @@ class TestDataSourceParsing:
         client = LookingGlassClient()
 
         data = {
-            "prefix": "192.0.2.0/24",
-            "routes": [
-                {
-                    "prefix": "192.0.2.0/24",
-                    "as_path": [174, 13335],
-                    "next_hop": "198.32.160.94",
-                    "peer": "peer1",
-                }
-            ],
+            "routes": {
+                "192.0.2.0/24": [{
+                    "aspath": [[174], [13335]],
+                    "exit_nexthop": "198.32.160.94",
+                    "ip": "peer1",
+                    "communities": []
+                }]
+            }
         }
 
-        result = client._parse_prefix_response(data)
+        result = client._parse_prefix_response(data, "192.0.2.0/24")
 
         assert result["prefix"] == "192.0.2.0/24"
         assert result["total_routes"] == 1
-        assert result["routes"][0]["origin_asn"] == 13335
+        assert result["routes"][0]["origin_asn"] == "13335"
 
     def test_rdap_parse_ip_response(self):
         """Test parsing of RDAP IP response"""
