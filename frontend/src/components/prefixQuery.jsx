@@ -4,12 +4,14 @@ import PrefixTableExplanation from "./prefixTable/prefixTableExplanation";
 import PrefixTable from "./prefixTable/prefixTable";
 import {findLeastSpecific} from "../utils/prefixData";
 import api from "../services/api";
+import DataSourcesModal from "./dataSources/DataSourcesModal";
 
 class PrefixQuery extends Component {
     state = {
         leastSpecificPrefix: null,
         directOverlapPrefixes: {hasLoaded: false, data: [], apiCallUrl: ''},
         leastSpecificOverlapPrefixes: {hasLoaded: false, data: [], apiCallUrl: ''},
+        showDataSources: false,
     };
 
     async componentDidMount() {
@@ -47,10 +49,19 @@ class PrefixQuery extends Component {
 
     render() {
         const {query, reducedColour, filterWarningError} = this.props;
-        const {leastSpecificOverlapPrefixes, directOverlapPrefixes, leastSpecificPrefix} = this.state;
+        const {leastSpecificOverlapPrefixes, directOverlapPrefixes, leastSpecificPrefix, showDataSources} = this.state;
         return (
             <>
-                <h1>Report for prefix {query}</h1>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <h1>Report for prefix {query}</h1>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => this.setState({showDataSources: true})}
+                        style={{height: 'fit-content'}}
+                    >
+                        <i className="fas fa-external-link-alt"></i> External Data Sources
+                    </button>
+                </div>
                 <PrefixTableExplanation/>
                 <h2 className="h3 mt-4">
                     Directly overlapping prefixes of {query}
@@ -78,6 +89,14 @@ class PrefixQuery extends Component {
                         defaultSortSmallestFirst={true}
                     />
                 </>}
+
+                {showDataSources && (
+                    <DataSourcesModal
+                        query={query}
+                        type="prefix"
+                        onClose={() => this.setState({showDataSources: false})}
+                    />
+                )}
             </>
         );
     }

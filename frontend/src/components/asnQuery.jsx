@@ -5,6 +5,7 @@ import PrefixTableExplanation from "./prefixTable/prefixTableExplanation";
 import PrefixTable from "./prefixTable/prefixTable";
 import api from "../services/api";
 import SetIncludedTable from "./common/setIncludedTable";
+import DataSourcesModal from "./dataSources/DataSourcesModal";
 
 class ASNQuery extends Component {
     state = {
@@ -12,6 +13,7 @@ class ASNQuery extends Component {
         directOriginPrefixes: [],
         overlapPrefixes: [],
         apiCallUrl: '',
+        showDataSources: false,
     };
 
     async componentDidMount() {
@@ -42,10 +44,19 @@ class ASNQuery extends Component {
 
     render() {
         const {query, reducedColour, filterWarningError} = this.props;
-        const {overlapPrefixes, hasLoadedPrefixes, directOriginPrefixes} = this.state;
+        const {overlapPrefixes, hasLoadedPrefixes, directOriginPrefixes, showDataSources} = this.state;
         return (
             <>
-                <h1>Report for ASN {query}</h1>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <h1>Report for ASN {query}</h1>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => this.setState({showDataSources: true})}
+                        style={{height: 'fit-content'}}
+                    >
+                        <i className="fas fa-external-link-alt"></i> External Data Sources
+                    </button>
+                </div>
                 <PrefixTableExplanation/>
                 <h2 className="h3 mt-4">
                     Prefixes originated by {query}
@@ -80,6 +91,14 @@ class ASNQuery extends Component {
                 </h2>
                 <hr/>
                 <SetIncludedTable query={this.props.query} objectClass="route-set"/>
+
+                {showDataSources && (
+                    <DataSourcesModal
+                        query={query}
+                        type="asn"
+                        onClose={() => this.setState({showDataSources: false})}
+                    />
+                )}
             </>
         );
     }

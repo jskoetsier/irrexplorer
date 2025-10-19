@@ -168,33 +168,144 @@ Response:
 }
 ```
 
-## Integration with Frontend
+## Frontend Integration
 
-To integrate these data sources into the frontend UI:
+The frontend now includes a modal component for viewing external data sources.
 
-1. Create new components for each data source
-2. Add links in the query result pages to fetch additional data
-3. Display the data in expandable sections or modal dialogs
-4. Cache responses appropriately to avoid rate limiting
+### Using the Data Sources Modal
 
-Example integration locations:
-- **Prefix results page**: Add "View BGP Routes" and "View RDAP Info" buttons
-- **ASN results page**: Add "View PeeringDB Info", "View BGP Routes", and "View RDAP Info"
-- **Sidebar or tools menu**: Add "Data Sources" section with links to all external sources
+On ASN and Prefix query result pages, you'll find an "External Data Sources" button that opens a modal with three tabs:
 
-## Data Collection
+1. **BGP Looking Glass** - Real-time routing information
+2. **RDAP** - Registration and allocation data
+3. **PeeringDB** - Peering and interconnection details (ASN queries only)
 
-The primary BGP and IRR data still needs to be collected regularly. Run the data import:
+### Implementation Details
+
+**Service Layer** (`frontend/src/services/dataSourceService.js`):
+- API calls for all data sources
+- Automatic ASN format handling (removes "AS" prefix)
+- Proper URL encoding for prefixes and domains
+
+**Modal Component** (`frontend/src/components/dataSources/DataSourcesModal.jsx`):
+- Tab-based interface for different data sources
+- Responsive design with dark theme
+- Loading states and error handling
+- Formatted data display with tables and info grids
+
+**Integration Points**:
+- `frontend/src/components/asnQuery.jsx` - ASN result pages
+- `frontend/src/components/prefixQuery.jsx` - Prefix result pages
+
+### Adding to Other Pages
+
+To add the data sources modal to other components:
+
+```jsx
+import DataSourcesModal from "./dataSources/DataSourcesModal";
+
+// In your component state
+state = {
+  showDataSources: false,
+  // ...
+};
+
+// Add button
+<button onClick={() => this.setState({showDataSources: true})}>
+  External Data Sources
+</button>
+
+// Add modal
+{this.state.showDataSources && (
+  <DataSourcesModal
+    query={yourQuery}
+    type="asn" // or "prefix"
+    onClose={() => this.setState({showDataSources: false})}
+  />
+)}
+```
+
+## Data Collection and Scheduling
+
+The primary BGP and IRR data needs to be collected regularly to keep the application data fresh.
+
+### Manual Import
+
+Run the data import manually:
 
 ```bash
 # Inside the backend container
 python -m irrexplorer.commands.import_data
 
 # Or from host with Docker/Podman
-docker-compose exec backend python -m irrexplorer.commands.import_data
+podman exec irrexplorer-backend python -m irrexplorer.commands.import_data
+# or
+docker exec irrexplorer-backend python -m irrexplorer.commands.import_data
 ```
 
-This should be scheduled to run periodically (e.g., via cron) to keep data fresh.
+### Automated Import with Cron
+
+Use the provided cron script (`scripts/import_data_cron.sh`) to schedule regular imports:
+
+1. **Setup the cron script**:
+   ```bash
+   # Make script executable (if not already)
+   chmod +x /opt/irrexplorer/scripts/import_data_cron.sh
+
+   # Create log directory
+   sudo mkdir -p /var/log/irrexplorer
+   sudo chown phreak:phreak /var/log/irrexplorer
+   ```
+
+2. **Add to crontab**:
+   ```bash
+   crontab -e
+   ```
+
+   Add this line to run every 4 hours:
+   ```
+   0 */4 * * * /opt/irrexplorer/scripts/import_data_cron.sh >> /var/log/irrexplorer/data_import.log 2>&1
+   ```
+
+3. **Alternative schedules**:
+   ```bash
+   # Every 6 hours
+   0 */6 * * * /opt/irrexplorer/scripts/import_data_cron.sh >> /var/log/irrexplorer/data_import.log 2>&1
+
+   # Daily at 2 AM
+   0 2 * * * /opt/irrexplorer/scripts/import_data_cron.sh >> /var/log/irrexplorer/data_import.log 2>&1
+
+   # Twice daily (2 AM and 2 PM)
+   0 2,14 * * * /opt/irrexplorer/scripts/import_data_cron.sh >> /var/log/irrexplorer/data_import.log 2>&1
+   ```
+
+4. **Monitor logs**:
+   ```bash
+   # View recent import logs
+   tail -f /var/log/irrexplorer/data_import.log
+
+   # Check last import status
+   tail -20 /var/log/irrexplorer/data_import.log
+   ```
+
+### What the Cron Script Does
+
+The `import_data_cron.sh` script:
+- Creates a lock file to prevent concurrent imports
+- Runs the data import using podman/docker
+- Clears Redis cache on success to refresh visualizations
+- Logs all operations with timestamps
+- Handles cleanup on exit
+
+### Configuration
+
+Customize the script via environment variables:
+```bash
+PROJECT_DIR=/opt/irrexplorer
+LOG_DIR=/var/log/irrexplorer
+LOCK_FILE=/tmp/irrexplorer_import.lock
+PODMAN_CONTAINER=irrexplorer-backend
+```
 
 ## Troubleshooting
 
