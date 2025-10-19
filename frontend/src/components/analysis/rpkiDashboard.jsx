@@ -52,8 +52,12 @@ const RPKIDashboard = () => {
     );
   }
 
-  if (!dashboardData || !dashboardData.status_breakdown || !dashboardData.roa_coverage_by_rir) {
-    return null;
+  if (!dashboardData || !dashboardData.status_breakdown) {
+    return (
+      <div className="analysis-container">
+        <div className="alert alert-warning">No data available</div>
+      </div>
+    );
   }
 
   const pieData = Object.keys(dashboardData.status_breakdown).map(status => ({
