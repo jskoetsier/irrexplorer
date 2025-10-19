@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/jskoetsier/irrexplorer/actions/workflows/ci.yml/badge.svg)](https://github.com/jskoetsier/irrexplorer/actions/workflows/ci.yml)
 [![Security](https://github.com/jskoetsier/irrexplorer/actions/workflows/security.yml/badge.svg)](https://github.com/jskoetsier/irrexplorer/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/jskoetsier/irrexplorer/branch/main/graph/badge.svg)](https://codecov.io/gh/jskoetsier/irrexplorer)
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-BSD%202--Clause-blue.svg)](LICENSE)
 
