@@ -5,6 +5,57 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2025-10-19
+
+### Enhanced Analysis Features
+- **RPKI Validation Dashboard**: Comprehensive RPKI status overview
+  - Validation status breakdown (valid, invalid, not_found, unknown)
+  - ROA coverage by RIR with charts and tables
+  - Percentage-based metrics and statistics
+  - GET `/api/analysis/rpki-dashboard` endpoint
+- **ROA Coverage Analysis**: Detailed ROA coverage metrics
+  - Global and per-ASN coverage analysis
+  - Coverage percentages and prefix counts
+  - GET `/api/analysis/roa-coverage?asn={asn}` endpoint
+- **IRR Consistency Checker**: Verify IRR database consistency
+  - Compare BGP routes with IRR data
+  - Identify inconsistencies and missing entries
+  - Per-ASN and global consistency metrics
+  - GET `/api/analysis/irr-consistency?asn={asn}` endpoint
+- **BGP Hijack Detection**: Identify potential hijacks
+  - Detect RPKI invalid routes (potential hijacks)
+  - High/medium/low severity classification
+  - Alert descriptions with announcing and authorized ASNs
+  - GET `/api/analysis/hijack-detection` endpoint
+- **Prefix Overlap Analyzer**: Find overlapping prefixes
+  - Identify exact matches, more-specifics, less-specifics
+  - Interactive search interface
+  - Visual categorization of overlap types
+  - GET `/api/analysis/prefix-overlap?prefix={prefix}` endpoint
+- **AS-Path Analysis**: Analyze ASN relationships and paths
+  - Identify neighboring ASNs
+  - Shared prefix analysis
+  - GET `/api/analysis/as-path?asn={asn}` endpoint
+- **WHOIS Integration**: WHOIS information lookup (placeholder)
+  - Framework for WHOIS data integration
+  - GET `/api/analysis/whois?resource={resource}` endpoint
+
+### Frontend Components
+- **Analysis Dashboard**: New `/analysis` route with tabbed interface
+  - RPKI Dashboard tab with charts and statistics
+  - Hijack Detection tab with alert list
+  - Prefix Overlap tab with search functionality
+- **Interactive Charts**: Pie charts, bar charts using Recharts
+- **Search Forms**: Dedicated search interfaces for analysis tools
+- **Severity Badges**: Color-coded indicators for alerts and status
+
+### User Experience
+- Link from homepage to Enhanced Analysis
+- Lazy-loaded components for performance
+- Error boundaries for graceful error handling
+- Responsive design for all screen sizes
+- Real-time data with caching (15-30 minute TTL)
+
 ## [1.10.0] - 2025-10-19
 
 ### Export & Reporting Features

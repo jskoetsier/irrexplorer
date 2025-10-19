@@ -8,7 +8,7 @@ import traceback
 
 import databases
 
-from irrexplorer.api import advanced_search, export, openapi, queries, search_navigation, visualization
+from irrexplorer.api import advanced_search, analysis, export, openapi, queries, search_navigation, visualization
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
@@ -114,6 +114,14 @@ routes = [
     # API Documentation endpoints
     Route("/api/docs/openapi.json", openapi.openapi_schema),
     Route("/api/docs", openapi.swagger_ui),
+    # Enhanced Analysis endpoints
+    Route("/api/analysis/rpki-dashboard", analysis.get_rpki_dashboard),
+    Route("/api/analysis/roa-coverage", analysis.get_roa_coverage),
+    Route("/api/analysis/irr-consistency", analysis.get_irr_consistency),
+    Route("/api/analysis/hijack-detection", analysis.get_hijack_detection),
+    Route("/api/analysis/prefix-overlap", analysis.get_prefix_overlap),
+    Route("/api/analysis/as-path", analysis.get_as_path_analysis),
+    Route("/api/analysis/whois", analysis.get_whois_info),
 ]
 
 # Only mount static files if not testing and directory exists

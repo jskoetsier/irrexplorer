@@ -27,10 +27,16 @@ function Home() {
                     <QueryForm/>
 
                     <div className="text-center my-4">
-                        <Link to="/visualizations" className="btn btn-outline-primary btn-lg">
-                            <i className="fas fa-chart-bar me-2"></i>
-                            Explore Data Visualizations
-                        </Link>
+                        <div className="btn-group" role="group">
+                            <Link to="/visualizations" className="btn btn-outline-primary btn-lg">
+                                <i className="fas fa-chart-bar me-2"></i>
+                                Data Visualizations
+                            </Link>
+                            <Link to="/analysis" className="btn btn-outline-success btn-lg">
+                                <i className="fas fa-microscope me-2"></i>
+                                Enhanced Analysis
+                            </Link>
+                        </div>
                     </div>
 
                     <SearchHistory/>

@@ -198,17 +198,67 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 - `/api/docs` - Swagger UI interface
 - `/api/docs/openapi.json` - OpenAPI schema
 
+### Phase 10: Enhanced Analysis (v1.11.0) ✅ COMPLETED
+
+**RPKI Validation Dashboard**
+- Comprehensive RPKI status overview with charts
+- Validation status breakdown (valid, invalid, not_found, unknown)
+- ROA coverage by RIR with detailed statistics
+- Pie charts and bar charts for visualization
+- GET `/api/analysis/rpki-dashboard` endpoint
+
+**ROA Coverage Analysis**
+- Global and per-ASN coverage metrics
+- Coverage percentages and prefix counts
+- Identify prefixes without ROA coverage
+- GET `/api/analysis/roa-coverage?asn={asn}` endpoint
+
+**IRR Consistency Checker**
+- Compare BGP routes with IRR data
+- Identify inconsistencies and missing entries
+- Per-ASN and global consistency statistics
+- Issue reporting with details
+- GET `/api/analysis/irr-consistency?asn={asn}` endpoint
+
+**BGP Hijack Detection**
+- Detect RPKI invalid routes (potential hijacks)
+- Alert severity classification (high/medium/low)
+- Detailed alert information with announcing and authorized ASNs
+- Alert list with filtering
+- GET `/api/analysis/hijack-detection` endpoint
+
+**Prefix Overlap Analyzer**
+- Find exact matches, more-specifics, and less-specifics
+- Interactive search interface
+- Visual categorization by overlap type
+- Comprehensive prefix lists
+- GET `/api/analysis/prefix-overlap?prefix={prefix}` endpoint
+
+**AS-Path Analysis**
+- Analyze ASN relationships
+- Identify neighboring ASNs
+- Shared prefix analysis
+- GET `/api/analysis/as-path?asn={asn}` endpoint
+
+**WHOIS Integration**
+- Framework for WHOIS data lookup (placeholder)
+- Integration points for external WHOIS services
+- GET `/api/analysis/whois?resource={resource}` endpoint
+
+**Frontend Components**
+- New `/analysis` route with dedicated dashboard
+- Tabbed interface for different analysis tools
+- RPKI Dashboard with interactive charts
+- Hijack Detection with alert list
+- Prefix Overlap with search functionality
+- Error boundaries and loading states
+- Responsive design
+
 ---
 
 ## Planned Enhancements
 
 ### Near-term (Next 3-6 months)
-
-**Export & Reporting**
-- CSV/JSON export functionality
-- PDF report generation
-- API documentation (Swagger/OpenAPI)
-- Bulk query support
 
 **Administration & Configuration**
 - Admin page for runtime configuration
@@ -373,8 +423,8 @@ We welcome contributions! Priority areas for community involvement:
 
 ---
 
-**Last Updated:** 2025-10-17
-**Current Version:** 1.5.0
+**Last Updated:** 2025-10-19
+**Current Version:** 1.11.0
 **Next Review:** 2026-01-17
 
 ---

@@ -371,6 +371,18 @@ This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICE
 
 See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 
+### Version 1.11.0 (2025-10-19) - Enhanced Analysis Release
+
+**New Features:**
+- RPKI Validation Dashboard with comprehensive status overview
+- ROA Coverage Analysis for global and per-ASN metrics
+- IRR Consistency Checker to verify database accuracy
+- BGP Hijack Detection with severity classification
+- Prefix Overlap Analyzer for exact/more/less-specific matches
+- AS-Path Analysis for relationship mapping
+- WHOIS Integration framework
+- New `/analysis` route with tabbed interface
+
 ### Version 1.10.0 (2025-10-19) - Export & Reporting Release
 
 **New Features:**
