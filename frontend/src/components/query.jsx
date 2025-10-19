@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 
 import QueryForm from "./common/queryForm";
 import AdvancedSearchFilters from "./advancedSearchFilters";
+import ExportButtons from "./exportButtons";
 
 import logo from "../logo.png";
 import {Link, navigate} from "@reach/router";
@@ -119,6 +120,11 @@ class Query extends Component {
                     </form>
                 </div>
                 <AdvancedSearchFilters onFilterChange={this.handleFilterChange} />
+                {this.state.cleanQuery && (
+                    <div className="mb-3">
+                        <ExportButtons query={this.state.cleanQuery} queryType={this.state.queryCategory} />
+                    </div>
+                )}
                 {
                     this.state.cleanQuery
                     && <ContentClass

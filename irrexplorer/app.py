@@ -8,7 +8,7 @@ import traceback
 
 import databases
 
-from irrexplorer.api import advanced_search, queries, search_navigation, visualization
+from irrexplorer.api import advanced_search, export, openapi, queries, search_navigation, visualization
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
@@ -106,6 +106,14 @@ routes = [
     Route("/api/viz/timeline", visualization.get_historical_timeline),
     Route("/api/viz/rir-distribution", visualization.get_rir_distribution),
     Route("/api/viz/prefix-distribution", visualization.get_prefix_size_distribution),
+    # Export & Reporting endpoints
+    Route("/api/export/csv", export.export_to_csv, methods=["POST"]),
+    Route("/api/export/json", export.export_to_json, methods=["POST"]),
+    Route("/api/export/pdf", export.generate_pdf_report, methods=["POST"]),
+    Route("/api/bulk-query", export.bulk_query, methods=["POST"]),
+    # API Documentation endpoints
+    Route("/api/docs/openapi.json", openapi.openapi_schema),
+    Route("/api/docs", openapi.swagger_ui),
 ]
 
 # Only mount static files if not testing and directory exists

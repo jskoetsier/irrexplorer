@@ -169,6 +169,35 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 - `/api/viz/prefix-distribution` - Prefix size distribution
 - Cached visualization data for performance
 
+### Phase 9: Export & Reporting (v1.10.0) ✅ COMPLETED
+
+**Export Functionality**
+- CSV export for query results
+- JSON export with metadata
+- Export buttons on query result pages
+- Automatic filename generation with timestamps
+- Support for all query types (prefix, ASN, set)
+
+**Bulk Operations**
+- Bulk query API endpoint (up to 100 queries per request)
+- Combined results with success/error status
+- Efficient batch processing
+
+**API Documentation**
+- OpenAPI 3.0/Swagger specification
+- Interactive Swagger UI at `/api/docs`
+- Comprehensive endpoint documentation
+- Request/response schemas
+- Example queries and responses
+
+**Backend API**
+- `/api/export/csv` - Export query results as CSV
+- `/api/export/json` - Export query results as JSON
+- `/api/export/pdf` - PDF report generation (placeholder)
+- `/api/bulk-query` - Execute multiple queries in one request
+- `/api/docs` - Swagger UI interface
+- `/api/docs/openapi.json` - OpenAPI schema
+
 ---
 
 ## Planned Enhancements
