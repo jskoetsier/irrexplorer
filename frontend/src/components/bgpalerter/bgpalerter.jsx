@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import bgpalerterService from '../../services/bgpalerterService';
 import './bgpalerter.css';
 
@@ -9,23 +9,17 @@ function BGPalerter() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
+    
     // Dashboard state
     const [status, setStatus] = useState(null);
     const [monitoredAsns, setMonitoredAsns] = useState([]);
     const [alerts, setAlerts] = useState([]);
-
+    
     // Form state
     const [newAsn, setNewAsn] = useState('');
     const [newDescription, setNewDescription] = useState('');
 
-    useEffect(() => {
-        if (isLoggedIn) {
-            loadDashboardData();
-        }
-    }, [isLoggedIn]);
-
-    const loadDashboardData = async () => {
+    const loadDashboardData = useCallback(async () => {
         setLoading(true);
         setError('');
 
@@ -50,7 +44,13 @@ function BGPalerter() {
         }
 
         setLoading(false);
-    };
+    }, [email]);
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            loadDashboardData();
+        }
+    }, [isLoggedIn, loadDashboardData]);
 
     const handleLogin = (e) => {
         e.preventDefault();
