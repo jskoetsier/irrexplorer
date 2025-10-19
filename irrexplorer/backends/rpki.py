@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 class RPKIValidator:
     """
-    RPKI validator using Cloudflare's RPKI validation API.
+    RPKI validator using Routinator's JSON API.
     Updates rpki_status field in bgp table based on ROA validation.
     """
 
-    CLOUDFLARE_API = "https://rpki.cloudflare.com/api/v1/origin/{asn}/{prefix}"
-    BATCH_SIZE = 100
-    MAX_CONCURRENT = 10
+    ROUTINATOR_API = "http://routinator:8323/api/v1/validity/{asn}/{prefix}"
+    BATCH_SIZE = 50
+    MAX_CONCURRENT = 20
 
     async def run_validation(self):
         """Run RPKI validation on all BGP routes."""
@@ -80,30 +80,35 @@ class RPKIValidator:
 
     async def _validate_route(self, asn: int, prefix: str) -> str:
         """
-        Validate a single route using Cloudflare RPKI API.
+        Validate a single route using Routinator's JSON API.
         Returns: 'valid', 'invalid', 'not_found', or 'unknown'
         """
-        url = self.CLOUDFLARE_API.format(asn=asn, prefix=prefix)
+        url = self.ROUTINATOR_API.format(asn=asn, prefix=prefix)
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as response:
                     if response.status == 200:
                         data = await response.json()
 
-                        # Cloudflare API returns {"status": "Valid"|"Invalid"|"NotFound"}
-                        status = data.get("status", "").lower()
+                        # Routinator returns {"validated_route":{"validity":{"state":"valid"|"invalid"|"not-found"}}}
+                        validated_route = data.get("validated_route", {})
+                        validity = validated_route.get("validity", {})
+                        state = validity.get("state", "").lower()
 
-                        if status == "valid":
+                        if state == "valid":
                             return "valid"
-                        elif status == "invalid":
+                        elif state == "invalid":
                             return "invalid"
-                        elif status == "notfound":
+                        elif state == "not-found":
                             return "not_found"
                         else:
                             return "unknown"
+                    elif response.status == 404:
+                        # No ROA found for this prefix
+                        return "not_found"
                     else:
-                        logger.warning(f"API returned status {response.status} for AS{asn} {prefix}")
+                        logger.debug(f"API returned status {response.status} for AS{asn} {prefix}")
                         return "unknown"
 
         except asyncio.TimeoutError:

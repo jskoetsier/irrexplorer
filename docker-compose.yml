@@ -24,6 +24,34 @@ services:
           cpus: '0.5'
           memory: 2G
 
+  # Routinator RPKI Validator
+  routinator:
+    image: nlnetlabs/routinator:latest
+    container_name: irrexplorer-routinator
+    command: ["server", "--http", "0.0.0.0:8323", "--rtr", "0.0.0.0:3323"]
+    ports:
+      - "8323:8323"
+      - "3323:3323"
+    volumes:
+      - routinator_data:/root/.rpki-cache
+    networks:
+      - irrexplorer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8323/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
   db:
     image: postgres:15-alpine
     container_name: irrexplorer-db
@@ -128,6 +156,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  routinator_data:
     driver: local
 
 networks:
