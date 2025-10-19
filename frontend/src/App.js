@@ -8,6 +8,7 @@ const Query = lazy(() => import("./components/query"));
 const Status = lazy(() => import("./components/status"));
 const Visualizations = lazy(() => import("./components/visualizations"));
 const Analysis = lazy(() => import("./components/analysis"));
+const BGPalerter = lazy(() => import("./components/bgpalerter/bgpalerter"));
 
 class App extends Component {
     render() {
@@ -19,6 +20,7 @@ class App extends Component {
                         <Status path="/status/"/>
                         <Visualizations path="/visualizations"/>
                         <Analysis path="/analysis"/>
+                        <BGPalerter path="/bgp-monitoring"/>
                         {/* Reach does not have native support for a slash in the url, hence two Query paths */}
                         <Query path="/query/:query"/>
                         <Query path="/:category/:query"/>
