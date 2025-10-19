@@ -1,3 +1,7 @@
+# IRRExplorer Compose Configuration
+# Compatible with both Docker Compose and Podman Compose
+# For Podman: use 'podman-compose' instead of 'docker-compose'
+
 services:
   # Redis Cache
   redis:

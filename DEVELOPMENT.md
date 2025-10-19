@@ -24,7 +24,7 @@ git clone https://github.com/yourusername/irrexplorer.git
 cd irrexplorer
 
 # Start development environment
-docker-compose -f docker-compose.dev.yml up
+podman-compose -f podman-compose.dev.yml up
 ```
 
 Access:
@@ -162,7 +162,7 @@ cd frontend
 yarn test
 
 # Integration tests
-docker-compose -f docker-compose.dev.yml run backend pytest
+podman-compose -f podman-compose.dev.yml run backend pytest
 ```
 
 ### 4. Format and Lint

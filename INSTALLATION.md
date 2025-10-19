@@ -6,7 +6,7 @@ Complete installation guide for IRRExplorer - Internet Routing Registry Explorer
 
 1. [System Requirements](#system-requirements)
 2. [Installation Methods](#installation-methods)
-3. [Docker Installation (Recommended)](#docker-installation-recommended)
+3. [Podman Installation (Recommended)](#docker-installation-recommended)
 4. [Manual Installation](#manual-installation)
 5. [Database Setup](#database-setup)
 6. [Initial Data Import](#initial-data-import)
@@ -31,8 +31,8 @@ Complete installation guide for IRRExplorer - Internet Routing Registry Explorer
 ### Software Prerequisites
 
 #### For Docker Installation
-- Docker Engine 20.10+
-- Docker Compose 2.0+
+- Podman 20.10+
+- podman-compose 2.0+
 
 #### For Manual Installation
 - Python 3.9+
@@ -44,7 +44,7 @@ Complete installation guide for IRRExplorer - Internet Routing Registry Explorer
 
 ### Quick Decision Guide
 
-**Choose Docker if:**
+**Choose Podman if:**
 - You want the fastest setup
 - You need isolated environments
 - You're deploying to production
@@ -56,25 +56,25 @@ Complete installation guide for IRRExplorer - Internet Routing Registry Explorer
 - You have specific Python/Node versions
 - You need fine-grained control
 
-## Docker Installation (Recommended)
+## Podman Installation (Recommended)
 
 ### 1. Install Docker
 
 #### Ubuntu/Debian
 ```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+curl -fsSL https://podman.io -o get-podmansh
+sudo sh get-podmansh
 sudo usermod -aG docker $USER
 ```
 
 #### macOS
 ```bash
 brew install --cask docker
-# Or download from https://www.docker.com/products/docker-desktop
+# Or download from https://www.podmancom/products/docker-desktop
 ```
 
 #### Windows
-Download Docker Desktop from https://www.docker.com/products/docker-desktop
+Download Podman Desktop from https://www.podmancom/products/docker-desktop
 
 ### 2. Clone Repository
 
@@ -102,19 +102,19 @@ DEBUG=False
 
 #### Production
 ```bash
-docker-compose up -d
+podman-compose up -d
 ```
 
 #### Development
 ```bash
-docker-compose -f docker-compose.dev.yml up
+podman-compose -f podman-compose.dev.yml up
 ```
 
 ### 5. Import Initial Data
 
 ```bash
 # This will take 15-30 minutes depending on your connection
-docker-compose exec backend python -m irrexplorer.commands.import_data
+podman-compose exec backend python -m irrexplorer.commands.import_data
 ```
 
 ### 6. Access Application
@@ -127,7 +127,7 @@ docker-compose exec backend python -m irrexplorer.commands.import_data
 
 ```bash
 # Check all services are running
-docker-compose ps
+podman-compose ps
 
 # Check backend health
 curl http://localhost:8000/api/metadata/
@@ -356,7 +356,7 @@ The data import consists of three main sources:
 
 ```bash
 # Docker
-docker-compose exec backend python -m irrexplorer.commands.import_data
+podman-compose exec backend python -m irrexplorer.commands.import_data
 
 # Manual
 poetry run python -m irrexplorer.commands.import_data
@@ -381,7 +381,7 @@ poetry run python -c "from irrexplorer.backends.rirstats import import_all; impo
 crontab -e
 
 # Add daily update at 2 AM
-0 2 * * * cd /path/to/irrexplorer && docker-compose exec -T backend python -m irrexplorer.commands.import_data >> /var/log/irrexplorer-import.log 2>&1
+0 2 * * * cd /path/to/irrexplorer && podman-compose exec -T backend python -m irrexplorer.commands.import_data >> /var/log/irrexplorer-import.log 2>&1
 ```
 
 #### Using systemd timer (Linux)
@@ -396,7 +396,7 @@ After=network.target
 Type=oneshot
 User=irrexplorer
 WorkingDirectory=/opt/irrexplorer
-ExecStart=/usr/local/bin/docker-compose exec -T backend python -m irrexplorer.commands.import_data
+ExecStart=/usr/local/bin/podman-compose exec -T backend python -m irrexplorer.commands.import_data
 ```
 
 Create `/etc/systemd/system/irrexplorer-import.timer`:
@@ -475,7 +475,7 @@ Edit `frontend/src/config.json`:
 
 ```bash
 # Docker
-docker-compose ps
+podman-compose ps
 
 # Expected output: All services "Up" and "healthy"
 ```
@@ -512,7 +512,7 @@ curl http://localhost/api/metadata/
 
 ```bash
 # Docker
-docker-compose exec db psql -U irrexplorer -c "SELECT COUNT(*) FROM bgp;"
+podman-compose exec db psql -U irrexplorer -c "SELECT COUNT(*) FROM bgp;"
 
 # Manual
 psql -U irrexplorer -c "SELECT COUNT(*) FROM bgp;"
@@ -540,7 +540,7 @@ time curl -s "http://localhost:8000/api/prefixes/prefix/1.1.1.0/24" > /dev/null
 # Find process using port
 sudo lsof -i :80
 
-# Kill process or change port in docker-compose.yml
+# Kill process or change port in podman-compose.yml
 ports:
   - "8080:80"  # Use port 8080 instead
 ```
@@ -552,7 +552,7 @@ ports:
 **Solution**:
 ```bash
 # Docker: Check database is healthy
-docker-compose ps db
+podman-compose ps db
 
 # Manual: Check PostgreSQL is running
 sudo systemctl status postgresql
@@ -583,7 +583,7 @@ df -h
 
 3. Check logs:
 ```bash
-docker-compose logs -f backend
+podman-compose logs -f backend
 ```
 
 4. Increase timeout if needed (edit source):
@@ -611,7 +611,7 @@ yarn build
 
 3. Check nginx logs (Docker):
 ```bash
-docker-compose logs frontend
+podman-compose logs frontend
 ```
 
 4. Verify API endpoint in browser console
@@ -624,12 +624,12 @@ docker-compose logs frontend
 
 1. Rebuild indexes:
 ```bash
-docker-compose exec db psql -U irrexplorer -d irrexplorer -c "REINDEX DATABASE irrexplorer;"
+podman-compose exec db psql -U irrexplorer -d irrexplorer -c "REINDEX DATABASE irrexplorer;"
 ```
 
 2. Update statistics:
 ```bash
-docker-compose exec db psql -U irrexplorer -d irrexplorer -c "ANALYZE;"
+podman-compose exec db psql -U irrexplorer -d irrexplorer -c "ANALYZE;"
 ```
 
 3. Check query plans:
@@ -652,7 +652,7 @@ HTTP_WORKERS=2  # In .env
 
 2. Limit Docker memory:
 ```yaml
-# docker-compose.yml
+# podman-compose.yml
 services:
   backend:
     mem_limit: 2g
@@ -688,7 +688,7 @@ After successful installation:
 
 - **Documentation**: See `DOCKER.md`, `SECURITY_CONFIGURATION.md`
 - **Issues**: https://github.com/yourusername/irrexplorer/issues
-- **Logs**: `docker-compose logs -f` or check `/var/log/`
+- **Logs**: `podman-compose logs -f` or check `/var/log/`
 
 ## Uninstallation
 
@@ -696,10 +696,10 @@ After successful installation:
 
 ```bash
 # Stop and remove containers
-docker-compose down
+podman-compose down
 
 # Remove volumes (WARNING: Deletes all data)
-docker-compose down -v
+podman-compose down -v
 
 # Remove images
 docker rmi irrexplorer_backend irrexplorer_frontend
