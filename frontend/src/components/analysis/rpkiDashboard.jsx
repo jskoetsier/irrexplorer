@@ -24,9 +24,11 @@ const RPKIDashboard = () => {
     try {
       setLoading(true);
       const data = await getRPKIDashboard();
+      console.log('RPKI Dashboard Data:', data);
       setDashboardData(data);
       setError(null);
     } catch (err) {
+      console.error('RPKI Dashboard Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
