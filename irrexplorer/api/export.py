@@ -114,7 +114,7 @@ async def export_to_json(request: Request) -> Response:
             "api_endpoints": {
                 "prefix": f"/api/prefixes/prefix/{query}" if "/" in query else None,
                 "asn": f"/api/prefixes/asn/{query}" if query.upper().startswith("AS") else None,
-                "set": f"/api/sets/expand/{query}" if not "/" in query and not query.upper().startswith("AS") else None
+                "set": f"/api/sets/expand/{query}" if "/" not in query and not query.upper().startswith("AS") else None
             }
         }
 

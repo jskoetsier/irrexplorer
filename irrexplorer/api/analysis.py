@@ -11,9 +11,8 @@ Provides endpoints for:
 - WHOIS integration
 """
 
-from collections import defaultdict
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Optional
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse
