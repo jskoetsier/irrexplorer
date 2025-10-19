@@ -342,12 +342,6 @@ const DataSourcesModal = ({ query, type, onClose }) => {
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      onClose();
-    }
-  };
-
   React.useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
