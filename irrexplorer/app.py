@@ -20,6 +20,7 @@ from starlette.routing import Mount, Route
 from irrexplorer.api import (
     advanced_search,
     analysis,
+    datasources,
     export,
     openapi,
     queries,
@@ -130,6 +131,23 @@ routes = [
     Route("/api/analysis/prefix-overlap", analysis.get_prefix_overlap),
     Route("/api/analysis/as-path", analysis.get_as_path_analysis),
     Route("/api/analysis/whois", analysis.get_whois_info),
+    # Data Sources endpoints - Looking Glass
+    Route("/api/datasources/lg/prefix/{prefix:path}", datasources.looking_glass_prefix),
+    Route("/api/datasources/lg/asn/{asn}", datasources.looking_glass_asn),
+    Route("/api/datasources/lg/route/{prefix:path}", datasources.looking_glass_route),
+    Route("/api/datasources/lg/peers", datasources.looking_glass_peers),
+    # Data Sources endpoints - RDAP
+    Route("/api/datasources/rdap/ip/{ip:path}", datasources.rdap_ip),
+    Route("/api/datasources/rdap/asn/{asn}", datasources.rdap_asn),
+    Route("/api/datasources/rdap/domain/{domain:path}", datasources.rdap_domain),
+    # Data Sources endpoints - PeeringDB
+    Route("/api/datasources/peeringdb/asn/{asn}", datasources.peeringdb_asn),
+    Route(
+        "/api/datasources/peeringdb/facility/{facility_id:int}",
+        datasources.peeringdb_facility,
+    ),
+    Route("/api/datasources/peeringdb/ix/{ix_id:int}", datasources.peeringdb_ix),
+    Route("/api/datasources/peeringdb/search", datasources.peeringdb_search),
 ]
 
 # Only mount static files if not testing and directory exists

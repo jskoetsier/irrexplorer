@@ -17,8 +17,31 @@ ALLOWED_ORIGINS = ["*"] if DEBUG else config("ALLOWED_ORIGINS", default="").spli
 HTTP_PORT = config("HTTP_PORT", cast=int, default=8000)
 HTTP_WORKERS = config("HTTP_WORKERS", cast=int, default=4)
 
+# BGP Data Sources
 BGP_SOURCE = config("BGP_SOURCE", default="https://bgp.tools/table.jsonl")
+BGP_SOURCES = [
+    BGP_SOURCE,
+    config(
+        "BGP_SOURCE_SECONDARY", default="https://stat.ripe.net/data/bgp-state/data.json"
+    ),
+]
 BGP_SOURCE_MINIMUM_HITS = config("BGP_SOURCE_MINIMUM_HITS", default=20, cast=int)
+
+# Additional IRR Sources
+ADDITIONAL_IRR_SOURCES = config(
+    "ADDITIONAL_IRR_SOURCES",
+    default="RADB,ALTDB,BELL,LEVEL3,RGNET,APNIC,JPIRR,ARIN,BBOI,NTTCOM",
+).split(",")
+
+# Looking Glass Configuration
+LOOKING_GLASS_URL = config("LOOKING_GLASS_URL", default="https://lg.ring.nlnog.net")
+
+# RDAP Configuration
+RDAP_TIMEOUT = config("RDAP_TIMEOUT", cast=int, default=30)
+
+# PeeringDB Configuration
+PEERINGDB_TIMEOUT = config("PEERINGDB_TIMEOUT", cast=int, default=30)
+
 DATABASE_URL = config("DATABASE_URL", cast=databases.DatabaseURL)
 
 if TESTING:
