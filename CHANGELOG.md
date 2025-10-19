@@ -5,6 +5,55 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2025-10-19
+
+### Added
+- **RPKI Status Field**: Implemented `rpki_status` column in BGP table for full RPKI validation
+  - Database migration to add rpki_status field with index
+  - Values: 'valid', 'invalid', 'not_found', 'unknown'
+  - Updated BGP importer to set initial status as 'unknown'
+- **Routinator Integration**: Added RPKI validator service
+  - Routinator container for RPKI ROA validation
+  - RPKI validator backend using Routinator JSON API
+  - Background validation process for all BGP routes
+  - Validates routes against ROA data and updates database
+- **RPKI Dashboard Enhancement**: Updated to use actual rpki_status data
+  - Removed warning message about missing rpki_status field
+  - Real-time RPKI validation statistics by status
+  - RIR-specific RPKI coverage with valid/invalid/not_found counts
+  - Accurate percentage-based metrics
+
+### Changed
+- **Container Runtime Migration**: Migrated from Docker to Podman
+  - Installed Podman and podman-compose on RHEL 9 server
+  - Updated all base images with fully qualified registry names (docker.io/)
+  - Configured for rootless operation under user 'phreak'
+  - Removed resource limits (CPU/memory) for rootless compatibility
+  - Enabled lingering for user to allow service persistence
+- **Docker Configuration**: Updated for Podman compatibility
+  - All images now use fully qualified names (docker.io/redis:7-alpine, etc.)
+  - Removed deploy resource limits that require root cgroup access
+  - Maintained health checks and restart policies
+  - Network and volume configurations remain unchanged
+
+### Fixed
+- RPKI dashboard showing "100% unknown" due to missing rpki_status field
+- Dockerfile.frontend using short image name incompatible with Podman
+- Resource limit errors when running containers as non-root user
+
+### Infrastructure
+- Running as unprivileged user 'phreak' on production server (195.95.177.11)
+- Podman rootless mode for improved security
+- All services accessible via podman-compose
+- Background RPKI validation process via podman-compose run
+
+### Technical Details
+- Database: Added indexed rpki_status VARCHAR(20) column to bgp table
+- Migration ID: add_rpki_status (depends on 6c73e25499d1)
+- Routinator API endpoint: http://routinator:8323/api/v1/validity/{asn}/{prefix}
+- Validation batch size: 50 routes, max 20 concurrent requests
+- Server: RHEL 9.6, Podman 5.4.0, podman-compose 1.5.0
+
 ## [1.11.0] - 2025-10-19
 
 ### Enhanced Analysis Features
