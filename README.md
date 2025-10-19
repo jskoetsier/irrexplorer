@@ -86,11 +86,11 @@ See [INSTALLATION.md](INSTALLATION.md) for detailed instructions.
 
 | Document | Description |
 |----------|-------------|
-| [INSTALLATION.md](INSTALLATION.md) | Complete installation guide for Docker and native setups |
-| [DOCKER.md](DOCKER.md) | Docker deployment and operations guide |
+| [INSTALLATION.md](INSTALLATION.md) | Complete installation guide for Podman and native setups |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow and coding standards |
 | [ROADMAP.md](ROADMAP.md) | Development roadmap and planned features |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
+| [DATA_SOURCES.md](DATA_SOURCES.md) | External data sources integration guide |
 | [frontend/OPTIMIZATION.md](frontend/OPTIMIZATION.md) | Frontend optimization guide |
 
 ## Architecture
@@ -135,7 +135,7 @@ See [INSTALLATION.md](INSTALLATION.md) for detailed instructions.
 - GIST indexes for efficient prefix queries
 
 **Deployment:**
-- Docker & Docker Compose
+- Podman & podman-compose
 - nginx - Reverse proxy
 - uvicorn - ASGI server
 
@@ -208,8 +208,8 @@ IRRExplorer aggregates data from multiple authoritative sources:
 ### Update Data
 
 ```bash
-# Docker
-docker-compose exec backend python -m irrexplorer.commands.import_data
+# Podman
+podman exec irrexplorer-backend python -m irrexplorer.commands.import_data
 
 # Native
 poetry run python -m irrexplorer.commands.import_data
@@ -217,18 +217,18 @@ poetry run python -m irrexplorer.commands.import_data
 
 ### Automated Updates
 
-Schedule daily updates with cron:
+Schedule daily updates with cron (see [DATA_SOURCES.md](DATA_SOURCES.md) for details):
 
 ```bash
-# Add to crontab
-0 2 * * * cd /path/to/irrexplorer && docker-compose exec -T backend python -m irrexplorer.commands.import_data
+# Use the provided cron script
+0 */4 * * * /opt/irrexplorer/scripts/import_data_cron.sh >> ~/logs/irrexplorer/data_import.log 2>&1
 ```
 
 ### Backup Database
 
 ```bash
-# Docker
-docker-compose exec db pg_dump -U irrexplorer irrexplorer > backup.sql
+# Podman
+podman exec irrexplorer-db pg_dump -U irrexplorer irrexplorer > backup.sql
 
 # Native
 pg_dump -U irrexplorer irrexplorer > backup.sql
