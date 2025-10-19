@@ -126,8 +126,9 @@ function BGPalerter() {
                     {error && <div className="error-message">{error}</div>}
                     <form onSubmit={handleLogin}>
                         <div className="form-group">
-                            <label>Email Address</label>
+                            <label htmlFor="email-input">Email Address</label>
                             <input
+                                id="email-input"
                                 type="email"
                                 className="form-input"
                                 value={email}
