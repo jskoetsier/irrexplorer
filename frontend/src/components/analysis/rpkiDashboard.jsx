@@ -122,59 +122,60 @@ const RPKIDashboard = () => {
         </div>
       </div>
 
-      <div className="row mt-4">
-        <div className="col-md-12">
-          <div className="analysis-card">
-            <h4>ROA Coverage by RIR</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dashboardData.roa_coverage_by_rir}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="rir" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="valid" fill="#28a745" name="Valid" />
-                <Bar dataKey="invalid" fill="#dc3545" name="Invalid" />
-                <Bar dataKey="not_found" fill="#ffc107" name="Not Found" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      <div className="row mt-4">
-        <div className="col-md-12">
-          <div className="analysis-card">
-            <h4>RIR Coverage Details</h4>
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>RIR</th>
-                    <th>Total Prefixes</th>
-                    <th>Valid</th>
-                    <th>Invalid</th>
-                    <th>Not Found</th>
-                    <th>Coverage %</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboardData.roa_coverage_by_rir.map(rir => (
-                    <tr key={rir.rir}>
-                      <td><strong>{rir.rir}</strong></td>
-                      <td>{rir.total_prefixes.toLocaleString()}</td>
-                      <td><span className="badge bg-success">{rir.valid}</span></td>
-                      <td><span className="badge bg-danger">{rir.invalid}</span></td>
-                      <td><span className="badge bg-warning text-dark">{rir.not_found}</span></td>
-                      <td>{rir.coverage_percentage}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {dashboardData.roa_coverage_by_rir && dashboardData.roa_coverage_by_rir.length > 0 && (
+        <>
+          <div className="row mt-4">
+            <div className="col-md-12">
+              <div className="analysis-card">
+                <h4>ROA Coverage by RIR</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={dashboardData.roa_coverage_by_rir}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="rir" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="valid" fill="#28a745" name="Announced" />
+                    <Bar dataKey="not_found" fill="#ffc107" name="Not Announced" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+
+          <div className="row mt-4">
+            <div className="col-md-12">
+              <div className="analysis-card">
+                <h4>RIR Coverage Details</h4>
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>RIR</th>
+                        <th>Total Prefixes</th>
+                        <th>Announced</th>
+                        <th>Not Announced</th>
+                        <th>Coverage %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dashboardData.roa_coverage_by_rir.map(rir => (
+                        <tr key={rir.rir}>
+                          <td><strong>{rir.rir}</strong></td>
+                          <td>{rir.total_prefixes.toLocaleString()}</td>
+                          <td><span className="badge bg-success">{rir.valid}</span></td>
+                          <td><span className="badge bg-warning text-dark">{rir.not_found}</span></td>
+                          <td>{rir.coverage_percentage}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="analysis-footer">
         <small className="text-muted">
