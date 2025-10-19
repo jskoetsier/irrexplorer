@@ -57,16 +57,16 @@ async def _get_rpki_dashboard_data(database):
     rir_rows = await database.fetch_all(rir_stats_query)
 
     total_routes = bgp_row["total_routes"] or 0
-    
+
     # Build status breakdown
     status_breakdown = {}
-    
+
     if total_routes > 0:
         valid_count = bgp_row["valid_count"] or 0
         invalid_count = bgp_row["invalid_count"] or 0
         not_found_count = bgp_row["not_found_count"] or 0
         unknown_count = bgp_row["unknown_count"] or 0
-        
+
         if valid_count > 0:
             status_breakdown["valid"] = {
                 "count": valid_count,
@@ -95,7 +95,7 @@ async def _get_rpki_dashboard_data(database):
         valid = row["valid_count"] or 0
         invalid = row["invalid_count"] or 0
         not_found = row["not_found_count"] or 0
-        
+
         if total > 0:
             roa_coverage.append({
                 "rir": row["rir"],
