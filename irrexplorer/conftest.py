@@ -13,8 +13,6 @@ from starlette.config import environ
 environ["TESTING"] = "TRUE"
 
 
-
-
 @pytest.fixture(autouse=True, scope="session")
 def setup_test_database():
     url = str(settings.DATABASE_URL)

@@ -2,6 +2,7 @@
 BGPalerter Management API
 Provides web interface integration for BGPalerter container.
 """
+
 import json
 import os
 from typing import Dict
@@ -107,9 +108,7 @@ async def add_monitored_asn(request: Request):
         # Save configuration
         save_monitored_prefixes(prefixes)
 
-        return JSONResponse(
-            {"message": f"AS{asn} added to monitoring", "asn": asn_str}
-        )
+        return JSONResponse({"message": f"AS{asn} added to monitoring", "asn": asn_str})
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)

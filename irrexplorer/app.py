@@ -151,10 +151,22 @@ routes = [
     # BGPalerter Management endpoints
     Route("/api/bgpalerter/status", bgpalerter_manager.get_bgpalerter_status),
     Route("/api/bgpalerter/monitored-asns", bgpalerter_manager.get_monitored_asns),
-    Route("/api/bgpalerter/monitored-asns", bgpalerter_manager.add_monitored_asn, methods=["POST"]),
-    Route("/api/bgpalerter/monitored-asns/{asn}", bgpalerter_manager.delete_monitored_asn, methods=["DELETE"]),
+    Route(
+        "/api/bgpalerter/monitored-asns",
+        bgpalerter_manager.add_monitored_asn,
+        methods=["POST"],
+    ),
+    Route(
+        "/api/bgpalerter/monitored-asns/{asn}",
+        bgpalerter_manager.delete_monitored_asn,
+        methods=["DELETE"],
+    ),
     Route("/api/bgpalerter/alerts", bgpalerter_manager.get_recent_alerts),
-    Route("/api/bgpalerter/webhook/{alert_type}", bgpalerter_manager.webhook_receiver, methods=["POST"]),
+    Route(
+        "/api/bgpalerter/webhook/{alert_type}",
+        bgpalerter_manager.webhook_receiver,
+        methods=["POST"],
+    ),
 ]
 
 # Only mount static files if not testing and directory exists
