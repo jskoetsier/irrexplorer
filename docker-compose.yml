@@ -15,14 +15,6 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 2500M
-        reservations:
-          cpus: '0.5'
-          memory: 2G
 
   # Routinator RPKI Validator
   routinator:
@@ -43,14 +35,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
 
   db:
     image: docker.io/postgres:15-alpine
@@ -91,14 +75,6 @@ services:
       retries: 5
     networks:
       - irrexplorer-network
-    deploy:
-      resources:
-        limits:
-          cpus: '6'
-          memory: 8G
-        reservations:
-          cpus: '2'
-          memory: 4G
 
   # Backend API
   backend:
@@ -131,14 +107,6 @@ services:
     networks:
       - irrexplorer-network
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '4'
-          memory: 4G
-        reservations:
-          cpus: '2'
-          memory: 2G
 
   # Frontend (nginx serving React build)
   frontend:
