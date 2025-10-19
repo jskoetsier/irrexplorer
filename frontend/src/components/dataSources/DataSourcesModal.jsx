@@ -353,20 +353,25 @@ const DataSourcesModal = ({ query, type, onClose }) => {
         onClose();
       }
     };
-    
+
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div 
-      className="modal-overlay" 
-      onClick={onClose}
+    <div
+      className="modal-overlay"
+      onClick={handleOverlayClick}
       role="presentation"
     >
-      <div 
-        className="modal-content" 
-        onClick={(e) => e.stopPropagation()}
+      <div
+        className="modal-content"
         role="dialog"
         aria-modal="true"
       >
