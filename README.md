@@ -10,6 +10,9 @@ Internet Routing Registry Explorer - A web application for exploring and analyzi
 - **Smart Search**: Autocomplete, search history, and bookmarks
 - **Advanced Filtering**: Filter by resource type and validation status
 - **Popular & Trending**: Discover frequently-queried resources
+- **Data Visualizations**: Interactive charts and graphs for routing data
+- **Export & Reporting**: CSV/JSON export with bulk query support
+- **API Documentation**: Swagger/OpenAPI interactive documentation
 - **Multi-Source Data**: Integrates BGP, IRR, RPKI, and RIR statistics
 - **Real-time Updates**: Fresh data from authoritative sources
 - **Interactive UI**: Modern responsive React-based interface
@@ -364,7 +367,26 @@ This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICE
 - **RIPE NCC, ARIN, APNIC, LACNIC, AFRINIC** - RIR statistics
 - **RPKI** - Route Origin Authorization data
 
-## Changelog
+## Recent Updates
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+
+### Version 1.10.0 (2025-10-19) - Export & Reporting Release
+
+**New Features:**
+- CSV/JSON export functionality for query results
+- Bulk query API (up to 100 queries per request)
+- Interactive Swagger/OpenAPI documentation at `/api/docs`
+- Export buttons on all query result pages
+
+### Version 1.9.0 (2025-10-19) - Data Visualization Release
+
+**New Features:**
+- Interactive prefix allocation treemaps
+- ASN relationship force-directed graphs
+- Historical timeline charts (7-90 days)
+- Geographical RIR distribution visualizations
+- Dedicated `/visualizations` page
 
 ### Version 1.5.0 (2025-10-17) - Responsive Design & UX Release
 

@@ -5,6 +5,103 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2025-10-19
+
+### Export & Reporting Features
+- **CSV Export**: Export query results to CSV format
+  - Automatic filename generation with timestamps
+  - Downloadable file with proper headers
+  - POST `/api/export/csv` endpoint
+- **JSON Export**: Export query results to JSON format with metadata
+  - Structured JSON output with query metadata
+  - Timestamp and query type information
+  - POST `/api/export/json` endpoint
+- **Bulk Query API**: Execute multiple queries in a single request
+  - Support for up to 100 queries per request
+  - Combined results with success/error status
+  - POST `/api/bulk-query` endpoint
+- **API Documentation**: Comprehensive Swagger/OpenAPI documentation
+  - Interactive Swagger UI at `/api/docs`
+  - OpenAPI 3.0 schema at `/api/docs/openapi.json`
+  - Complete endpoint documentation with examples
+  - Request/response schemas for all endpoints
+
+### Frontend Enhancements
+- **Export Buttons**: CSV and JSON export buttons on query result pages
+  - One-click export functionality
+  - Loading indicators during export
+  - Error handling and user feedback
+- **Export Service**: Client-side export service with axios integration
+  - Automatic file downloads
+  - Proper MIME types and Content-Disposition headers
+
+### API Endpoints Added
+- `POST /api/export/csv` - Export query results as CSV
+- `POST /api/export/json` - Export query results as JSON
+- `POST /api/export/pdf` - PDF report generation (placeholder)
+- `POST /api/bulk-query` - Execute multiple queries
+- `GET /api/docs` - Swagger UI documentation interface
+- `GET /api/docs/openapi.json` - OpenAPI schema
+
+### Developer Experience
+- Complete API documentation for integration
+- Standardized export formats
+- Bulk query capability for automation
+- Self-service API documentation
+
+## [1.9.0] - 2025-10-19
+
+### Data Visualization Features
+- **Interactive Prefix Allocation Maps**: Treemap visualization
+  - View by RIR or top 50 ASNs
+  - Color-coded allocation visualization
+  - Interactive tooltips with detailed statistics
+  - Prefix counts and total IP addresses
+- **ASN Relationship Graphs**: Force-directed network visualization
+  - Interactive network graph showing ASN relationships
+  - Based on prefix overlaps
+  - Click nodes to explore related ASNs
+  - Customizable graph with zoom and pan
+  - Top 50 related ASNs displayed
+- **Historical Timeline Views**: Time-series query activity
+  - Line and bar chart options
+  - 7, 30, 60, or 90-day views
+  - Query type breakdown (ASN, prefix, set)
+  - Top queries per day with accordion view
+  - Summary statistics (total, average, peak)
+- **Geographical RIR Distribution**: Regional allocation visualization
+  - Pie charts and bar charts
+  - IPv4 and IPv6 breakdown
+  - Detailed RIR statistics table
+  - Regional information and country coverage
+  - Continent-based grouping
+
+### Visualization Libraries
+- **Recharts**: Integrated for charts and graphs
+  - Responsive container support
+  - Multiple chart types (line, bar, pie, treemap)
+  - Customizable tooltips and legends
+- **React Force Graph 2D**: Network graph visualization
+  - Force-directed graph layout
+  - Interactive node and edge rendering
+  - Custom styling and callbacks
+
+### Backend API
+- `GET /api/viz/prefix-allocation` - Prefix allocation data
+- `GET /api/viz/asn-relationships/{asn}` - ASN relationship graph data
+- `GET /api/viz/timeline?days={days}` - Historical query activity
+- `GET /api/viz/rir-distribution` - RIR distribution statistics
+- `GET /api/viz/prefix-distribution` - Prefix size distribution
+- Cached visualization data (15-60 minute TTL)
+
+### User Experience
+- Dedicated `/visualizations` route
+- Tab-based navigation between visualizations
+- Loading spinners for async data
+- Error boundaries for graceful error handling
+- Responsive design for all screen sizes
+- Link from homepage to visualizations
+
 ## [1.8.2] - 2025-10-18
 
 ### Production Deployment
