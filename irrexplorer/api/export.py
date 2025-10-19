@@ -28,12 +28,12 @@ def sanitize_csv_field(field):
         return field
 
     # Remove leading dangerous characters that could trigger formula execution
-    dangerous_prefixes = ['=', '+', '-', '@', '\t', '\r']
+    dangerous_prefixes = ["=", "+", "-", "@", "\t", "\r"]
     while field and any(field.startswith(prefix) for prefix in dangerous_prefixes):
         field = field[1:]
 
     # Also escape pipe and other potentially dangerous characters
-    field = field.replace('|', '\\|')
+    field = field.replace("|", "\\|")
 
     return field
 
@@ -52,7 +52,7 @@ async def export_to_csv(request: Request) -> Response:
             return Response(
                 content=json.dumps({"error": "Query parameter required"}),
                 status_code=400,
-                media_type="application/json"
+                media_type="application/json",
             )
 
         # Create CSV output with basic info
@@ -74,16 +74,14 @@ async def export_to_csv(request: Request) -> Response:
         return Response(
             content=csv_content,
             media_type="text/csv",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            }
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     except Exception as e:
         return Response(
             content=json.dumps({"error": str(e)}),
             status_code=500,
-            media_type="application/json"
+            media_type="application/json",
         )
 
 
@@ -102,7 +100,7 @@ async def export_to_json(request: Request) -> Response:
             return Response(
                 content=json.dumps({"error": "Query parameter required"}),
                 status_code=400,
-                media_type="application/json"
+                media_type="application/json",
             )
 
         # Create basic export structure
@@ -113,9 +111,13 @@ async def export_to_json(request: Request) -> Response:
             "note": "Use specific API endpoints for full query results",
             "api_endpoints": {
                 "prefix": f"/api/prefixes/prefix/{query}" if "/" in query else None,
-                "asn": f"/api/prefixes/asn/{query}" if query.upper().startswith("AS") else None,
-                "set": f"/api/sets/expand/{query}" if "/" not in query and not query.upper().startswith("AS") else None
-            }
+                "asn": f"/api/prefixes/asn/{query}"
+                if query.upper().startswith("AS")
+                else None,
+                "set": f"/api/sets/expand/{query}"
+                if "/" not in query and not query.upper().startswith("AS")
+                else None,
+            },
         }
 
         filename = f"irrexplorer_{query.replace('/', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -123,16 +125,14 @@ async def export_to_json(request: Request) -> Response:
         return Response(
             content=json.dumps(export_data, indent=2),
             media_type="application/json",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            }
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     except Exception as e:
         return Response(
             content=json.dumps({"error": str(e)}),
             status_code=500,
-            media_type="application/json"
+            media_type="application/json",
         )
 
 
@@ -150,14 +150,14 @@ async def bulk_query(request: Request) -> Response:
             return Response(
                 content=json.dumps({"error": "queries array required"}),
                 status_code=400,
-                media_type="application/json"
+                media_type="application/json",
             )
 
         if len(queries) > 100:
             return Response(
                 content=json.dumps({"error": "Maximum 100 queries per request"}),
                 status_code=400,
-                media_type="application/json"
+                media_type="application/json",
             )
 
         results = []
@@ -167,34 +167,36 @@ async def bulk_query(request: Request) -> Response:
             query_type = query_item.get("type", "auto")
 
             if not query:
-                results.append({
-                    "query": query,
-                    "error": "Query parameter missing"
-                })
+                results.append({"query": query, "error": "Query parameter missing"})
                 continue
 
             # Add query to results with basic info
-            results.append({
-                "query": query,
-                "type": query_type,
-                "status": "queued",
-                "note": "Use individual API endpoints for full query execution"
-            })
+            results.append(
+                {
+                    "query": query,
+                    "type": query_type,
+                    "status": "queued",
+                    "note": "Use individual API endpoints for full query execution",
+                }
+            )
 
         return Response(
-            content=json.dumps({
-                "timestamp": datetime.utcnow().isoformat(),
-                "total_queries": len(queries),
-                "results": results
-            }, indent=2),
-            media_type="application/json"
+            content=json.dumps(
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "total_queries": len(queries),
+                    "results": results,
+                },
+                indent=2,
+            ),
+            media_type="application/json",
         )
 
     except Exception as e:
         return Response(
             content=json.dumps({"error": str(e)}),
             status_code=500,
-            media_type="application/json"
+            media_type="application/json",
         )
 
 
@@ -213,7 +215,7 @@ async def generate_pdf_report(request: Request) -> Response:
             return Response(
                 content=json.dumps({"error": "Query parameter required"}),
                 status_code=400,
-                media_type="application/json"
+                media_type="application/json",
             )
 
         # For now, return report structure that could be rendered as PDF
@@ -222,17 +224,16 @@ async def generate_pdf_report(request: Request) -> Response:
             "generated_at": datetime.utcnow().isoformat(),
             "query": query,
             "message": "PDF generation requires additional setup. Use JSON/CSV export for now.",
-            "note": "To enable PDF reports, install reportlab: pip install reportlab"
+            "note": "To enable PDF reports, install reportlab: pip install reportlab",
         }
 
         return Response(
-            content=json.dumps(report_data, indent=2),
-            media_type="application/json"
+            content=json.dumps(report_data, indent=2), media_type="application/json"
         )
 
     except Exception as e:
         return Response(
             content=json.dumps({"error": str(e)}),
             status_code=500,
-            media_type="application/json"
+            media_type="application/json",
         )

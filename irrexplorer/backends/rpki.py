@@ -34,11 +34,13 @@ class RPKIValidator:
 
             # Process in batches to avoid overwhelming the API
             for i in range(0, total, self.BATCH_SIZE):
-                batch = routes[i:i + self.BATCH_SIZE]
+                batch = routes[i : i + self.BATCH_SIZE]
                 await self._validate_batch(database, batch)
 
                 if (i + self.BATCH_SIZE) % 1000 == 0:
-                    logger.info(f"Validated {min(i + self.BATCH_SIZE, total)}/{total} routes...")
+                    logger.info(
+                        f"Validated {min(i + self.BATCH_SIZE, total)}/{total} routes..."
+                    )
 
             logger.info("RPKI validation complete!")
 
@@ -71,8 +73,7 @@ class RPKIValidator:
                         WHERE prefix = :prefix::inet AND asn = :asn
                     """
                     await database.execute(
-                        update_query,
-                        {"status": status, "prefix": prefix, "asn": asn}
+                        update_query, {"status": status, "prefix": prefix, "asn": asn}
                     )
 
         tasks = [validate_route(row) for row in batch]
@@ -87,7 +88,9 @@ class RPKIValidator:
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                async with session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=5)
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
 
@@ -108,7 +111,9 @@ class RPKIValidator:
                         # No ROA found for this prefix
                         return "not_found"
                     else:
-                        logger.debug(f"API returned status {response.status} for AS{asn} {prefix}")
+                        logger.debug(
+                            f"API returned status {response.status} for AS{asn} {prefix}"
+                        )
                         return "unknown"
 
         except asyncio.TimeoutError:

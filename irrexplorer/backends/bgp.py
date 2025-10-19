@@ -78,7 +78,9 @@ class BGPImporter:
             async with database.transaction():
                 await database.execute(tables.bgp.delete())
                 if prefixes:
-                    logger.info(f"Loading {len(prefixes)} BGP routes with RPKI validation...")
+                    logger.info(
+                        f"Loading {len(prefixes)} BGP routes with RPKI validation..."
+                    )
                     for chunk in chunks(prefixes, 5000):
                         values = [
                             {
@@ -94,7 +96,9 @@ class BGPImporter:
                             )
                         except DataError as de:
                             raise ImporterError(f"Failed to insert BGP data: {de}")
-                    logger.info("BGP import complete. RPKI validation data will be populated by separate validator.")
+                    logger.info(
+                        "BGP import complete. RPKI validation data will be populated by separate validator."
+                    )
 
 
 class BGPQuery(LocalSQLQueryBase):

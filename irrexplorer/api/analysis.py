@@ -69,22 +69,22 @@ async def _get_rpki_dashboard_data(database):
         if valid_count > 0:
             status_breakdown["valid"] = {
                 "count": valid_count,
-                "percentage": round((valid_count / total_routes) * 100, 2)
+                "percentage": round((valid_count / total_routes) * 100, 2),
             }
         if invalid_count > 0:
             status_breakdown["invalid"] = {
                 "count": invalid_count,
-                "percentage": round((invalid_count / total_routes) * 100, 2)
+                "percentage": round((invalid_count / total_routes) * 100, 2),
             }
         if not_found_count > 0:
             status_breakdown["not_found"] = {
                 "count": not_found_count,
-                "percentage": round((not_found_count / total_routes) * 100, 2)
+                "percentage": round((not_found_count / total_routes) * 100, 2),
             }
         if unknown_count > 0:
             status_breakdown["unknown"] = {
                 "count": unknown_count,
-                "percentage": round((unknown_count / total_routes) * 100, 2)
+                "percentage": round((unknown_count / total_routes) * 100, 2),
             }
 
     # Format RIR coverage
@@ -96,20 +96,22 @@ async def _get_rpki_dashboard_data(database):
         not_found = row["not_found_count"] or 0
 
         if total > 0:
-            roa_coverage.append({
-                "rir": row["rir"],
-                "total_prefixes": total,
-                "valid": valid,
-                "invalid": invalid,
-                "not_found": not_found,
-                "coverage_percentage": round((valid / total) * 100, 2)
-            })
+            roa_coverage.append(
+                {
+                    "rir": row["rir"],
+                    "total_prefixes": total,
+                    "valid": valid,
+                    "invalid": invalid,
+                    "not_found": not_found,
+                    "coverage_percentage": round((valid / total) * 100, 2),
+                }
+            )
 
     return {
         "status_breakdown": status_breakdown,
         "total_prefixes": total_routes,
         "roa_coverage_by_rir": roa_coverage,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -141,11 +143,9 @@ async def _get_roa_coverage_data(database, asn: Optional[int] = None):
         total = len(rows)
 
         for row in rows:
-            prefixes.append({
-                "prefix": row["prefix"],
-                "rpki_status": "announced",
-                "has_roa": True
-            })
+            prefixes.append(
+                {"prefix": row["prefix"], "rpki_status": "announced", "has_roa": True}
+            )
 
         return {
             "asn": asn,
@@ -154,7 +154,7 @@ async def _get_roa_coverage_data(database, asn: Optional[int] = None):
             "coverage_percentage": 100.0 if total > 0 else 0,
             "prefixes": prefixes,
             "timestamp": datetime.utcnow().isoformat(),
-            "note": "Showing announced prefixes. Full ROA validation requires rpki_status field."
+            "note": "Showing announced prefixes. Full ROA validation requires rpki_status field.",
         }
 
     else:
@@ -177,7 +177,7 @@ async def _get_roa_coverage_data(database, asn: Optional[int] = None):
             "not_covered_prefixes": 0,
             "coverage_percentage": 100.0 if total > 0 else 0,
             "timestamp": datetime.utcnow().isoformat(),
-            "note": "Showing announced routes. Full ROA validation requires rpki_status field."
+            "note": "Showing announced routes. Full ROA validation requires rpki_status field.",
         }
 
 
@@ -225,20 +225,24 @@ async def _get_irr_consistency_data(database, asn: Optional[int] = None):
         issues = []
         for row in rows:
             if not row["in_irr"]:
-                issues.append({
-                    "prefix": row["prefix"],
-                    "issue": "Not found in IRR",
-                    "rpki_status": "unknown"
-                })
+                issues.append(
+                    {
+                        "prefix": row["prefix"],
+                        "issue": "Not found in IRR",
+                        "rpki_status": "unknown",
+                    }
+                )
 
         return {
             "asn": asn,
             "total_prefixes": len(rows),
             "consistent": consistent,
             "inconsistent": inconsistent,
-            "consistency_percentage": round((consistent / len(rows) * 100), 2) if len(rows) > 0 else 0,
+            "consistency_percentage": round((consistent / len(rows) * 100), 2)
+            if len(rows) > 0
+            else 0,
             "issues": issues[:50],  # Limit to 50 issues
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     else:
@@ -262,8 +266,10 @@ async def _get_irr_consistency_data(database, asn: Optional[int] = None):
             "total_routes": total,
             "consistent_routes": consistent,
             "inconsistent_routes": total - consistent,
-            "consistency_percentage": round((consistent / total * 100), 2) if total > 0 else 0,
-            "timestamp": datetime.utcnow().isoformat()
+            "consistency_percentage": round((consistent / total * 100), 2)
+            if total > 0
+            else 0,
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
 
@@ -299,7 +305,7 @@ async def _get_hijack_detection_data(database):
         "low_severity": 0,
         "alerts": [],
         "timestamp": datetime.utcnow().isoformat(),
-        "note": "BGP hijack detection requires RPKI validation data (rpki_status field in bgp table)."
+        "note": "BGP hijack detection requires RPKI validation data (rpki_status field in bgp table).",
     }
 
 
@@ -334,17 +340,12 @@ async def _get_prefix_overlap_data(database, prefix: str):
 
     rows = await database.fetch_all(overlap_query, {"prefix": prefix})
 
-    overlaps = {
-        "exact": [],
-        "more_specific": [],
-        "less_specific": []
-    }
+    overlaps = {"exact": [], "more_specific": [], "less_specific": []}
 
     for row in rows:
-        overlaps[row["overlap_type"]].append({
-            "prefix": row["overlapping_prefix"],
-            "asn": row["asn"]
-        })
+        overlaps[row["overlap_type"]].append(
+            {"prefix": row["overlapping_prefix"], "asn": row["asn"]}
+        )
 
     return {
         "query_prefix": prefix,
@@ -353,7 +354,7 @@ async def _get_prefix_overlap_data(database, prefix: str):
         "more_specifics": len(overlaps["more_specific"]),
         "less_specifics": len(overlaps["less_specific"]),
         "overlaps": overlaps,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -408,10 +409,7 @@ async def _get_as_path_data(database, asn: int):
 
     prefixes = [{"prefix": row["prefix"]} for row in rows]
     neighbors = [
-        {
-            "asn": row["neighbor_asn"],
-            "shared_prefixes": row["shared_prefixes"]
-        }
+        {"asn": row["neighbor_asn"], "shared_prefixes": row["shared_prefixes"]}
         for row in neighbor_rows
     ]
 
@@ -421,7 +419,7 @@ async def _get_as_path_data(database, asn: int):
         "prefixes": prefixes,
         "neighbors": neighbors,
         "total_neighbors": len(neighbors),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -460,7 +458,7 @@ async def get_whois_info(request: Request) -> JSONResponse:
         "message": "WHOIS integration requires external service setup",
         "note": "Consider integrating with services like RIPE NCC WHOIS, ARIN WHOIS, or RIPEstat",
         "suggestion": "Use RIPEstat Data API: https://stat.ripe.net/docs/data_api",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
     return JSONResponse(whois_data)

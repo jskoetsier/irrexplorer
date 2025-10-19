@@ -10,15 +10,10 @@ OPENAPI_SCHEMA = {
         "description": "IRRExplorer API provides access to Internet Routing Registry data, BGP information, and comprehensive routing analytics.",
         "contact": {
             "name": "IRRExplorer Support",
-            "url": "https://irrexplorer.nlnog.net"
-        }
+            "url": "https://irrexplorer.nlnog.net",
+        },
     },
-    "servers": [
-        {
-            "url": "/api",
-            "description": "API Server"
-        }
-    ],
+    "servers": [{"url": "/api", "description": "API Server"}],
     "paths": {
         "/metadata/": {
             "get": {
@@ -27,15 +22,9 @@ OPENAPI_SCHEMA = {
                 "responses": {
                     "200": {
                         "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "content": {"application/json": {"schema": {"type": "object"}}},
                     }
-                }
+                },
             }
         },
         "/prefixes/asn/{asn}": {
@@ -48,10 +37,7 @@ OPENAPI_SCHEMA = {
                         "in": "path",
                         "required": True,
                         "description": "Autonomous System Number (with or without AS prefix)",
-                        "schema": {
-                            "type": "string",
-                            "example": "AS13335"
-                        }
+                        "schema": {"type": "string", "example": "AS13335"},
                     }
                 ],
                 "responses": {
@@ -63,13 +49,13 @@ OPENAPI_SCHEMA = {
                                     "type": "object",
                                     "properties": {
                                         "asn": {"type": "string"},
-                                        "prefixes": {"type": "array"}
-                                    }
+                                        "prefixes": {"type": "array"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/prefixes/prefix/{prefix}": {
@@ -82,10 +68,7 @@ OPENAPI_SCHEMA = {
                         "in": "path",
                         "required": True,
                         "description": "IP prefix in CIDR notation",
-                        "schema": {
-                            "type": "string",
-                            "example": "1.1.1.0/24"
-                        }
+                        "schema": {"type": "string", "example": "1.1.1.0/24"},
                     }
                 ],
                 "responses": {
@@ -98,13 +81,13 @@ OPENAPI_SCHEMA = {
                                     "properties": {
                                         "prefix": {"type": "string"},
                                         "bgp_origins": {"type": "array"},
-                                        "irr_routes": {"type": "array"}
-                                    }
+                                        "irr_routes": {"type": "array"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/sets/expand/{target}": {
@@ -117,24 +100,15 @@ OPENAPI_SCHEMA = {
                         "in": "path",
                         "required": True,
                         "description": "AS-SET or ROUTE-SET name",
-                        "schema": {
-                            "type": "string",
-                            "example": "AS-CLOUDFLARE"
-                        }
+                        "schema": {"type": "string", "example": "AS-CLOUDFLARE"},
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Expanded set members",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "content": {"application/json": {"schema": {"type": "object"}}},
                     }
-                }
+                },
             }
         },
         "/export/csv": {
@@ -150,32 +124,29 @@ OPENAPI_SCHEMA = {
                                 "properties": {
                                     "query": {
                                         "type": "string",
-                                        "description": "Query string (prefix, ASN, or set name)"
+                                        "description": "Query string (prefix, ASN, or set name)",
                                     },
                                     "type": {
                                         "type": "string",
                                         "enum": ["auto", "prefix", "asn", "set"],
-                                        "default": "auto"
-                                    }
+                                        "default": "auto",
+                                    },
                                 },
-                                "required": ["query"]
+                                "required": ["query"],
                             }
                         }
-                    }
+                    },
                 },
                 "responses": {
                     "200": {
                         "description": "CSV file download",
                         "content": {
                             "text/csv": {
-                                "schema": {
-                                    "type": "string",
-                                    "format": "binary"
-                                }
+                                "schema": {"type": "string", "format": "binary"}
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/export/json": {
@@ -191,18 +162,18 @@ OPENAPI_SCHEMA = {
                                 "properties": {
                                     "query": {
                                         "type": "string",
-                                        "description": "Query string (prefix, ASN, or set name)"
+                                        "description": "Query string (prefix, ASN, or set name)",
                                     },
                                     "type": {
                                         "type": "string",
                                         "enum": ["auto", "prefix", "asn", "set"],
-                                        "default": "auto"
-                                    }
+                                        "default": "auto",
+                                    },
                                 },
-                                "required": ["query"]
+                                "required": ["query"],
                             }
                         }
-                    }
+                    },
                 },
                 "responses": {
                     "200": {
@@ -215,13 +186,13 @@ OPENAPI_SCHEMA = {
                                         "query": {"type": "string"},
                                         "query_type": {"type": "string"},
                                         "timestamp": {"type": "string"},
-                                        "results": {"type": "object"}
-                                    }
+                                        "results": {"type": "object"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/bulk-query": {
@@ -243,17 +214,22 @@ OPENAPI_SCHEMA = {
                                                 "query": {"type": "string"},
                                                 "type": {
                                                     "type": "string",
-                                                    "enum": ["auto", "prefix", "asn", "set"]
-                                                }
-                                            }
+                                                    "enum": [
+                                                        "auto",
+                                                        "prefix",
+                                                        "asn",
+                                                        "set",
+                                                    ],
+                                                },
+                                            },
                                         },
-                                        "maxItems": 100
+                                        "maxItems": 100,
                                     }
                                 },
-                                "required": ["queries"]
+                                "required": ["queries"],
                             }
                         }
-                    }
+                    },
                 },
                 "responses": {
                     "200": {
@@ -274,16 +250,16 @@ OPENAPI_SCHEMA = {
                                                     "type": {"type": "string"},
                                                     "success": {"type": "boolean"},
                                                     "data": {"type": "object"},
-                                                    "error": {"type": "string"}
-                                                }
-                                            }
-                                        }
-                                    }
+                                                    "error": {"type": "string"},
+                                                },
+                                            },
+                                        },
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/viz/prefix-allocation": {
@@ -300,13 +276,13 @@ OPENAPI_SCHEMA = {
                                     "properties": {
                                         "rir_allocations": {"type": "array"},
                                         "top_asns": {"type": "array"},
-                                        "timestamp": {"type": "string"}
-                                    }
+                                        "timestamp": {"type": "string"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/viz/asn-relationships/{asn}": {
@@ -319,9 +295,7 @@ OPENAPI_SCHEMA = {
                         "in": "path",
                         "required": True,
                         "description": "Autonomous System Number",
-                        "schema": {
-                            "type": "integer"
-                        }
+                        "schema": {"type": "integer"},
                     }
                 ],
                 "responses": {
@@ -334,13 +308,13 @@ OPENAPI_SCHEMA = {
                                     "properties": {
                                         "nodes": {"type": "array"},
                                         "edges": {"type": "array"},
-                                        "timestamp": {"type": "string"}
-                                    }
+                                        "timestamp": {"type": "string"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/viz/timeline": {
@@ -357,22 +331,16 @@ OPENAPI_SCHEMA = {
                             "type": "integer",
                             "minimum": 1,
                             "maximum": 90,
-                            "default": 30
-                        }
+                            "default": 30,
+                        },
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Timeline data",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "content": {"application/json": {"schema": {"type": "object"}}},
                     }
-                }
+                },
             }
         },
         "/viz/rir-distribution": {
@@ -382,24 +350,19 @@ OPENAPI_SCHEMA = {
                 "responses": {
                     "200": {
                         "description": "RIR distribution data",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "content": {"application/json": {"schema": {"type": "object"}}},
                     }
-                }
+                },
             }
-        }
-    }
+        },
+    },
 }
 
 
 async def openapi_schema(request):
     """Return OpenAPI schema."""
     from starlette.responses import JSONResponse
+
     return JSONResponse(OPENAPI_SCHEMA)
 
 

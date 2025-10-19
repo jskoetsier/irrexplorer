@@ -8,7 +8,15 @@ import traceback
 
 import databases
 
-from irrexplorer.api import advanced_search, analysis, export, openapi, queries, search_navigation, visualization
+from irrexplorer.api import (
+    advanced_search,
+    analysis,
+    export,
+    openapi,
+    queries,
+    search_navigation,
+    visualization,
+)
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
