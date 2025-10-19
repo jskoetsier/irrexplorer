@@ -1,7 +1,6 @@
 from os import environ
 
 import pytest
-
 from irrexplorer.state import RIR
 from irrexplorer.storage import tables
 

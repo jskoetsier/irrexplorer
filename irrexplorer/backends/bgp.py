@@ -5,7 +5,6 @@ from typing import List, Tuple
 from asgiref.sync import sync_to_async
 from asyncpg import DataError
 from databases import Database
-
 from irrexplorer.backends.common import (
     MAX_QUERY_RESULTS,
     LocalSQLQueryBase,

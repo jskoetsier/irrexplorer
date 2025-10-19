@@ -1,6 +1,5 @@
 import aggregate6
 from asgiref.sync import sync_to_async
-
 from irrexplorer.backends.common import retrieve_url_text, store_rir_prefixes
 from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import REGISTROBR_URL

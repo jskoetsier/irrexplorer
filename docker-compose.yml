@@ -126,10 +126,31 @@ services:
       - irrexplorer-network
     restart: unless-stopped
 
+  # BGPalerter - BGP Monitoring and Alerting
+  bgpalerter:
+    image: docker.io/nttgin/bgpalerter:latest
+    container_name: irrexplorer-bgpalerter
+    volumes:
+      - ./bgpalerter/config.yml:/opt/bgpalerter/config.yml
+      - bgpalerter_data:/opt/bgpalerter/volume
+    ports:
+      - "8011:8011"
+    networks:
+      - irrexplorer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8011/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
 volumes:
   postgres_data:
     driver: local
   routinator_data:
+    driver: local
+  bgpalerter_data:
     driver: local
 
 networks:

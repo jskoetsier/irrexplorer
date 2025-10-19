@@ -3,8 +3,8 @@ import logging
 from typing import Any, List
 
 import aiohttp
-from databases import Database
 
+from databases import Database
 from irrexplorer.settings import DATABASE_URL
 
 logger = logging.getLogger(__name__)

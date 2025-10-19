@@ -1,5 +1,4 @@
 import pytest
-
 from irrexplorer.settings import TESTING
 
 

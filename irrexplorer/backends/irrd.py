@@ -6,7 +6,6 @@ from typing import Dict, List
 
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
-
 from irrexplorer.api.interfaces import ObjectClass
 from irrexplorer.settings import config
 from irrexplorer.state import DataSource, IPNetwork, RouteInfo, RPKIStatus

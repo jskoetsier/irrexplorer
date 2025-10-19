@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from os import environ
 
 import pytest
-
 from irrexplorer.backends.metadata import update_last_data_import
 
 pytestmark = pytest.mark.asyncio

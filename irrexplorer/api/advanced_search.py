@@ -6,10 +6,9 @@ import re
 from enum import Enum
 from typing import Any, Dict, List
 
+from irrexplorer.api import queries
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-
-from irrexplorer.api import queries
 
 
 class ResourceType(str, Enum):

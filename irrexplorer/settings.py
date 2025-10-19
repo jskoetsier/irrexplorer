@@ -2,9 +2,8 @@ from ipaddress import IPv4Network, IPv6Network
 from typing import Tuple, Union
 
 import databases
-from starlette.config import Config
-
 from irrexplorer.state import RIR
+from starlette.config import Config
 
 config = Config(".env")
 

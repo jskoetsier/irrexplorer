@@ -6,7 +6,6 @@ from typing import Coroutine, Dict, List, Optional
 
 from aggregate6 import aggregate
 from databases import Database
-
 from irrexplorer.api.caching import ASN_SUMMARY_TTL, cached
 from irrexplorer.api.interfaces import (
     ASNPrefixes,

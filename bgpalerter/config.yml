@@ -1,0 +1,77 @@
+# BGPalerter Configuration for IRRExplorer Integration
+# This is a base configuration that will be extended by user-specific monitoring
+
+environment: production
+
+# Logging configuration
+logging:
+  level: info
+  directory: volume/logs
+  logRotatePattern: YYYY-MM-DD
+  maxRetainedFiles: 10
+
+# Volume directory for persistent data
+volume: /opt/bgpalerter/volume
+
+# Check for new prefixes every 5 minutes
+checkForPrefixHijack: true
+checkForVisibilityLoss: true
+checkForASPathChanges: true
+checkForRPKIInvalid: true
+
+# API server configuration
+webServer:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8011
+
+# Monitoring groups - will be dynamically updated via API
+monitoredPrefixes: []
+
+# RPKI configuration
+rpki:
+  vrps: https://console.rpki-client.org/vrps.json
+
+# BGP data sources
+connectors:
+  - file: connectorRIS
+    name: ris
+    carefulInitialPrefixLoading: true
+
+# Reports configuration (notifications)
+reports:
+  - file: reportFile
+    channels:
+      - hijack
+      - newprefix
+      - visibility
+      - path
+      - rpki
+    showPaths: 0
+    persistAlertData: true
+
+  - file: reportHTTP
+    hooks:
+      hijack:
+        method: POST
+        url: http://backend:8000/api/bgpalerter/webhook/hijack
+      newprefix:
+        method: POST
+        url: http://backend:8000/api/bgpalerter/webhook/newprefix
+      visibility:
+        method: POST
+        url: http://backend:8000/api/bgpalerter/webhook/visibility
+      path:
+        method: POST
+        url: http://backend:8000/api/bgpalerter/webhook/path
+      rpki:
+        method: POST
+        url: http://backend:8000/api/bgpalerter/webhook/rpki
+
+# Alerting thresholds
+notification:
+  notificationIntervalSeconds: 7200
+  notificationIntervalHours: 2
+
+# Prefixes configuration will be loaded from volume/prefixes.yml
+# This file is managed by IRRExplorer user registration system

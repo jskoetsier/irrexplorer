@@ -3,10 +3,10 @@ from abc import ABCMeta
 from typing import List
 
 import aiohttp
+
 import sqlalchemy as sa
 import sqlalchemy.dialects.postgresql as pg
 from databases import Database
-
 from irrexplorer.exceptions import ImporterError
 from irrexplorer.settings import DATABASE_URL
 from irrexplorer.state import RIR, DataSource, IPNetwork, RouteInfo

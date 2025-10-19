@@ -10,11 +10,10 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 
+from irrexplorer.storage.tables import bookmarks, query_stats, search_history
 from sqlalchemy import and_, desc, func, or_, select
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-
-from irrexplorer.storage.tables import bookmarks, query_stats, search_history
 
 logger = logging.getLogger(__name__)
 

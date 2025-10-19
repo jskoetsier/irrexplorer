@@ -4,14 +4,14 @@ from alembic.command import upgrade as alembic_upgrade
 from alembic.config import Config as AlembicConfig
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
+from irrexplorer import settings  # noqa: E402
+from irrexplorer.app import app  # noqa: E402
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from starlette.config import environ
 
 # Must be set before settings is imported
 environ["TESTING"] = "TRUE"
 
-from irrexplorer import settings  # noqa: E402
-from irrexplorer.app import app  # noqa: E402
 
 
 @pytest.fixture(autouse=True, scope="session")

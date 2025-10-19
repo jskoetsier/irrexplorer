@@ -7,19 +7,10 @@ import threading
 import traceback
 
 import databases
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
-from starlette.applications import Starlette
-from starlette.middleware import Middleware
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GZipMiddleware
-from starlette.responses import JSONResponse
-from starlette.routing import Mount, Route
-
 from irrexplorer.api import (
     advanced_search,
     analysis,
+    bgpalerter_manager,
     datasources,
     export,
     openapi,
@@ -30,6 +21,15 @@ from irrexplorer.api import (
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from starlette.applications import Starlette
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
+from starlette.responses import JSONResponse
+from starlette.routing import Mount, Route
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
@@ -148,6 +148,13 @@ routes = [
     ),
     Route("/api/datasources/peeringdb/ix/{ix_id:int}", datasources.peeringdb_ix),
     Route("/api/datasources/peeringdb/search", datasources.peeringdb_search),
+    # BGPalerter Management endpoints
+    Route("/api/bgpalerter/status", bgpalerter_manager.get_bgpalerter_status),
+    Route("/api/bgpalerter/monitored-asns", bgpalerter_manager.get_monitored_asns),
+    Route("/api/bgpalerter/monitored-asns", bgpalerter_manager.add_monitored_asn, methods=["POST"]),
+    Route("/api/bgpalerter/monitored-asns/{asn}", bgpalerter_manager.delete_monitored_asn, methods=["DELETE"]),
+    Route("/api/bgpalerter/alerts", bgpalerter_manager.get_recent_alerts),
+    Route("/api/bgpalerter/webhook/{alert_type}", bgpalerter_manager.webhook_receiver, methods=["POST"]),
 ]
 
 # Only mount static files if not testing and directory exists

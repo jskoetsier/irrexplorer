@@ -12,7 +12,6 @@ from functools import wraps
 from typing import Any, Callable, Dict, Optional
 
 import redis
-
 from irrexplorer.settings import config
 
 logger = logging.getLogger(__name__)
