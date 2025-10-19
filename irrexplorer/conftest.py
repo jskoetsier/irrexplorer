@@ -1,3 +1,6 @@
+# Must be set FIRST before any imports that use settings
+import os
+
 import pytest
 import pytest_asyncio
 from alembic.command import upgrade as alembic_upgrade
@@ -7,10 +10,8 @@ from httpx import ASGITransport, AsyncClient
 from irrexplorer import settings  # noqa: E402
 from irrexplorer.app import app  # noqa: E402
 from sqlalchemy_utils import create_database, database_exists, drop_database
-from starlette.config import environ
 
-# Must be set FIRST before any imports that use settings
-environ["TESTING"] = "TRUE"
+os.environ["TESTING"] = "TRUE"
 
 
 @pytest.fixture(autouse=True, scope="session")
