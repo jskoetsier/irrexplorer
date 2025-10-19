@@ -77,3 +77,149 @@ query_stats = sa.Table(
     sa.UniqueConstraint("query", "query_type", name="uq_query_stats"),
     sa.Index("ix_query_stats_count", "count"),
 )
+
+# BGP Monitoring Users and Configuration
+bgp_users = sa.Table(
+    "bgp_users",
+    sa_metadata,
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("email", sa.String(255), nullable=False, unique=True, index=True),
+    sa.Column("password_hash", sa.String(255), nullable=False),
+    sa.Column("full_name", sa.String(255)),
+    sa.Column("is_active", sa.Boolean, nullable=False, default=True),
+    sa.Column("is_admin", sa.Boolean, nullable=False, default=False),
+    sa.Column(
+        "created_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.text("CURRENT_TIMESTAMP"),
+    ),
+    sa.Column(
+        "updated_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.text("CURRENT_TIMESTAMP"),
+    ),
+)
+
+user_emails = sa.Table(
+    "user_emails",
+    sa_metadata,
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column(
+        "user_id",
+        sa.Integer,
+        sa.ForeignKey("bgp_users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    sa.Column("email", sa.String(255), nullable=False),
+    sa.Column("is_primary", sa.Boolean, nullable=False, default=False),
+    sa.Column("is_verified", sa.Boolean, nullable=False, default=False),
+    sa.Column(
+        "created_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.text("CURRENT_TIMESTAMP"),
+    ),
+    sa.Index("ix_user_emails_email", "email"),
+)
+
+user_monitored_asns = sa.Table(
+    "user_monitored_asns",
+    sa_metadata,
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column(
+        "user_id",
+        sa.Integer,
+        sa.ForeignKey("bgp_users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    sa.Column("asn", sa.BigInteger, nullable=False, index=True),
+    sa.Column("description", sa.String(500)),
+    sa.Column("is_active", sa.Boolean, nullable=False, default=True),
+    sa.Column(
+        "created_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.text("CURRENT_TIMESTAMP"),
+    ),
+    sa.UniqueConstraint("user_id", "asn", name="uq_user_monitored_asn"),
+)
+
+alert_configurations = sa.Table(
+    "alert_configurations",
+    sa_metadata,
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column(
+        "user_id",
+        sa.Integer,
+        sa.ForeignKey("bgp_users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    sa.Column(
+        "channel_type", sa.String(50), nullable=False
+    ),  # email, slack, telegram, webhook, push
+    sa.Column("is_enabled", sa.Boolean, nullable=False, default=True),
+    sa.Column("config", pg.JSONB),  # Channel-specific configuration
+    sa.Column(
+        "created_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.text("CURRENT_TIMESTAMP"),
+    ),
+    sa.Column(
+        "updated_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.text("CURRENT_TIMESTAMP"),
+    ),
+)
+
+bgp_alert_events = sa.Table(
+    "bgp_alert_events",
+    sa_metadata,
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column(
+        "user_id",
+        sa.Integer,
+        sa.ForeignKey("bgp_users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    sa.Column("asn", sa.BigInteger, nullable=False, index=True),
+    sa.Column("prefix", pg.CIDR),
+    sa.Column(
+        "alert_type", sa.String(50), nullable=False
+    ),  # hijack, visibility, path, rpki
+    sa.Column("severity", sa.String(20), nullable=False),  # critical, high, medium, low
+    sa.Column("message", sa.Text, nullable=False),
+    sa.Column("details", pg.JSONB),
+    sa.Column("is_acknowledged", sa.Boolean, nullable=False, default=False),
+    sa.Column("acknowledged_at", sa.DateTime(timezone=True)),
+    sa.Column(
+        "created_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.text("CURRENT_TIMESTAMP"),
+        index=True,
+    ),
+)
+
+system_config = sa.Table(
+    "system_config",
+    sa_metadata,
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("key", sa.String(255), nullable=False, unique=True, index=True),
+    sa.Column("value", pg.JSONB, nullable=False),
+    sa.Column("description", sa.Text),
+    sa.Column(
+        "updated_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.text("CURRENT_TIMESTAMP"),
+    ),
+    sa.Column("updated_by", sa.Integer, sa.ForeignKey("bgp_users.id")),
+)

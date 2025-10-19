@@ -9,12 +9,12 @@ function BGPalerter() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    
+
     // Dashboard state
     const [status, setStatus] = useState(null);
     const [monitoredAsns, setMonitoredAsns] = useState([]);
     const [alerts, setAlerts] = useState([]);
-    
+
     // Form state
     const [newAsn, setNewAsn] = useState('');
     const [newDescription, setNewDescription] = useState('');
