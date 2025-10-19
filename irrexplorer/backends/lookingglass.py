@@ -68,21 +68,64 @@ class LookingGlassClient:
         """
         Query BGP routes for a specific ASN.
 
-        Note: NLNOG LG doesn't have a direct ASN endpoint, so we return
-        a message indicating limited support.
+        Uses RIPE Stat API for ASN prefix announcements since NLNOG doesn't
+        have a direct ASN endpoint.
 
         Args:
             asn: Autonomous System Number
 
         Returns:
-            Dictionary with ASN information
+            Dictionary with ASN routing information
         """
+        try:
+            async with aiohttp.ClientSession(timeout=self.timeout) as session:
+                # Use RIPE Stat API for announced prefixes
+                url = f"https://stat.ripe.net/data/announced-prefixes/data.json?resource=AS{asn}"
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return self._parse_ripe_asn_response(data, asn)
+                    elif response.status == 404:
+                        return {
+                            "asn": asn,
+                            "prefixes": [],
+                            "error": "Not found",
+                        }
+                    else:
+                        logger.error(f"RIPE Stat API error: {response.status}")
+                        return {
+                            "asn": asn,
+                            "prefixes": [],
+                            "error": f"API error: {response.status}",
+                        }
+        except asyncio.TimeoutError:
+            logger.error(f"Timeout querying ASN {asn}")
+            return {"asn": asn, "prefixes": [], "error": "Query timeout"}
+        except Exception as e:
+            logger.error(f"Error querying ASN {asn}: {e}", exc_info=True)
+            return {"asn": asn, "prefixes": [], "error": str(e)}
+
+    def _parse_ripe_asn_response(
+        self, data: Dict[str, Any], asn: int
+    ) -> Dict[str, Any]:
+        """Parse RIPE Stat announced-prefixes response."""
+        prefixes = []
+        data_content = data.get("data", {})
+
+        for prefix_data in data_content.get("prefixes", []):
+            prefixes.append(
+                {
+                    "prefix": prefix_data.get("prefix"),
+                    "origin": f"AS{asn}",
+                    "peers": [],
+                }
+            )
+
         return {
             "asn": asn,
-            "prefixes": [],
-            "total_prefixes": 0,
+            "prefixes": prefixes,
+            "total_prefixes": len(prefixes),
             "as_name": None,
-            "error": "ASN queries not supported by NLNOG Looking Glass. Use prefix queries instead.",
         }
 
     async def query_bgp_route(
