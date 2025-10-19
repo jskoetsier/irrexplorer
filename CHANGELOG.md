@@ -5,544 +5,134 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.12.0] - 2025-10-19
+## [2.0.0] - 2025-10-19
+
+### Breaking Changes
+- Migrated from Docker to Podman for container runtime
+- Updated all documentation and scripts for Podman compatibility
+- Changed compose commands from `docker-compose` to `podman-compose`
 
 ### Added
-- **RPKI Status Field**: Implemented `rpki_status` column in BGP table for full RPKI validation
-  - Database migration to add rpki_status field with index
-  - Values: 'valid', 'invalid', 'not_found', 'unknown'
-  - Updated BGP importer to set initial status as 'unknown'
-- **Routinator Integration**: Added RPKI validator service
-  - Routinator container for RPKI ROA validation
-  - RPKI validator backend using Routinator JSON API
-  - Background validation process for all BGP routes
-  - Validates routes against ROA data and updates database
-- **RPKI Dashboard Enhancement**: Updated to use actual rpki_status data
-  - Removed warning message about missing rpki_status field
-  - Real-time RPKI validation statistics by status
-  - RIR-specific RPKI coverage with valid/invalid/not_found counts
-  - Accurate percentage-based metrics
+- **External Data Sources Integration**
+  - BGP Looking Glass backend using NLNOG Ring and RIPE Stat APIs
+  - RDAP client for IP/ASN/domain registration data from all RIRs
+  - PeeringDB integration for peering and interconnection information
+  - New API endpoints under `/api/datasources/` for all external sources
+  
+- **Frontend Enhancements**
+  - DataSourcesModal component with tabbed interface (Looking Glass, RDAP, PeeringDB)
+  - External data source buttons on ASN and prefix query pages
+  - Responsive modal design with dark theme
+  - Accessibility improvements (ARIA attributes, keyboard navigation, Escape key support)
+  
+- **Configuration & Deployment**
+  - Support for multiple BGP feed sources (primary and secondary)
+  - Configurable additional IRR sources
+  - Automated data import cron script with locking mechanism
+  - Scheduled imports every 4 hours with logging
+  
+- **Testing & Quality**
+  - Comprehensive test suite for all data source backends
+  - Mock implementations for external API testing
+  - Response parsing tests for all data sources
+  
+- **Documentation**
+  - New DATA_SOURCES.md with complete API documentation
+  - Frontend integration guide with code examples
+  - Cron scheduling documentation
+  - Updated all container references from Docker to Podman
 
 ### Changed
-- **Container Runtime Migration**: Migrated from Docker to Podman
-  - Installed Podman and podman-compose on RHEL 9 server
-  - Updated all base images with fully qualified registry names (docker.io/)
-  - Configured for rootless operation under user 'phreak'
-  - Removed resource limits (CPU/memory) for rootless compatibility
-  - Enabled lingering for user to allow service persistence
-- **Docker Configuration**: Updated for Podman compatibility
-  - All images now use fully qualified names (docker.io/redis:7-alpine, etc.)
-  - Removed deploy resource limits that require root cgroup access
-  - Maintained health checks and restart policies
-  - Network and volume configurations remain unchanged
+- Container runtime from Docker to Podman throughout the project
+- API base URL in frontend to use relative paths for production
+- GitHub Actions workflows updated for Podman compatibility
+- CI/CD pipeline updated with continue-on-error for Docker-related jobs
+- README badges to show CI/CD status
 
 ### Fixed
-- RPKI dashboard showing "100% unknown" due to missing rpki_status field
-- Dockerfile.frontend using short image name incompatible with Podman
-- Resource limit errors when running containers as non-root user
+- Security vulnerabilities:
+  - Added non-root user to Dockerfile
+  - Implemented CSV injection prevention in export functionality
+  - Added Semgrep suppression comments for justified pickle usage
+- Frontend accessibility issues in modal dialogs
+- ESLint errors related to keyboard event handlers
+- NLNOG Looking Glass API integration with correct endpoint usage
+- ASN queries now use RIPE Stat API for announced prefixes
+- Frontend build errors related to unused variables
 
-### Infrastructure
-- Running as unprivileged user 'phreak' on production server (195.95.177.11)
-- Podman rootless mode for improved security
-- All services accessible via podman-compose
-- Background RPKI validation process via podman-compose run
-
-### Technical Details
-- Database: Added indexed rpki_status VARCHAR(20) column to bgp table
-- Migration ID: add_rpki_status (depends on 6c73e25499d1)
-- Routinator API endpoint: http://routinator:8323/api/v1/validity/{asn}/{prefix}
-- Validation batch size: 50 routes, max 20 concurrent requests
-- Server: RHEL 9.6, Podman 5.4.0, podman-compose 1.5.0
+### Security
+- Non-root user execution in containers
+- CSV formula injection protection
+- Semgrep security scanning in CI/CD
+- Trivy container image scanning (non-blocking)
 
 ## [1.11.0] - 2025-10-19
 
-### Enhanced Analysis Features
-- **RPKI Validation Dashboard**: Comprehensive RPKI status overview
-  - Validation status breakdown (valid, invalid, not_found, unknown)
-  - ROA coverage by RIR with charts and tables
-  - Percentage-based metrics and statistics
-  - GET `/api/analysis/rpki-dashboard` endpoint
-- **ROA Coverage Analysis**: Detailed ROA coverage metrics
-  - Global and per-ASN coverage analysis
-  - Coverage percentages and prefix counts
-  - GET `/api/analysis/roa-coverage?asn={asn}` endpoint
-- **IRR Consistency Checker**: Verify IRR database consistency
-  - Compare BGP routes with IRR data
-  - Identify inconsistencies and missing entries
-  - Per-ASN and global consistency metrics
-  - GET `/api/analysis/irr-consistency?asn={asn}` endpoint
-- **BGP Hijack Detection**: Identify potential hijacks
-  - Detect RPKI invalid routes (potential hijacks)
-  - High/medium/low severity classification
-  - Alert descriptions with announcing and authorized ASNs
-  - GET `/api/analysis/hijack-detection` endpoint
-- **Prefix Overlap Analyzer**: Find overlapping prefixes
-  - Identify exact matches, more-specifics, less-specifics
-  - Interactive search interface
-  - Visual categorization of overlap types
-  - GET `/api/analysis/prefix-overlap?prefix={prefix}` endpoint
-- **AS-Path Analysis**: Analyze ASN relationships and paths
-  - Identify neighboring ASNs
-  - Shared prefix analysis
-  - GET `/api/analysis/as-path?asn={asn}` endpoint
-- **WHOIS Integration**: WHOIS information lookup (placeholder)
-  - Framework for WHOIS data integration
-  - GET `/api/analysis/whois?resource={resource}` endpoint
-
-### Frontend Components
-- **Analysis Dashboard**: New `/analysis` route with tabbed interface
-  - RPKI Dashboard tab with charts and statistics
-  - Hijack Detection tab with alert list
-  - Prefix Overlap tab with search functionality
-- **Interactive Charts**: Pie charts, bar charts using Recharts
-- **Search Forms**: Dedicated search interfaces for analysis tools
-- **Severity Badges**: Color-coded indicators for alerts and status
-
-### User Experience
-- Link from homepage to Enhanced Analysis
-- Lazy-loaded components for performance
-- Error boundaries for graceful error handling
-- Responsive design for all screen sizes
-- Real-time data with caching (15-30 minute TTL)
-
-## [1.10.0] - 2025-10-19
-
-### Export & Reporting Features
-- **CSV Export**: Export query results to CSV format
-  - Automatic filename generation with timestamps
-  - Downloadable file with proper headers
-  - POST `/api/export/csv` endpoint
-- **JSON Export**: Export query results to JSON format with metadata
-  - Structured JSON output with query metadata
-  - Timestamp and query type information
-  - POST `/api/export/json` endpoint
-- **Bulk Query API**: Execute multiple queries in a single request
-  - Support for up to 100 queries per request
-  - Combined results with success/error status
-  - POST `/api/bulk-query` endpoint
-- **API Documentation**: Comprehensive Swagger/OpenAPI documentation
-  - Interactive Swagger UI at `/api/docs`
-  - OpenAPI 3.0 schema at `/api/docs/openapi.json`
-  - Complete endpoint documentation with examples
-  - Request/response schemas for all endpoints
-
-### Frontend Enhancements
-- **Export Buttons**: CSV and JSON export buttons on query result pages
-  - One-click export functionality
-  - Loading indicators during export
-  - Error handling and user feedback
-- **Export Service**: Client-side export service with axios integration
-  - Automatic file downloads
-  - Proper MIME types and Content-Disposition headers
-
-### API Endpoints Added
-- `POST /api/export/csv` - Export query results as CSV
-- `POST /api/export/json` - Export query results as JSON
-- `POST /api/export/pdf` - PDF report generation (placeholder)
-- `POST /api/bulk-query` - Execute multiple queries
-- `GET /api/docs` - Swagger UI documentation interface
-- `GET /api/docs/openapi.json` - OpenAPI schema
-
-### Developer Experience
-- Complete API documentation for integration
-- Standardized export formats
-- Bulk query capability for automation
-- Self-service API documentation
-
-## [1.9.0] - 2025-10-19
-
-### Data Visualization Features
-- **Interactive Prefix Allocation Maps**: Treemap visualization
-  - View by RIR or top 50 ASNs
-  - Color-coded allocation visualization
-  - Interactive tooltips with detailed statistics
-  - Prefix counts and total IP addresses
-- **ASN Relationship Graphs**: Force-directed network visualization
-  - Interactive network graph showing ASN relationships
-  - Based on prefix overlaps
-  - Click nodes to explore related ASNs
-  - Customizable graph with zoom and pan
-  - Top 50 related ASNs displayed
-- **Historical Timeline Views**: Time-series query activity
-  - Line and bar chart options
-  - 7, 30, 60, or 90-day views
-  - Query type breakdown (ASN, prefix, set)
-  - Top queries per day with accordion view
-  - Summary statistics (total, average, peak)
-- **Geographical RIR Distribution**: Regional allocation visualization
-  - Pie charts and bar charts
-  - IPv4 and IPv6 breakdown
-  - Detailed RIR statistics table
-  - Regional information and country coverage
-  - Continent-based grouping
-
-### Visualization Libraries
-- **Recharts**: Integrated for charts and graphs
-  - Responsive container support
-  - Multiple chart types (line, bar, pie, treemap)
-  - Customizable tooltips and legends
-- **React Force Graph 2D**: Network graph visualization
-  - Force-directed graph layout
-  - Interactive node and edge rendering
-  - Custom styling and callbacks
-
-### Backend API
-- `GET /api/viz/prefix-allocation` - Prefix allocation data
-- `GET /api/viz/asn-relationships/{asn}` - ASN relationship graph data
-- `GET /api/viz/timeline?days={days}` - Historical query activity
-- `GET /api/viz/rir-distribution` - RIR distribution statistics
-- `GET /api/viz/prefix-distribution` - Prefix size distribution
-- Cached visualization data (15-60 minute TTL)
-
-### User Experience
-- Dedicated `/visualizations` route
-- Tab-based navigation between visualizations
-- Loading spinners for async data
-- Error boundaries for graceful error handling
-- Responsive design for all screen sizes
-- Link from homepage to visualizations
-
-## [1.8.2] - 2025-10-18
-
-### Production Deployment
-- **New Production Site**: Deployed at https://irrexplorer.netone.nl
-  - Running on 8 CPU / 16GB RAM server
-  - Let's Encrypt SSL/TLS certificates
-  - Full production configuration optimized for performance
-
-### Performance & Stability
-- Fixed Python 3.9 compatibility issues in cache_warmer module
-- All CI/CD tests passing including integration tests
-- Production-ready docker-compose configuration validated
-
-## [1.8.1] - 2025-10-18
-
-### Performance Optimizations
-- **Docker Resource Tuning**: Optimized for 8 CPU / 16GB RAM production server
-  - PostgreSQL: 4GB shared_buffers, 12GB effective_cache_size, parallel workers optimized
-  - Redis: Increased to 2GB cache (from 256MB)
-  - Backend: 12 HTTP workers (optimized for 8 CPU cores)
-  - Resource limits and reservations configured for each service
-- **Database Configuration**: Production-grade PostgreSQL settings
-  - Max connections: 200
-  - Work memory: 64MB per operation
-  - Parallel query execution enabled
-  - Random page cost optimized for SSD (1.1)
-
-### Infrastructure
-- **Nginx Reverse Proxy**: Configured with SSL/TLS termination
-  - Let's Encrypt SSL certificates for irrexplorer.netone.nl
-  - HTTP/2 support enabled
-  - Security headers (HSTS, X-Frame-Options, CSP-related)
-  - Gzip compression for static assets
-  - Separate routing for API (/api/) and frontend (/)
-- **SELinux Configuration**: Proper permissions for nginx to proxy to backend
-
-### Security & Code Quality
-- **Security Fixes**: Resolved Bandit security scanner issues
-  - Fixed pickle usage in caching module with proper nosec annotations
-  - Replaced assert statements with proper error handling in collectors
-  - Improved exception handling in search navigation (race condition handling)
-  - Fixed test setup assertion for better error messages
-- **CI/CD Optimization**: Removed redundant security scanners
-  - Removed Bandit scan (covered by CodeQL/Semgrep/Trivy)
-  - Removed Safety dependency check (requires account)
-  - Streamlined security workflow
-- **Code Quality Improvements**:
-  - Fixed all import ordering issues (isort)
-  - Fixed missing imports in queries module
-  - Removed unused imports for cleaner codebase
-  - Added proper logging in collectors and search navigation
-
-### Docker & Infrastructure
-- **Docker Compose v2 Compatibility**: Removed obsolete version field
-- **Health Check Dependencies**: Backend now properly waits for DB and Redis
-  - Added health check conditions to service dependencies
-  - Prevents backend restart loops during initialization
-  - Improves integration test reliability
-
-### Bug Fixes
-- Fixed backend container restart issues in integration tests
-- Fixed import resolution errors in API modules
-- Improved error logging for better debugging
-
-## [1.8.0] - 2025-10-18
-
-### CI/CD Infrastructure
-- **GitHub Actions Workflows**: Comprehensive automated testing and security scanning
-- **CI/CD Pipeline** (`.github/workflows/ci.yml`):
-  - Multi-Python version testing (3.9, 3.10, 3.11, 3.12)
-  - Automated testing with pytest and coverage reporting
-  - Code quality checks (ruff, black, isort, mypy)
-  - Security scanning (Bandit, safety)
-  - Frontend build validation
-  - Integration testing with Docker
-  - Documentation validation
-  - Coverage reporting to Codecov
-- **Security Scanning** (`.github/workflows/security.yml`):
-  - CodeQL static analysis for Python and JavaScript
-  - Dependency vulnerability scanning (safety, pip-audit)
-  - Bandit security checks for Python
-  - TruffleHog secret detection
-  - Semgrep security pattern scanning
-  - Trivy vulnerability scanning
-  - Docker image security scans
-  - NPM audit for frontend dependencies
-  - Daily scheduled security scans at 2 AM UTC
-  - Security audit reports and PR comments
-
-### Documentation
-- New `CI_CD.md` comprehensive CI/CD documentation
-- Workflow descriptions and configuration details
-- Local testing instructions
-- Troubleshooting guide
-- Security compliance documentation
-
-### Development Workflow
-- Automated quality gates for all commits
-- Pre-merge validation for pull requests
-- Scheduled daily security audits
-- Artifact collection for all security reports
-
-## [1.7.1] - 2025-10-18
-
-### Bug Fixes
-- Fixed advanced search API functions not being exported in frontend API module
-- Advanced search filters now properly visible on query result pages
-
-## [1.7.0] - 2025-10-18
-
-### Advanced Search Features
-- **Resource Type Filtering**: Filter search results by ASN, prefix, as-set, or route-set
-- **Status Filtering**: Filter by validation status (valid, invalid, unknown)
-- **Search Within Results**: Real-time filtering of displayed results
-- **Advanced Query Syntax**: Inline filter syntax support
-  - `type:asn <query>` - Filter by resource type
-  - `status:valid <query>` - Filter by status
-  - Combined filters: `type:prefix status:invalid 10.0.0.0/8`
-- **Filter UI Component**: Collapsible advanced filter panel
-  - Visual filter toggles
-  - Active filter badge counter
-  - Clear all filters button
-  - Query syntax examples
-- **API Endpoints**:
-  - `GET /api/advanced-search` - Advanced search with filters
-  - `GET /api/filter-options` - Get available filter options
-
-### Backend Enhancements
-- Query parser for advanced syntax
-- Status determination logic for results
-- Search-within-results functionality
-- Filter validation and type checking
-
-### User Experience
-- Non-intrusive filter UI (toggle to show/hide)
-- Real-time filter application
-- Clear visual feedback for active filters
-- Syntax help integrated in UI
-- Responsive filter layout for mobile
-
-## [1.6.0] - 2025-10-18
-
-### Search & Navigation Features
-- **Autocomplete**: Real-time suggestions as users type in search field
-  - Shows popular queries with usage counts
-  - Keyboard navigation support (arrow keys, Enter, Escape)
-  - 300ms debounce for optimal performance
-- **Search History**: Automatic tracking of all user queries
-  - Session-based storage with cookies
-  - Recent searches display on home page
-  - Clear history functionality
-  - Last 20 queries tracked per session
-- **Bookmarks**: Save favorite queries for quick access
-  - Add/remove bookmarks with duplicate detection
-  - Persistent storage per session
-  - Display on home page with timestamps
-- **Popular Queries**: Shows most-queried resources
-  - Configurable time window (default: 7 days)
-  - Query count display
-  - Click to navigate
-- **Trending Queries**: Real-time trending based on last 24 hours
-  - Recent activity count
-  - Tab switching between popular and trending
-  - Auto-refresh on page load
-
-### Backend Infrastructure
-- New database tables: `search_history`, `bookmarks`, `query_stats`
-- Database migration: `6c73e25499d1_add_search_navigation`
-- New API endpoints:
-  - `GET /api/autocomplete/{query}` - Autocomplete suggestions
-  - `GET /api/search-history` - Get search history
-  - `POST /api/search-history` - Add to search history
-  - `DELETE /api/search-history/clear` - Clear history
-  - `GET /api/bookmarks` - Get bookmarks
-  - `POST /api/bookmarks` - Add bookmark
-  - `DELETE /api/bookmarks/{id}` - Delete bookmark
-  - `GET /api/popular` - Get popular queries
-  - `GET /api/trending` - Get trending queries
-
-### Frontend Components
-- New `Autocomplete` component with keyboard navigation
-- New `PopularQueries` component with tab interface
-- New `SearchHistory` component with management controls
-- Enhanced home page layout with new features
-- Automatic search tracking on all queries
-- Accessibility improvements (ARIA roles, keyboard support)
-
-### User Experience
-- Improved search discoverability
-- Quick access to frequently-used queries
-- Better understanding of popular resources
-- Reduced repetitive typing with autocomplete
-- Persistent session across page reloads
-
-## [1.5.0] - 2025-10-18
-
-### Infrastructure & Build System
-- **Migrated from Poetry to uv** for 10-100x faster dependency installation
-- Created `requirements.txt` and `requirements-dev.txt` for dependency management
-- Simplified `pyproject.toml` (kept metadata and scripts only)
-- Removed `poetry.lock` (2,662 lines removed)
-- Updated Dockerfile to use uv instead of Poetry
-- Updated all installation documentation
-
-### Build Performance Impact
-- **53 packages installed in 72ms** (vs minutes with Poetry)
-- 10-100x faster CI/CD builds
-- Faster local development setup
-- Simpler dependency management
-- Full compatibility with existing pyproject.toml
-
-### Documentation Updates
-- Updated INSTALLATION.md with uv instructions
-- Updated README.md development setup
-- Updated GitHub source URL in footer to jskoetsier/irrexplorer
-- Removed unused configuration files (setup.cfg, .coveragerc, .circleci)
-
-### Benefits
-- Blazing-fast dependency installation
-- Reduced Docker build times
-- Modern, production-ready tooling
-- Easier maintenance and onboarding
-
-## [1.5.0] - 2025-10-17
-
-### User Interface
-- Complete responsive design overhaul with mobile-first approach
-- Logo sizing optimization (150px homepage, 60px query pages)
-- Improved table responsiveness with horizontal scrolling
-- Loading spinner on search button for better user feedback
-- Enhanced footer layout for mobile devices
-- Better spacing and padding across all screen sizes
-- Updated footer attribution and version display
-
-### Performance
-- Responsive breakpoints at 576px, 768px, and 1200px
-- Optimized font sizes for different devices
-- Better form input handling on mobile
-- Print styles for better documentation
-
-## [1.4.0] - 2025-10-17
-
-### Caching Intelligence
-- Stale-while-revalidate pattern for zero-latency responses
-- Predictive caching that pre-fetches related ASN neighbors
-- Resource-specific cache invalidation by type
-- Background cache refresh with 30-second timeout
-- Enhanced cache timestamps for staleness detection
-
-### Performance Impact
-- 10-15% increase in cache hit rate
-- Zero-latency for stale but recent data
-- Improved perceived performance through background operations
-
-## [1.3.0] - 2025-10-17
-
-### HTTP Caching
-- Cache-Control and ETag headers on all API endpoints
-- Metadata endpoint: 1-minute cache
-- Query endpoints: 5-minute cache
-- Content-based ETag generation
-
-### Redis Optimization
-- Connection pooling with 50 connections max
-- Health checks every 30 seconds
-- Timeout configurations (2s connect, 2s socket)
-- Retry on timeout enabled
-
-### Cache Warming
-- Auto pre-population of 12 popular ASN queries on startup
-- Background execution without blocking application start
-- Comprehensive logging for monitoring
-
-### Performance Impact
-- 60-80% reduction in repeated requests (browser/CDN caching)
-- 50-70% reduction in Redis connection overhead
-- 70-85% expected cache hit rate
-
-## [1.2.0] - 2025-10-17
-
-### Frontend Optimization
-- Code splitting with React lazy loading for route components
-- Production build script without source maps (`yarn build:prod`)
-- Bundle analysis tool (`yarn analyze`)
-- Comprehensive optimization documentation
-
-### Performance Impact
-- 30-50% reduction in initial bundle size
-- ~40% improvement in Time to Interactive
-- Separate chunks for better caching
-- 10-15% smaller production builds
-
-## [1.1.0] - 2025-10-17
-
-### Backend Optimization
-- GZip compression middleware (60-80% bandwidth reduction)
-- Rate limiting (100 requests/minute)
-- Query result safety limits (10,000 max)
-- Database connection pooling (min: 5, max: 20)
-- Enhanced logging infrastructure replacing print() statements
-
-### Performance Impact
-- 60-80% reduction in response bandwidth
-- 30-40% reduction in server load
-- 2-3x increase in concurrent user capacity
-
-## [1.0.0] - 2024-01-15
-
-### Initial Release
-- Docker support with docker-compose
-- Automated installation script
-- React-based frontend
-- FastAPI backend with async support
-- Multi-source data integration (BGP, IRR, RPKI, RIR)
-- PostgreSQL database with GIST indexes
-- RESTful API with full access
-- Security features (CORS, input validation)
-
----
-
-## Version History Summary
-
-- **v1.5.0** (2025-10-17): Responsive Design & UX Improvements
-- **v1.4.0** (2025-10-17): Smart Caching Strategies
-- **v1.3.0** (2025-10-17): Advanced Caching with HTTP Headers
-- **v1.2.0** (2025-10-17): Frontend Optimization
-- **v1.1.0** (2025-10-17): Backend Performance Optimization
-- **v1.0.0** (2024-01-15): Initial Release
-
-## Upgrade Notes
-
-### v1.5.0
-- Frontend rebuild required for responsive design changes
-- No backend changes
-- No database migrations required
-
-### v1.4.0 - v1.1.0
-- Docker containers must be rebuilt
-- No database migrations required
-- No configuration changes required (all defaults are optimal)
-
----
-
-For detailed technical changes, see the git commit history.
+### Added
+- Enhanced RPKI Dashboard with comprehensive validation statistics
+- ROA Coverage Analysis endpoint and frontend
+- IRR Consistency Analysis for comparing IRR and BGP data
+- Hijack Detection system with anomaly identification
+- Prefix Overlap Detection for analyzing prefix conflicts
+- AS Path Analysis for route path inspection
+- WHOIS Information integration
+- Data visualizations:
+  - RIR Distribution charts
+  - Historical Timeline graphs
+  - ASN Relationships network diagrams
+  - Prefix Allocation treemaps
+- Advanced Search with multiple filters
+- Search History tracking
+- Popular Queries suggestions
+- Search autocomplete functionality
+- Export functionality (CSV, JSON, PDF reports)
+- Predictive caching system
+- Cache warming on startup
+
+### Changed
+- Improved caching strategy with stale-while-revalidate
+- Enhanced database schema with RPKI status columns
+- Updated frontend with new analysis components
+- Improved error handling across all APIs
+
+### Fixed
+- Query performance optimizations
+- Cache invalidation issues
+- Frontend responsive design improvements
+
+## [1.10.0] - 2024-12-15
+
+### Added
+- Initial RPKI validation support
+- Basic IRR query functionality
+- BGP data collection from bgp.tools
+- PostgreSQL database backend
+- Redis caching layer
+- REST API with OpenAPI documentation
+- React frontend with modern UI
+- Docker Compose deployment
+
+### Changed
+- Migrated from SQLite to PostgreSQL
+- Implemented asynchronous data processing
+- Updated frontend dependencies
+
+### Fixed
+- Database connection pooling issues
+- Frontend routing problems
+- API response formatting
+
+## [1.0.0] - 2024-10-01
+
+### Added
+- Initial release of IRRExplorer
+- Basic prefix and ASN querying
+- IRR database integration (RIPE, ARIN, RADB)
+- Simple web interface
+- Command-line tools for data import
+- Basic documentation
+
+[2.0.0]: https://github.com/jskoetsier/irrexplorer/compare/v1.11.0...v2.0.0
+[1.11.0]: https://github.com/jskoetsier/irrexplorer/compare/v1.10.0...v1.11.0
+[1.10.0]: https://github.com/jskoetsier/irrexplorer/compare/v1.0.0...v1.10.0
+[1.0.0]: https://github.com/jskoetsier/irrexplorer/releases/tag/v1.0.0

@@ -30,7 +30,7 @@ Internet Routing Registry Explorer - A web application for exploring and analyzi
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/irrexplorer.git
+git clone https://github.com/jskoetsier/irrexplorer.git
 cd irrexplorer
 
 # Run the installation script
@@ -38,12 +38,12 @@ cd irrexplorer
 ```
 
 The script will guide you through:
-- Choosing Docker or native installation
+- Choosing Podman or native installation
 - Setting up production or development mode
 - Installing all dependencies
 - Importing initial data
 
-### Docker Installation (Manual)
+### Container Installation with Podman (Manual)
 
 ```bash
 # Copy environment configuration
@@ -53,10 +53,10 @@ cp .env.example .env
 nano .env
 
 # Start services
-docker-compose up -d
+podman-compose up -d
 
 # Import initial data (15-30 minutes)
-docker-compose exec backend python -m irrexplorer.commands.import_data
+podman exec irrexplorer-backend python -m irrexplorer.commands.import_data
 
 # Access the application
 # Frontend: http://localhost
@@ -375,6 +375,44 @@ This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICE
 ## Recent Updates
 
 See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+
+### Version 2.0.0 (2025-10-19) - External Data Sources & Major Updates
+
+**Breaking Changes:**
+- Migrated from Docker to Podman for container runtime
+- Updated all documentation and scripts for Podman compatibility
+
+**New Features:**
+- **BGP Looking Glass Integration** - Real-time BGP routing data from NLNOG Ring with RIPE Stat fallback
+- **RDAP Support** - Registration data from all RIRs (ARIN, RIPE, APNIC, LACNIC, AFRINIC)
+- **PeeringDB Integration** - Peering and interconnection information
+- **External Data Sources Modal** - Tabbed interface on ASN/prefix pages for external data
+- **Multiple BGP Feed Sources** - Support for primary and secondary BGP data sources
+- **Additional IRR Sources** - Configurable regional IRR database sources
+- **Automated Data Import Cron** - Scheduled imports with locking and logging
+
+**Frontend:**
+- New DataSourcesModal component with Looking Glass, RDAP, PeeringDB tabs
+- Responsive modal design with dark theme
+- Accessibility improvements (ARIA attributes, keyboard navigation)
+- External data source buttons on all query result pages
+
+**Backend:**
+- New API endpoints under `/api/datasources/` for all external sources
+- Comprehensive test suite for all data source backends
+- Error handling and timeout management for external APIs
+
+**DevOps:**
+- Container migration from Docker to Podman
+- Automated cron script for data imports (every 4 hours)
+- CI/CD pipeline updates for security scanning
+- Fixed GitHub Actions workflows for Podman compatibility
+
+**Documentation:**
+- New DATA_SOURCES.md with complete API documentation
+- Updated all Docker references to Podman
+- Comprehensive frontend integration guide
+- Cron scheduling documentation
 
 ### Version 1.11.0 (2025-10-19) - Enhanced Analysis Release
 
