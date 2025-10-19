@@ -20,7 +20,6 @@ const CustomTooltip = ({ active, payload }) => {
 
 const PrefixAllocation = () => {
   const [allocationData, setAllocationData] = useState(null);
-  const [distributionData, setDistributionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeView, setActiveView] = useState('rir');
@@ -32,12 +31,11 @@ const PrefixAllocation = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [allocation, distribution] = await Promise.all([
+      const [allocation] = await Promise.all([
         getPrefixAllocationData(),
         getPrefixSizeDistribution()
       ]);
       setAllocationData(allocation);
-      setDistributionData(distribution);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -160,40 +158,6 @@ const PrefixAllocation = () => {
         </small>
       </div>
     </div>
-  );
-};
-
-const CustomizedContent = ({ activeView, root, depth, x, y, width, height, index, colors, name }) => {
-  const fontSize = width < 100 ? 10 : 12;
-  const showText = width > 50 && height > 30;
-
-  return (
-    <g>
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        style={{
-          fill: depth < 2 ? colors[Math.floor((index / root.children.length) * 6)] : 'none',
-          stroke: '#fff',
-          strokeWidth: 2 / (depth + 1e-10),
-          strokeOpacity: 1 / (depth + 1e-10),
-        }}
-      />
-      {showText && (
-        <text
-          x={x + width / 2}
-          y={y + height / 2}
-          textAnchor="middle"
-          fill="#fff"
-          fontSize={fontSize}
-          fontWeight="bold"
-        >
-          {activeView === 'rir' ? name : `AS${name}`}
-        </text>
-      )}
-    </g>
   );
 };
 
