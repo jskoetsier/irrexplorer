@@ -1,7 +1,7 @@
 services:
   # Redis Cache
   redis:
-    image: redis:7-alpine
+    image: docker.io/redis:7-alpine
     container_name: irrexplorer-redis
     # Optimized for 16GB RAM server - allocate 2GB for Redis cache
     command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --save "" --appendonly no
@@ -26,7 +26,7 @@ services:
 
   # Routinator RPKI Validator
   routinator:
-    image: nlnetlabs/routinator:latest
+    image: docker.io/nlnetlabs/routinator:latest
     container_name: irrexplorer-routinator
     command: ["server", "--http", "0.0.0.0:8323", "--rtr", "0.0.0.0:3323"]
     ports:
@@ -53,7 +53,7 @@ services:
           memory: 512M
 
   db:
-    image: postgres:15-alpine
+    image: docker.io/postgres:15-alpine
     container_name: irrexplorer-db
     environment:
       POSTGRES_DB: irrexplorer
