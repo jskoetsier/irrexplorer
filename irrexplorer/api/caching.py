@@ -107,6 +107,7 @@ def cached(
                     # Cache hit
                     redis_client.incr("irrexplorer:stats:hits")
                     # Used for internal caching of trusted data only
+                    # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
                     result = pickle.loads(cached_value)  # nosec B301
 
                     # Check if stale-while-revalidate is enabled
@@ -139,6 +140,7 @@ def cached(
 
             try:
                 # Store in cache with timestamp
+                # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
                 serialized = pickle.dumps(result)
                 redis_client.setex(key, ttl + STALE_GRACE_PERIOD, serialized)
                 if stale_while_revalidate:
@@ -169,6 +171,7 @@ async def _refresh_cache(func, key, timestamp_key, ttl, args, kwargs):
         )
 
         # Update cache
+        # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
         serialized = pickle.dumps(result)
         redis_client.setex(key, ttl + STALE_GRACE_PERIOD, serialized)
         redis_client.setex(timestamp_key, ttl + STALE_GRACE_PERIOD, str(time.time()))

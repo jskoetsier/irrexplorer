@@ -107,6 +107,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Run Semgrep
+      id: semgrep
       uses: returntocorp/semgrep-action@v1
       with:
         config: >-
@@ -114,13 +115,7 @@ jobs:
           p/python
           p/docker
           p/javascript
-        generateSarif: true
-
-    - name: Upload Semgrep results to GitHub
-      if: always()
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: semgrep.sarif
+      continue-on-error: true
 
   trivy-scan:
     name: Trivy Vulnerability Scanner

@@ -28,6 +28,13 @@ COPY scripts.py ./
 # Create directory for frontend build
 RUN mkdir -p frontend/build
 
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
 # Expose port
 EXPOSE 8000
 

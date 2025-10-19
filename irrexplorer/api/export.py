@@ -17,6 +17,27 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 
+def sanitize_csv_field(field):
+    """
+    Sanitize CSV field to prevent formula injection attacks.
+
+    Removes leading characters that could be interpreted as formulas
+    in spreadsheet applications (=, +, -, @, tab, carriage return).
+    """
+    if not isinstance(field, str):
+        return field
+
+    # Remove leading dangerous characters that could trigger formula execution
+    dangerous_prefixes = ['=', '+', '-', '@', '\t', '\r']
+    while field and any(field.startswith(prefix) for prefix in dangerous_prefixes):
+        field = field[1:]
+
+    # Also escape pipe and other potentially dangerous characters
+    field = field.replace('|', '\\|')
+
+    return field
+
+
 async def export_to_csv(request: Request) -> Response:
     """
     Export query results to CSV format.
@@ -38,9 +59,9 @@ async def export_to_csv(request: Request) -> Response:
         output = io.StringIO()
         writer = csv.writer(output)
 
-        # Simple export format
+        # Simple export format - sanitize fields to prevent CSV injection
         writer.writerow(["Query", "Export Time"])
-        writer.writerow([query, datetime.now().isoformat()])
+        writer.writerow([sanitize_csv_field(query), datetime.now().isoformat()])
         writer.writerow([])
         writer.writerow(["Note: Full data export requires query execution"])
         writer.writerow(["Use the API directly for programmatic access"])
