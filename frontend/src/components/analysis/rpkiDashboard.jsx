@@ -25,11 +25,9 @@ const RPKIDashboard = () => {
     try {
       setLoading(true);
       const data = await getRPKIDashboard();
-      console.log('RPKI Dashboard Data:', data);
       setDashboardData(data);
       setError(null);
     } catch (err) {
-      console.error('RPKI Dashboard Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -55,39 +53,36 @@ const RPKIDashboard = () => {
   if (!dashboardData) {
     return (
       <div className="analysis-container">
-        <div className="alert alert-warning">No data available - dashboardData is null</div>
+        <div className="alert alert-warning">No data available</div>
       </div>
     );
   }
 
-  if (!dashboardData.status_breakdown) {
-    return (
-      <div className="analysis-container">
-        <div className="alert alert-warning">
-          No data available - status_breakdown is missing
-          <pre>{JSON.stringify(dashboardData, null, 2)}</pre>
-        </div>
-      </div>
-    );
-  }
-
-  const pieData = Object.keys(dashboardData.status_breakdown || {}).map(status => ({
+  const statusBreakdown = dashboardData.status_breakdown || {};
+  const roaCoverage = dashboardData.roa_coverage_by_rir || [];
+  
+  const pieData = Object.keys(statusBreakdown).map(status => ({
     name: status.replace('_', ' ').toUpperCase(),
-    value: dashboardData.status_breakdown[status]?.count || 0,
-    percentage: dashboardData.status_breakdown[status]?.percentage || 0
+    value: statusBreakdown[status]?.count || 0,
+    percentage: statusBreakdown[status]?.percentage || 0
   }));
 
   return (
     <div className="analysis-container">
       <div className="analysis-header">
         <h2>RPKI Validation Dashboard</h2>
-        <p className="text-muted">Overview of RPKI validation status across all BGP routes</p>
+        <p className="text-muted">Overview of routing status across all BGP routes</p>
+        {dashboardData.note && (
+          <div className="alert alert-info mt-2">
+            <small><i className="fas fa-info-circle me-2"></i>{dashboardData.note}</small>
+          </div>
+        )}
       </div>
 
       <div className="row">
         <div className="col-md-8">
           <div className="analysis-card">
-            <h4>Validation Status Distribution</h4>
+            <h4>Status Distribution</h4>
             <ResponsiveContainer width="100%" height={400}>
               <PieChart>
                 <Pie
@@ -101,7 +96,7 @@ const RPKIDashboard = () => {
                   dataKey="value"
                 >
                   {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name.toLowerCase().replace(' ', '_')]} />
+                    <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name.toLowerCase().replace(' ', '_')] || '#999'} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -116,15 +111,15 @@ const RPKIDashboard = () => {
             <div className="stats-list">
               <div className="stat-item">
                 <span className="stat-label">Total Prefixes:</span>
-                <span className="stat-value">{dashboardData.total_prefixes.toLocaleString()}</span>
+                <span className="stat-value">{(dashboardData.total_prefixes || 0).toLocaleString()}</span>
               </div>
-              {Object.keys(dashboardData.status_breakdown || {}).map(status => (
+              {Object.keys(statusBreakdown).map(status => (
                 <div className="stat-item" key={status}>
                   <span className="stat-label">{status.replace('_', ' ').toUpperCase()}:</span>
                   <span className="stat-value">
-                    {(dashboardData.status_breakdown[status].count || 0).toLocaleString()}
+                    {(statusBreakdown[status]?.count || 0).toLocaleString()}
                     {' '}
-                    ({dashboardData.status_breakdown[status].percentage || 0}%)
+                    ({statusBreakdown[status]?.percentage || 0}%)
                   </span>
                 </div>
               ))}
@@ -133,14 +128,14 @@ const RPKIDashboard = () => {
         </div>
       </div>
 
-      {dashboardData.roa_coverage_by_rir && dashboardData.roa_coverage_by_rir.length > 0 && (
+      {roaCoverage.length > 0 && (
         <>
           <div className="row mt-4">
             <div className="col-md-12">
               <div className="analysis-card">
-                <h4>ROA Coverage by RIR</h4>
+                <h4>RIR Coverage</h4>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={dashboardData.roa_coverage_by_rir}>
+                  <BarChart data={roaCoverage}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="rir" />
                     <YAxis />
@@ -170,7 +165,7 @@ const RPKIDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {dashboardData.roa_coverage_by_rir.map(rir => (
+                      {roaCoverage.map(rir => (
                         <tr key={rir.rir}>
                           <td><strong>{rir.rir}</strong></td>
                           <td>{rir.total_prefixes.toLocaleString()}</td>
