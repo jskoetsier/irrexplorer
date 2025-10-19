@@ -102,13 +102,13 @@ const RPKIDashboard = () => {
                 <span className="stat-label">Total Prefixes:</span>
                 <span className="stat-value">{dashboardData.total_prefixes.toLocaleString()}</span>
               </div>
-              {Object.keys(dashboardData.status_breakdown).map(status => (
+              {Object.keys(dashboardData.status_breakdown || {}).map(status => (
                 <div className="stat-item" key={status}>
                   <span className="stat-label">{status.replace('_', ' ').toUpperCase()}:</span>
                   <span className="stat-value">
-                    {dashboardData.status_breakdown[status].count.toLocaleString()}
+                    {(dashboardData.status_breakdown[status].count || 0).toLocaleString()}
                     {' '}
-                    ({dashboardData.status_breakdown[status].percentage}%)
+                    ({dashboardData.status_breakdown[status].percentage || 0}%)
                   </span>
                 </div>
               ))}
