@@ -9,8 +9,9 @@ from irrexplorer.app import app  # noqa: E402
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from starlette.config import environ
 
-# Must be set before settings is imported
+# Must be set FIRST before any imports that use settings
 environ["TESTING"] = "TRUE"
+
 
 
 
