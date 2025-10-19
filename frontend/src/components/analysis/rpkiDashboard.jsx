@@ -60,7 +60,7 @@ const RPKIDashboard = () => {
 
   const statusBreakdown = dashboardData.status_breakdown || {};
   const roaCoverage = dashboardData.roa_coverage_by_rir || [];
-  
+
   const pieData = Object.keys(statusBreakdown).map(status => ({
     name: status.replace('_', ' ').toUpperCase(),
     value: statusBreakdown[status]?.count || 0,
