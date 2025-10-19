@@ -52,18 +52,29 @@ const RPKIDashboard = () => {
     );
   }
 
-  if (!dashboardData || !dashboardData.status_breakdown) {
+  if (!dashboardData) {
     return (
       <div className="analysis-container">
-        <div className="alert alert-warning">No data available</div>
+        <div className="alert alert-warning">No data available - dashboardData is null</div>
       </div>
     );
   }
 
-  const pieData = Object.keys(dashboardData.status_breakdown).map(status => ({
+  if (!dashboardData.status_breakdown) {
+    return (
+      <div className="analysis-container">
+        <div className="alert alert-warning">
+          No data available - status_breakdown is missing
+          <pre>{JSON.stringify(dashboardData, null, 2)}</pre>
+        </div>
+      </div>
+    );
+  }
+
+  const pieData = Object.keys(dashboardData.status_breakdown || {}).map(status => ({
     name: status.replace('_', ' ').toUpperCase(),
-    value: dashboardData.status_breakdown[status].count,
-    percentage: dashboardData.status_breakdown[status].percentage
+    value: dashboardData.status_breakdown[status]?.count || 0,
+    percentage: dashboardData.status_breakdown[status]?.percentage || 0
   }));
 
   return (
