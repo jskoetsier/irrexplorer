@@ -8,7 +8,8 @@ const STATUS_COLORS = {
   valid: '#28a745',
   invalid: '#dc3545',
   not_found: '#ffc107',
-  unknown: '#6c757d'
+  unknown: '#6c757d',
+  announced: '#007bff'
 };
 
 const RPKIDashboard = () => {
