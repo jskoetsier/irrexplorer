@@ -18,6 +18,7 @@ const DataSourcesModal = ({ query, type, onClose }) => {
     if (query) {
       loadData(activeTab);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, activeTab]);
 
   const loadData = async (tab) => {
