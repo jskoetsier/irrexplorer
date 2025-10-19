@@ -49,7 +49,7 @@ const RPKIDashboard = () => {
     );
   }
 
-  if (!dashboardData) {
+  if (!dashboardData || !dashboardData.status_breakdown || !dashboardData.roa_coverage_by_rir) {
     return null;
   }
 
