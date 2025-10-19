@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// Use relative URL to work with both dev and production
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
 /**
  * Service for interacting with external data source APIs
