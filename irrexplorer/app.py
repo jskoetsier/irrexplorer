@@ -7,6 +7,15 @@ import threading
 import traceback
 
 import databases
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from starlette.applications import Starlette
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
+from starlette.responses import JSONResponse
+from starlette.routing import Mount, Route
 
 from irrexplorer.api import (
     advanced_search,
@@ -20,15 +29,6 @@ from irrexplorer.api import (
 from irrexplorer.api.caching import clear_cache, get_cache_stats
 from irrexplorer.api.utils import DefaultIndexStaticFiles
 from irrexplorer.settings import ALLOWED_ORIGINS, DATABASE_URL, DEBUG, TESTING
-from slowapi import _rate_limit_exceeded_handler, Limiter
-from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
-from starlette.applications import Starlette
-from starlette.middleware import Middleware
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GZipMiddleware
-from starlette.responses import JSONResponse
-from starlette.routing import Mount, Route
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])

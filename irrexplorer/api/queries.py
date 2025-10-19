@@ -7,12 +7,13 @@ from ipaddress import ip_network
 from typing import Optional
 
 import IPy
-from dataclasses_json import dataclass_json, LetterCase
+from dataclasses_json import LetterCase, dataclass_json
+from starlette.responses import PlainTextResponse, Response
 
 from irrexplorer.api.collectors import (
+    PrefixCollector,
     collect_member_of,
     collect_set_expansion,
-    PrefixCollector,
 )
 from irrexplorer.api.interfaces import ObjectClass
 from irrexplorer.api.report import enrich_prefix_summaries_with_report
@@ -20,7 +21,6 @@ from irrexplorer.api.utils import DataClassJSONResponse
 from irrexplorer.backends.irrd import IRRDQuery
 from irrexplorer.backends.metadata import get_last_data_import
 from irrexplorer.settings import MINIMUM_PREFIX_SIZE
-from starlette.responses import PlainTextResponse, Response
 
 # Pre-compiled regex pattern with caching
 RE_RPSL_NAME = re.compile(r"^[A-Z][A-Z0-9_:-]*[A-Z0-9]$", re.IGNORECASE)

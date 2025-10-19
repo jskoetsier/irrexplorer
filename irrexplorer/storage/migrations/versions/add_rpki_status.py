@@ -6,8 +6,8 @@ Create Date: 2025-10-19
 
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "add_rpki_status"

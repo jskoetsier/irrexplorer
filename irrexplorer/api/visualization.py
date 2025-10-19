@@ -11,10 +11,10 @@ Provides endpoints for:
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from irrexplorer.api.caching import cached
-
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+from irrexplorer.api.caching import cached
 
 
 @cached(ttl=3600, key_prefix="viz:prefix_allocation")
