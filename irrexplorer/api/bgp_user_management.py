@@ -165,7 +165,7 @@ async def add_monitored_asn(request: Request):
 
         # Insert monitored ASN
         insert_query = user_monitored_asns.insert().values(
-            user_id=user["id"], asn=asn, description=description
+            user_id=user["id"], asn=asn, description=description, is_active=True
         )
         asn_id = await db.execute(insert_query)
 
