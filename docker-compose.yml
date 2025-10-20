@@ -93,14 +93,14 @@ services:
       image: docker.io/nttgin/bgpalerter:latest
       container_name: irrexplorer-bgpalerter
       volumes:
-        - ./bgpalerter:/opt/bgpalerter/config
+        - ./bgpalerter/config.yml:/opt/bgpalerter/config.yml:ro
+        - ./bgpalerter/prefixes.yml:/opt/bgpalerter/prefixes.yml:ro
         - bgpalerter_data:/opt/bgpalerter/volume
       ports:
         - "8011:8011"
       networks:
         - irrexplorer-network
       restart: unless-stopped
-      command: ["npx", "--yes", "bgpalerter@latest", "-c", "/opt/bgpalerter/config/config.yml"]
       healthcheck:
         test: ["CMD", "wget", "--spider", "-q", "http://localhost:8011/status"]
         interval: 30s
