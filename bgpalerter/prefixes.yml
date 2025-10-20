@@ -2,4 +2,4 @@
 # This file is managed by IRRExplorer BGP monitoring system
 # Prefixes will be added automatically when users register ASNs for monitoring
 
-monitorASns: {}
+monitoredPrefixes: []
