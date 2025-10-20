@@ -5,9 +5,10 @@ Provides web interface integration for BGPalerter container.
 
 import json
 import os
-from typing import Dict
+from typing import Dict, Optional
 
 import yaml
+from databases import Database
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
