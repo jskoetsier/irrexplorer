@@ -1,2 +1,4 @@
-# BGPalerter monitored prefixes/ASNs
-# Managed by IRRExplorer - ASNs will be added dynamically
+options:
+  monitorASns:
+    8315:
+      group: default
