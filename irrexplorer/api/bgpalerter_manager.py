@@ -54,23 +54,42 @@ def save_monitored_prefixes(prefixes: Dict) -> None:
 async def get_bgpalerter_status(request: Request):
     """Get BGPalerter status and configuration."""
     try:
+        import httpx
+
+        # Try to reach BGPalerter REST API
+        bgpalerter_url = os.getenv("BGPALERTER_URL", "http://bgpalerter:8011")
+        is_running = False
+
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                response = await client.get(f"{bgpalerter_url}/status")
+                is_running = response.status_code == 200
+        except Exception:
+            is_running = False
+
         config = load_bgpalerter_config()
         prefixes = load_monitored_prefixes()
+        monitored_count = len(prefixes.get("monitorASns", {}).keys())
 
         return JSONResponse(
             {
-                "status": "running",
-                "monitored_prefixes": len(prefixes.get("monitorASns", {}).keys()),
+                "status": "running" if is_running else "down",
+                "is_running": is_running,
+                "monitored_asns_count": monitored_count,
                 "config": {
-                    "hijack_detection": config.get("checkForPrefixHijack", False),
-                    "visibility_loss": config.get("checkForVisibilityLoss", False),
-                    "path_changes": config.get("checkForASPathChanges", False),
-                    "rpki_invalid": config.get("checkForRPKIInvalid", False),
+                    "environment": config.get("environment", "production"),
+                    "rpki_enabled": "rpki" in str(config.get("monitors", [])),
+                    "notification_interval": config.get("notification", {}).get(
+                        "notificationIntervalSeconds", 7200
+                    ),
                 },
+                "api_url": bgpalerter_url,
             }
         )
     except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+        return JSONResponse(
+            {"error": str(e), "status": "unknown", "is_running": False}, status_code=500
+        )
 
 
 async def add_monitored_asn(request: Request):
@@ -175,23 +194,77 @@ async def delete_monitored_asn(request: Request):
 
 
 async def webhook_receiver(request: Request):
-    """Receive alerts from BGPalerter webhooks."""
+    """Receive alerts from BGPalerter webhooks and create database records."""
     try:
         alert_type = request.path_params["alert_type"]
         data = await request.json()
 
-        # Log the alert (in production, store in database)
+        # Log the alert for debugging
         print(f"BGPalerter Alert [{alert_type}]: {json.dumps(data, indent=2)}")
 
-        # Here you would:
-        # 1. Parse the alert data
-        # 2. Store it in the database
-        # 3. Send notifications to users (email, webhook, etc.)
-        # 4. Update the frontend dashboard
+        db: Database = request.app.state.database
 
-        return JSONResponse({"status": "received", "alert_type": alert_type})
+        # Parse alert data based on type
+        asn = data.get("data", {}).get("asn")
+        prefix = data.get("data", {}).get("prefix")
+        message = data.get("message", f"BGP {alert_type} alert")
+
+        # Determine severity based on alert type
+        severity_map = {
+            "hijack": "critical",
+            "newprefix": "medium",
+            "visibility": "high",
+            "path": "medium",
+            "rpki": "high",
+        }
+        severity = severity_map.get(alert_type, "medium")
+
+        if not asn:
+            return JSONResponse(
+                {"error": "ASN not found in alert data"}, status_code=400
+            )
+
+        # Find all users monitoring this ASN
+        from irrexplorer.storage.tables import bgp_alert_events, user_monitored_asns
+
+        monitored_query = user_monitored_asns.select().where(
+            (user_monitored_asns.c.asn == asn)
+            & (user_monitored_asns.c.is_active == True)  # noqa: E712
+        )
+        monitored_records = await db.fetch_all(monitored_query)
+
+        # Create alert for each user monitoring this ASN
+        created_alerts = []
+        for record in monitored_records:
+            alert_insert = bgp_alert_events.insert().values(
+                user_id=record["user_id"],
+                asn=asn,
+                prefix=prefix,
+                alert_type=alert_type,
+                severity=severity,
+                message=message,
+                details=data,
+                is_acknowledged=False,
+            )
+            alert_id = await db.execute(alert_insert)
+            created_alerts.append(alert_id)
+
+            # TODO: Send notifications based on user's alert configurations
+            # - Check user's alert_configurations table
+            # - Send email/slack/telegram/webhook notifications
+
+        return JSONResponse(
+            {
+                "status": "received",
+                "alert_type": alert_type,
+                "alerts_created": len(created_alerts),
+            }
+        )
 
     except Exception as e:
+        import traceback
+
+        print(f"Error processing webhook: {traceback.format_exc()}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
