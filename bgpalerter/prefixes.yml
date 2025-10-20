@@ -1,8 +1,9 @@
 1.1.1.0/24:
-  description: Cloudflare DNS - Test to ensure BGPalerter starts
+  description: Cloudflare DNS
   asn: 13335
   ignoreMorespecifics: false
   ignore: false
+
 
 options:
   monitorASns:
