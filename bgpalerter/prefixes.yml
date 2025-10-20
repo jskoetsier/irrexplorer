@@ -1,8 +1,1 @@
-monitoredPrefixes:
-  # This file is managed by IRRExplorer BGP monitoring system
-  # ASNs will be added automatically when users register them for monitoring
-  # Example format:
-  # - prefix: "2001:db8::/32"
-  #   description: "Example IPv6 prefix"
-  #   asn: [64512]
-  #   ignoreMorespecifics: false
+{}
