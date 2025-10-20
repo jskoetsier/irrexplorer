@@ -64,7 +64,7 @@ reports:
 environment: production
 volume: /opt/bgpalerter/volume
 monitoredPrefixesFiles:
-  - prefixes.yml
+  - /opt/bgpalerter/prefixes.yml
 
 logging:
   directory: volume/logs
