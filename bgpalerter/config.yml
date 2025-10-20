@@ -11,20 +11,23 @@ monitoredPrefixesFiles:
 connectors:
   - file: connectorRIS
     name: ris
+    params:
+      url: "https://ris-live.ripe.net/v1/socketio/"
+      perMessageDeflate: true
 
 monitors:
   - file: monitorHijack
     channel: hijack
-    
+
   - file: monitorPath
     channel: path
-    
+
   - file: monitorVisibility
     channel: visibility
-    
+
   - file: monitorNewPrefix
     channel: newprefix
-    
+
   - file: monitorAS
     channel: asn
 
