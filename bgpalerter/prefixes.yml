@@ -1,10 +1,1 @@
-monitorASns:
-  # IRRExplorer will dynamically add ASNs here
-  # Example: When user adds AS15562, it becomes:
-  # 15562:
-  #   group: user@example.com
-  #   ignoreMorespecifics: false
-
-options:
-  monitorASns:
-    thresholdMinPeers: 2
+monitorASns: {}
