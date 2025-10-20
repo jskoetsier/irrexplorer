@@ -10,6 +10,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from irrexplorer.api.bgp_auth import require_auth
+from irrexplorer.api.bgp_helpers import serialize_row, serialize_rows
 from irrexplorer.storage.tables import (
     alert_configurations,
     bgp_alert_events,
@@ -30,7 +31,7 @@ async def get_user_emails(request: Request):
         query = user_emails.select().where(user_emails.c.user_id == user["id"])
         results = await db.fetch_all(query)
 
-        return JSONResponse([dict(row) for row in results])
+        return JSONResponse(serialize_rows(results))
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -80,7 +81,7 @@ async def add_user_email(request: Request):
         query = user_emails.select().where(user_emails.c.id == email_id)
         new_email = await db.fetch_one(query)
 
-        return JSONResponse(dict(new_email))
+        return JSONResponse(serialize_row(dict(new_email)))
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -129,7 +130,7 @@ async def get_monitored_asns(request: Request):
         )
         results = await db.fetch_all(query)
 
-        return JSONResponse([dict(row) for row in results])
+        return JSONResponse(serialize_rows(results))
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -175,7 +176,7 @@ async def add_monitored_asn(request: Request):
         query = user_monitored_asns.select().where(user_monitored_asns.c.id == asn_id)
         new_asn = await db.fetch_one(query)
 
-        return JSONResponse(dict(new_asn))
+        return JSONResponse(serialize_row(dict(new_asn)))
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -229,7 +230,7 @@ async def get_alert_configs(request: Request):
         )
         results = await db.fetch_all(query)
 
-        return JSONResponse([dict(row) for row in results])
+        return JSONResponse(serialize_rows(results))
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -310,7 +311,7 @@ async def add_alert_config(request: Request):
         )
         alert_config = await db.fetch_one(query)
 
-        return JSONResponse(dict(alert_config))
+        return JSONResponse(serialize_row(dict(alert_config)))
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -384,7 +385,7 @@ async def get_alert_events(request: Request):
         query = query.order_by(bgp_alert_events.c.created_at.desc()).limit(limit)
 
         results = await db.fetch_all(query)
-        return JSONResponse([dict(row) for row in results])
+        return JSONResponse(serialize_rows(results))
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
