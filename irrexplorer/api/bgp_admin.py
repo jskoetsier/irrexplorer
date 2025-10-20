@@ -10,7 +10,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from irrexplorer.api.bgp_auth import hash_password, require_admin
-from irrexplorer.api.bgp_helpers import serialize_row, serialize_rows
+from irrexplorer.api.bgp_helpers import serialize_rows
 from irrexplorer.storage.tables import (
     alert_configurations,
     bgp_alert_events,

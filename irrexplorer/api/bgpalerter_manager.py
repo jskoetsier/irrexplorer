@@ -5,7 +5,7 @@ Provides web interface integration for BGPalerter container.
 
 import json
 import os
-from typing import Dict, Optional
+from typing import Dict
 
 import yaml
 from databases import Database

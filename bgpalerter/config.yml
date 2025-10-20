@@ -10,23 +10,23 @@ monitors:
     channel: hijack
     params:
       thresholdMinPeers: 3
-    
+
   - file: monitorPath
     channel: path
     params:
       thresholdMinPeers: 1
-    
+
   - file: monitorVisibility
     channel: visibility
     params:
       thresholdMinPeers: 10
       notificationIntervalSeconds: 3600
-    
+
   - file: monitorNewPrefix
     channel: newprefix
     params:
       thresholdMinPeers: 3
-    
+
   - file: monitorAS
     channel: misconfiguration
     params:
