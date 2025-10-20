@@ -54,9 +54,11 @@ async def run_bgpalerter_generate(asn: int) -> tuple[bool, str, Dict]:
         cmd = [
             str(BGPALERTER_BINARY),
             "generate",
-            "-a", str(asn),
-            "-o", str(temp_file),
-            "-m"
+            "-a",
+            str(asn),
+            "-o",
+            str(temp_file),
+            "-m",
         ]
 
         logger.info(f"Generating BGPalerter config for AS{asn}")
@@ -65,7 +67,7 @@ async def run_bgpalerter_generate(asn: int) -> tuple[bool, str, Dict]:
             *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            cwd=str(BGPALERTER_DIR)
+            cwd=str(BGPALERTER_DIR),
         )
 
         stdout, stderr = await process.communicate()
@@ -77,7 +79,7 @@ async def run_bgpalerter_generate(asn: int) -> tuple[bool, str, Dict]:
 
         # Parse the generated file
         if temp_file.exists():
-            with open(temp_file, 'r') as f:
+            with open(temp_file, "r") as f:
                 data = yaml.safe_load(f)
             temp_file.unlink()  # Clean up temp file
             return True, output, data
@@ -124,9 +126,11 @@ async def reload_bgpalerter():
     try:
         # Try systemd restart first
         process = await asyncio.create_subprocess_exec(
-            "systemctl", "restart", "bgpalerter",
+            "systemctl",
+            "restart",
+            "bgpalerter",
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
         await process.communicate()
 
@@ -139,9 +143,11 @@ async def reload_bgpalerter():
     try:
         # Try podman/docker restart
         process = await asyncio.create_subprocess_exec(
-            "podman", "restart", "irrexplorer-bgpalerter",
+            "podman",
+            "restart",
+            "irrexplorer-bgpalerter",
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
         await process.communicate()
 
@@ -172,7 +178,7 @@ async def add_asn_monitoring(asn: int, background_tasks: BackgroundTasks):
         if not BGPALERTER_BINARY.exists():
             raise HTTPException(
                 status_code=503,
-                detail="BGPalerter binary not found. Please install BGPalerter first."
+                detail="BGPalerter binary not found. Please install BGPalerter first.",
             )
 
         # Generate configuration for the ASN
@@ -181,13 +187,13 @@ async def add_asn_monitoring(asn: int, background_tasks: BackgroundTasks):
         if not success:
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to generate BGPalerter configuration: {output}"
+                detail=f"Failed to generate BGPalerter configuration: {output}",
             )
 
         # Load existing prefixes.yml
         existing_data = {}
         if PREFIXES_FILE.exists():
-            with open(PREFIXES_FILE, 'r') as f:
+            with open(PREFIXES_FILE, "r") as f:
                 existing_data = yaml.safe_load(f) or {}
 
         # Merge configurations
@@ -199,23 +205,30 @@ async def add_asn_monitoring(asn: int, background_tasks: BackgroundTasks):
             PREFIXES_FILE.rename(backup_file)
 
         # Write merged configuration
-        with open(PREFIXES_FILE, 'w') as f:
+        with open(PREFIXES_FILE, "w") as f:
             yaml.dump(merged_data, f, default_flow_style=False, sort_keys=False)
 
         # Count prefixes for this ASN
-        prefix_count = sum(1 for k, v in merged_data.items()
-                          if k != "options" and asn in (v.get("asn", []) if isinstance(v.get("asn"), list) else [v.get("asn")]))
+        prefix_count = sum(
+            1
+            for k, v in merged_data.items()
+            if k != "options"
+            and asn
+            in (v.get("asn", []) if isinstance(v.get("asn"), list) else [v.get("asn")])
+        )
 
         # Schedule BGPalerter reload in background
         background_tasks.add_task(reload_bgpalerter)
 
-        logger.info(f"Successfully added AS{asn} to BGPalerter monitoring ({prefix_count} prefixes)")
+        logger.info(
+            f"Successfully added AS{asn} to BGPalerter monitoring ({prefix_count} prefixes)"
+        )
 
         return ASNMonitorResponse(
             asn=asn,
             status="success",
             prefixes_count=prefix_count,
-            message=f"AS{asn} added to monitoring with {prefix_count} prefixes. BGPalerter is reloading."
+            message=f"AS{asn} added to monitoring with {prefix_count} prefixes. BGPalerter is reloading.",
         )
 
     except HTTPException:
@@ -232,10 +245,12 @@ async def remove_asn_monitoring(asn: int, background_tasks: BackgroundTasks):
     """
     try:
         if not PREFIXES_FILE.exists():
-            raise HTTPException(status_code=404, detail="Prefixes configuration not found")
+            raise HTTPException(
+                status_code=404, detail="Prefixes configuration not found"
+            )
 
         # Load existing configuration
-        with open(PREFIXES_FILE, 'r') as f:
+        with open(PREFIXES_FILE, "r") as f:
             data = yaml.safe_load(f) or {}
 
         # Remove prefixes associated with this ASN
@@ -260,19 +275,21 @@ async def remove_asn_monitoring(asn: int, background_tasks: BackgroundTasks):
         backup_file = BGPALERTER_DIR / "prefixes.yml.backup"
         PREFIXES_FILE.rename(backup_file)
 
-        with open(PREFIXES_FILE, 'w') as f:
+        with open(PREFIXES_FILE, "w") as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 
         # Schedule BGPalerter reload
         background_tasks.add_task(reload_bgpalerter)
 
-        logger.info(f"Removed AS{asn} from BGPalerter monitoring ({len(prefixes_to_remove)} prefixes)")
+        logger.info(
+            f"Removed AS{asn} from BGPalerter monitoring ({len(prefixes_to_remove)} prefixes)"
+        )
 
         return {
             "asn": asn,
             "status": "success",
             "prefixes_removed": len(prefixes_to_remove),
-            "message": f"AS{asn} removed from monitoring. BGPalerter is reloading."
+            "message": f"AS{asn} removed from monitoring. BGPalerter is reloading.",
         }
 
     except HTTPException:
@@ -291,7 +308,7 @@ async def get_monitored_asns():
         if not PREFIXES_FILE.exists():
             return []
 
-        with open(PREFIXES_FILE, 'r') as f:
+        with open(PREFIXES_FILE, "r") as f:
             data = yaml.safe_load(f) or {}
 
         asn_info = {}
@@ -304,7 +321,7 @@ async def get_monitored_asns():
                     "asn": asn,
                     "prefixes": [],
                     "upstreams": config.get("upstreams", []) or [],
-                    "downstreams": config.get("downstreams", []) or []
+                    "downstreams": config.get("downstreams", []) or [],
                 }
 
         # Collect prefixes for each ASN
@@ -333,9 +350,11 @@ async def get_bgpalerter_status():
     try:
         # Try checking systemd status
         process = await asyncio.create_subprocess_exec(
-            "systemctl", "is-active", "bgpalerter",
+            "systemctl",
+            "is-active",
+            "bgpalerter",
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await process.communicate()
         status = stdout.decode().strip()
@@ -344,22 +363,26 @@ async def get_bgpalerter_status():
             return {
                 "status": "running",
                 "service": "systemd",
-                "message": "BGPalerter is running"
+                "message": "BGPalerter is running",
             }
         else:
             return {
                 "status": "stopped",
                 "service": "systemd",
-                "message": f"BGPalerter status: {status}"
+                "message": f"BGPalerter status: {status}",
             }
 
     except Exception:
         # Try checking container status
         try:
             process = await asyncio.create_subprocess_exec(
-                "podman", "inspect", "--format", "{{.State.Status}}", "irrexplorer-bgpalerter",
+                "podman",
+                "inspect",
+                "--format",
+                "{{.State.Status}}",
+                "irrexplorer-bgpalerter",
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
             stdout, _ = await process.communicate()
 
@@ -368,7 +391,7 @@ async def get_bgpalerter_status():
                 return {
                     "status": "running" if status == "running" else "stopped",
                     "service": "container",
-                    "message": f"Container status: {status}"
+                    "message": f"Container status: {status}",
                 }
         except Exception:
             pass
@@ -376,5 +399,5 @@ async def get_bgpalerter_status():
         return {
             "status": "unknown",
             "service": "none",
-            "message": "Could not determine BGPalerter status"
+            "message": "Could not determine BGPalerter status",
         }
