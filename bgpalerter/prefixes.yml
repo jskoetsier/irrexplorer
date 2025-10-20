@@ -1,6 +1,12 @@
 # BGPalerter monitored prefixes for AS8315
 # Real prefixes from AS8315 via RIPEstat
 
+8.8.8.0/24:
+  description: Google DNS - Test prefix
+  asn: 15169
+  ignoreMorespecifics: false
+  ignore: false
+
 193.34.150.0/23:
   description: AS8315 Prefix
   asn: 8315
@@ -16,5 +22,7 @@
 
 options:
   monitorASns:
+    15169:
+      group: default
     8315:
       group: default
