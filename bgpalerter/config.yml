@@ -1,27 +1,17 @@
-# BGPalerter v2.0.1 Configuration
-
 environment: production
 
-# Logging
 logging:
   directory: volume/logs
-  logRotatePattern: YYYY-MM-DD
-  maxRetainedFiles: 10
-  compressOldFiles: false
 
-# Volume directory
 volume: /opt/bgpalerter/volume
 
-# Monitored prefixes files
 monitoredPrefixesFiles:
   - prefixes.yml
 
-# Connectors
 connectors:
   - file: connectorRIS
     name: ris
 
-# Monitors  
 monitors:
   - file: monitorHijack
     channel: hijack
@@ -38,7 +28,6 @@ monitors:
   - file: monitorAS
     channel: asn
 
-# Reports
 reports:
   - file: reportFile
     channels:
