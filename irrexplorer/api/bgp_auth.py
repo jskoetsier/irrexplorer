@@ -129,7 +129,11 @@ async def register(request: Request):
         # Create user
         password_hash = hash_password(password)
         insert_query = bgp_users.insert().values(
-            email=email, password_hash=password_hash, full_name=full_name
+            email=email,
+            password_hash=password_hash,
+            full_name=full_name,
+            is_active=True,
+            is_admin=False,
         )
         user_id = await db.execute(insert_query)
 
