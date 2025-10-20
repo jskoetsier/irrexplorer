@@ -1,13 +1,4 @@
-1.1.1.0/24:
-  description: Cloudflare DNS
-  asn: 13335
-  ignoreMorespecifics: false
-  ignore: false
-
-
 options:
   monitorASns:
-    13335:
-      group: default
     8315:
       group: default
