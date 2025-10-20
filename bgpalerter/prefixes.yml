@@ -1,1 +1,9 @@
-monitorASns: {}
+# BGPalerter Monitored ASNs
+# This file will be dynamically updated by IRRExplorer when users add ASNs
+
+options:
+  monitorASns:
+    # Format: ASN: { group: "user@example.com" }
+    # Example when user adds AS15562:
+    # 15562:
+    #   group: user@example.com
