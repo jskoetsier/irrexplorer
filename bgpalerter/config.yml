@@ -28,6 +28,10 @@ webServer:
 # Monitoring groups - will be dynamically updated via API
 monitoredPrefixes: []
 
+# Prefix files configuration for newer BGPalerter versions
+monitoredPrefixesFiles:
+  - prefixes.yml
+
 # RPKI configuration
 rpki:
   vrps: https://console.rpki-client.org/vrps.json
