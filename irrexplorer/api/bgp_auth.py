@@ -39,7 +39,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(user_id: int, is_admin: bool = False) -> str:
     """Create a JWT access token."""
     expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
-    to_encode = {"sub": user_id, "admin": is_admin, "exp": expire}
+    to_encode = {"sub": str(user_id), "admin": is_admin, "exp": expire}
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -66,8 +66,13 @@ async def get_current_user(request: Request) -> Optional[dict]:
     if not payload:
         return None
 
-    user_id = payload.get("sub")
-    if not user_id:
+    user_id_str = payload.get("sub")
+    if not user_id_str:
+        return None
+
+    try:
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
         return None
 
     db: Database = request.app.state.database
