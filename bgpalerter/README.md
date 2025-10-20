@@ -10,11 +10,11 @@ According to [BGPalerter official Docker documentation](https://github.com/nttgi
    ssh phreak@195.95.177.11
    cd /opt/irrexplorer
    git pull
-   
+
    # Stop bgpalerter if running
    podman-compose stop bgpalerter
    podman rm irrexplorer-bgpalerter
-   
+
    # Start bgpalerter in interactive mode for initial configuration
    podman run -it --rm \
      -v $(pwd)/bgpalerter_data:/opt/bgpalerter/volume \
@@ -31,10 +31,10 @@ According to [BGPalerter official Docker documentation](https://github.com/nttgi
    ```bash
    # Backup the auto-generated config
    sudo cp bgpalerter_data/config.yml bgpalerter_data/config.yml.auto
-   
+
    # Copy our custom config
    sudo cp bgpalerter/config.yml bgpalerter_data/config.yml
-   
+
    # Optionally update prefixes.yml if needed
    sudo cp bgpalerter/prefixes.yml bgpalerter_data/prefixes.yml
    ```

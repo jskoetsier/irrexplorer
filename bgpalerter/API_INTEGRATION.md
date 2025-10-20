@@ -248,7 +248,7 @@ The API also supports containerized BGPalerter. If running in a container, ensur
 The API handles various error scenarios:
 
 1. **Invalid ASN**: Returns 400 Bad Request
-2. **BGPalerter not installed**: Returns 503 Service Unavailable  
+2. **BGPalerter not installed**: Returns 503 Service Unavailable
 3. **Generation failure**: Returns 500 with error details from BGPalerter
 4. **Configuration file errors**: Returns 500 with YAML parsing errors
 
