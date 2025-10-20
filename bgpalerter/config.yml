@@ -51,6 +51,12 @@ reports:
     persistAlertData: true
 
   - file: reportHTTP
+    channels:
+      - hijack
+      - newprefix
+      - visibility
+      - path
+      - rpki
     hooks:
       hijack:
         method: POST
