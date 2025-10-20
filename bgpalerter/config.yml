@@ -1,62 +1,44 @@
-# BGPalerter Configuration for IRRExplorer Integration
-# Compatible with BGPalerter v2.0.1+
+# BGPalerter v2.0.1 Configuration
 
 environment: production
 
-# Volume directory for persistent data
-volume: /opt/bgpalerter/volume
-
-# Logging configuration
+# Logging
 logging:
-  level: info
   directory: volume/logs
   logRotatePattern: YYYY-MM-DD
   maxRetainedFiles: 10
   compressOldFiles: false
 
-# Prefix files configuration
+# Volume directory
+volume: /opt/bgpalerter/volume
+
+# Monitored prefixes files
 monitoredPrefixesFiles:
   - prefixes.yml
 
-# RPKI configuration
-rpki:
-  vrps: https://console.rpki-client.org/vrps.json
-
-# BGP data sources
+# Connectors
 connectors:
   - file: connectorRIS
     name: ris
-    params:
-      url: "https://ris-live.ripe.net/v1/socketio/"
-      perMessageDeflate: true
-      carefulInitialPrefixLoading: true
 
-# Monitoring modules
+# Monitors  
 monitors:
   - file: monitorHijack
     channel: hijack
-    params:
-      thresholdMinPeers: 2
-
+    
   - file: monitorPath
     channel: path
-    params:
-      thresholdMinPeers: 2
-
+    
   - file: monitorVisibility
     channel: visibility
-    params:
-      thresholdMinPeers: 2
-
+    
   - file: monitorNewPrefix
     channel: newprefix
-    params:
-      thresholdMinPeers: 2
+    
+  - file: monitorAS
+    channel: asn
 
-  - file: monitorRPKI
-    channel: rpki
-
-# Reports configuration (notifications)
+# Reports
 reports:
   - file: reportFile
     channels:
@@ -64,10 +46,7 @@ reports:
       - newprefix
       - visibility
       - path
-      - rpki
-    params:
-      showPaths: 0
-      persistAlertData: true
+      - asn
 
   - file: reportHTTP
     channels:
@@ -75,42 +54,16 @@ reports:
       - newprefix
       - visibility
       - path
-      - rpki
+      - asn
     params:
-      templates:
-        default: "New BGP alert"
       hooks:
         - channel: hijack
           url: http://backend:8000/api/bgpalerter/webhook/hijack
-          method: POST
-          headers:
-            Content-Type: application/json
         - channel: newprefix
           url: http://backend:8000/api/bgpalerter/webhook/newprefix
-          method: POST
-          headers:
-            Content-Type: application/json
         - channel: visibility
           url: http://backend:8000/api/bgpalerter/webhook/visibility
-          method: POST
-          headers:
-            Content-Type: application/json
         - channel: path
           url: http://backend:8000/api/bgpalerter/webhook/path
-          method: POST
-          headers:
-            Content-Type: application/json
-        - channel: rpki
-          url: http://backend:8000/api/bgpalerter/webhook/rpki
-          method: POST
-          headers:
-            Content-Type: application/json
-
-# Notification settings
-notification:
-  notificationIntervalSeconds: 7200
-
-# API server configuration
-rest:
-  host: "0.0.0.0"
-  port: 8011
+        - channel: asn
+          url: http://backend:8000/api/bgpalerter/webhook/asn
