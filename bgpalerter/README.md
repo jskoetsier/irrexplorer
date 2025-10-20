@@ -1,59 +1,71 @@
-# BGPalerter Configuration Issue
+# BGPalerter Setup
 
-## Problem
-BGPalerter 2.0.1 has a known issue when running in containerized environments. It prompts for interactive configuration when it cannot validate the prefixes.yml file against the live RIS BGP feed at startup.
+## Solution
+According to [BGPalerter official Docker documentation](https://github.com/nttgin/BGPalerter/blob/main/docs/installation.md), config files should be placed inside the volume directory, not mounted separately.
 
-## Root Cause
-When BGPalerter starts, it:
-1. Loads config.yml
-2. Attempts to load and validate prefixes.yml
-3. If validation fails (e.g., prefixes not yet visible in BGP feed), it prompts for interactive auto-configuration
-4. In a container without stdin, this causes the container to hang indefinitely
+## Setup Instructions
 
-## Current Status
-- Configuration files are correctly formatted (config.yml and prefixes.yml)
-- The container mounts are working correctly
-- ruff and isort checks have passed
-- Code has been pushed to git
-
-## Workaround Options
-
-### Option 1: Use a Well-Known Prefix (Current Configuration)
-The prefixes.yml currently includes Cloudflare's 1.1.1.0/24 which should be visible in the BGP feed. However, BGPalerter may still require time to connect to the RIS feed before validation succeeds.
-
-### Option 2: Allow Interactive Configuration
-To allow BGPalerter to auto-configure:
-1. Stop the container: `podman stop irrexplorer-bgpalerter`
-2. Run interactively: 
+1. **First-time setup on remote server:**
    ```bash
+   ssh phreak@195.95.177.11
+   cd /opt/irrexplorer
+   git pull
+   
+   # Stop bgpalerter if running
+   podman-compose stop bgpalerter
+   podman rm irrexplorer-bgpalerter
+   
+   # Start bgpalerter in interactive mode for initial configuration
    podman run -it --rm \
-     -v ./bgpalerter/config.yml:/opt/bgpalerter/config.yml:ro \
-     -v ./bgpalerter:/mnt/output \
-     docker.io/nttgin/bgpalerter:latest run serve
+     -v $(pwd)/bgpalerter_data:/opt/bgpalerter/volume \
+     nttgin/bgpalerter:latest run serve -- --d /opt/bgpalerter/volume/
    ```
-3. Answer the prompts to generate a new prefixes.yml
-4. Copy the generated file to ./bgpalerter/prefixes.yml
-5. Restart the container normally
 
-### Option 3: Disable BGPalerter Temporarily
-If BGPalerter is not immediately required:
-1. Comment out the bgpalerter service in docker-compose.yml
-2. The rest of the irrexplorer stack will function normally
-3. Re-enable when BGPalerter configuration is resolved
+2. **During the interactive setup:**
+   - BGPalerter will auto-generate `config.yml` and ask for ASN to monitor
+   - Enter `8315` when prompted for ASN
+   - It will generate `prefixes.yml` automatically from BGP data
+   - Press Ctrl+C when setup is complete
 
-## Files Modified
-- `/opt/irrexplorer/bgpalerter/config.yml` - Added processMonitors: false and checkForUpdatesAtBoot: false
-- `/opt/irrexplorer/bgpalerter/prefixes.yml` - Reformatted to match BGPalerter 2.0.1 example format
-- `/opt/irrexplorer/docker-compose.yml` - Added stdin_open: false, tty: false, and BGPALERTER_SKIP_PROMPT env
+3. **Copy our custom config into the volume:**
+   ```bash
+   # Backup the auto-generated config
+   sudo cp bgpalerter_data/config.yml bgpalerter_data/config.yml.auto
+   
+   # Copy our custom config
+   sudo cp bgpalerter/config.yml bgpalerter_data/config.yml
+   
+   # Optionally update prefixes.yml if needed
+   sudo cp bgpalerter/prefixes.yml bgpalerter_data/prefixes.yml
+   ```
 
-## Next Steps
-1. Consider downgrading to BGPalerter 1.x which may not have this interactive prompt issue
-2. Or wait for BGPalerter 2.x to add a non-interactive mode flag
-3. Or reach out to BGPalerter project to report this containerization issue
+4. **Start BGPalerter normally:**
+   ```bash
+   podman-compose up -d bgpalerter
+   ```
 
-## Monitoring AS8315
-Once BGPalerter starts successfully, it will monitor:
-- AS8315 (primary target)
-- AS13335 (Cloudflare - used for validation)
+5. **Verify it's running:**
+   ```bash
+   podman-compose logs bgpalerter
+   curl http://localhost:8011/status
+   ```
 
-The monitored prefixes can be updated in prefixes.yml once the service is running.
+## Current Configuration
+
+The docker-compose.yml has been fixed to use the correct command:
+```yaml
+command: run serve -- --d /opt/bgpalerter/volume/
+```
+
+All BGPalerter data (config, prefixes, logs) will be stored in the `bgpalerter_data` Docker volume.
+
+## Files
+- `config.yml` - Our custom webhook configuration for irrexplorer backend
+- `prefixes.yml` - Monitored prefixes (will be auto-generated or manually placed in volume)
+- `README.md` - This file
+
+## Monitoring
+Once running, BGPalerter will:
+- Monitor AS8315 and AS13335
+- Send webhook alerts to irrexplorer backend at `http://backend:8000/api/bgpalerter/webhook/*`
+- Provide status endpoint at `http://localhost:8011/status`
