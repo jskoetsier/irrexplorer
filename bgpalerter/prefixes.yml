@@ -1,1 +1,13 @@
-{}
+# BGPalerter monitored ASNs configuration
+# Managed by IRRExplorer BGP monitoring system
+# ASNs will be added dynamically when users register them
+
+monitorASns:
+  # Example format (will be populated by IRRExplorer):
+  # 64512:
+  #   group: user@example.com
+  #   ignoreMorespecifics: false
+
+options:
+  monitorASns:
+    thresholdMinPeers: 2
