@@ -1,35 +1,36 @@
-environment: production
-
-logging:
-  directory: volume/logs
-
-volume: /opt/bgpalerter/volume
-
-monitoredPrefixesFiles:
-  - prefixes.yml
-
 connectors:
   - file: connectorRIS
     name: ris
     params:
-      url: "https://ris-live.ripe.net/v1/socketio/"
+      url: ws://ris-live.ripe.net/v1/ws/
       perMessageDeflate: true
 
 monitors:
   - file: monitorHijack
     channel: hijack
-
+    params:
+      thresholdMinPeers: 3
+    
   - file: monitorPath
     channel: path
-
+    params:
+      thresholdMinPeers: 1
+    
   - file: monitorVisibility
     channel: visibility
-
+    params:
+      thresholdMinPeers: 10
+      notificationIntervalSeconds: 3600
+    
   - file: monitorNewPrefix
     channel: newprefix
-
+    params:
+      thresholdMinPeers: 3
+    
   - file: monitorAS
-    channel: asn
+    channel: misconfiguration
+    params:
+      thresholdMinPeers: 3
 
 reports:
   - file: reportFile
@@ -38,7 +39,7 @@ reports:
       - newprefix
       - visibility
       - path
-      - asn
+      - misconfiguration
 
   - file: reportHTTP
     channels:
@@ -46,7 +47,7 @@ reports:
       - newprefix
       - visibility
       - path
-      - asn
+      - misconfiguration
     params:
       hooks:
         - channel: hijack
@@ -57,5 +58,13 @@ reports:
           url: http://backend:8000/api/bgpalerter/webhook/visibility
         - channel: path
           url: http://backend:8000/api/bgpalerter/webhook/path
-        - channel: asn
+        - channel: misconfiguration
           url: http://backend:8000/api/bgpalerter/webhook/asn
+
+environment: production
+volume: /opt/bgpalerter/volume
+monitoredPrefixesFiles:
+  - prefixes.yml
+
+logging:
+  directory: volume/logs
