@@ -68,3 +68,7 @@ monitoredPrefixesFiles:
 
 logging:
   directory: volume/logs
+
+processMonitors: false
+
+checkForUpdatesAtBoot: false
