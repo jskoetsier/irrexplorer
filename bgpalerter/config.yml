@@ -27,6 +27,8 @@ connectors:
   - file: connectorRIS
     name: ris
     params:
+      url: "https://ris-live.ripe.net/v1/socketio/"
+      perMessageDeflate: true
       carefulInitialPrefixLoading: true
 
 # Monitoring modules
