@@ -92,13 +92,8 @@ services:
     bgpalerter:
       image: docker.io/nttgin/bgpalerter:latest
       container_name: irrexplorer-bgpalerter
-      stdin_open: false
-      tty: false
-      environment:
-        - BGPALERTER_SKIP_PROMPT=true
+      command: run serve -- --d /opt/bgpalerter/volume/
       volumes:
-        - ./bgpalerter/config.yml:/opt/bgpalerter/config.yml:ro
-        - ./bgpalerter/prefixes.yml:/opt/bgpalerter/prefixes.yml:rw
         - bgpalerter_data:/opt/bgpalerter/volume
       ports:
         - "8011:8011"
