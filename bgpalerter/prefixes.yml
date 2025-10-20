@@ -3,15 +3,16 @@
 
 193.34.150.0/23:
   description: AS8315 Prefix
-  asn:
-    - 8315
+  asn: 8315
   ignoreMorespecifics: false
+  ignore: false
 
 85.92.128.0/20:
   description: AS8315 Prefix
-  asn:
-    - 8315
+  asn: 8315
   ignoreMorespecifics: false
+  ignore: false
+
 
 options:
   monitorASns:
