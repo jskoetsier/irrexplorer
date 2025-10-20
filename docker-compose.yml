@@ -1,149 +1,116 @@
-# IRRExplorer Compose Configuration
-# Compatible with both Docker Compose and Podman Compose
-# For Podman: use 'podman-compose' instead of 'docker-compose'
+version: '3.8'
 
 services:
-  # Redis Cache
-  redis:
-    image: docker.io/redis:7-alpine
-    container_name: irrexplorer-redis
-    # Optimized for 16GB RAM server - allocate 2GB for Redis cache
-    command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --save "" --appendonly no
-    ports:
-      - "6379:6379"
-    networks:
-      - irrexplorer-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
+    # PostgreSQL database
+    postgres:
+      image: postgres:15
+      container_name: irrexplorer-postgres
+      environment:
+        POSTGRES_DB: irrexplorer
+        POSTGRES_USER: irrexplorer
+        POSTGRES_PASSWORD: irrexplorer
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      networks:
+        - irrexplorer-network
+      restart: unless-stopped
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U irrexplorer"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
 
-  # Routinator RPKI Validator
-  routinator:
-    image: docker.io/nlnetlabs/routinator:latest
-    container_name: irrexplorer-routinator
-    command: ["server", "--http", "0.0.0.0:8323", "--rtr", "0.0.0.0:3323"]
-    ports:
-      - "8323:8323"
-      - "3323:3323"
-    volumes:
-      - routinator_data:/root/.rpki-cache
-    networks:
-      - irrexplorer-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8323/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+    # Redis for caching
+    redis:
+      image: redis:7-alpine
+      container_name: irrexplorer-redis
+      networks:
+        - irrexplorer-network
+      restart: unless-stopped
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 3s
+        retries: 3
 
-  db:
-    image: docker.io/postgres:15-alpine
-    container_name: irrexplorer-db
-    environment:
-      POSTGRES_DB: irrexplorer
-      POSTGRES_USER: irrexplorer
-      POSTGRES_PASSWORD: irrexplorer_password
-      # PostgreSQL tuning for 8 CPU / 16GB RAM
-      POSTGRES_SHARED_BUFFERS: "4GB"
-      POSTGRES_EFFECTIVE_CACHE_SIZE: "12GB"
-      POSTGRES_MAINTENANCE_WORK_MEM: "1GB"
-      POSTGRES_WORK_MEM: "64MB"
-      POSTGRES_MAX_WORKER_PROCESSES: "8"
-      POSTGRES_MAX_PARALLEL_WORKERS_PER_GATHER: "4"
-      POSTGRES_MAX_PARALLEL_WORKERS: "8"
-      POSTGRES_MAX_CONNECTIONS: "200"
-    command: >
-      postgres
-      -c shared_buffers=4GB
-      -c effective_cache_size=12GB
-      -c maintenance_work_mem=1GB
-      -c work_mem=64MB
-      -c max_worker_processes=8
-      -c max_parallel_workers_per_gather=4
-      -c max_parallel_workers=8
-      -c max_connections=200
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U irrexplorer"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - irrexplorer-network
+    # Routinator for RPKI validation
+    routinator:
+      image: nlnetlabs/routinator:latest
+      container_name: irrexplorer-routinator
+      networks:
+        - irrexplorer-network
+      ports:
+        - "8323:8323"
+      volumes:
+        - routinator_data:/root/.rpki-cache
+      command: server --rtr 0.0.0.0:8323 --http 0.0.0.0:8080
+      restart: unless-stopped
 
-  # Backend API
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: irrexplorer-backend
-    environment:
-      DATABASE_URL: postgresql://irrexplorer:irrexplorer_password@db:5432/irrexplorer
-      REDIS_URL: redis://redis:6379/0
-      IRRD_ENDPOINT: ${IRRD_ENDPOINT:-}
-      DEBUG: ${DEBUG:-False}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:3000}
-      BGP_SOURCE: ${BGP_SOURCE:-https://bgp.tools/table.jsonl}
-      BGP_SOURCE_MINIMUM_HITS: ${BGP_SOURCE_MINIMUM_HITS:-20}
-      HTTP_PORT: 8000
-      # Optimized for 8 CPU server: (2 * CPU) + 1 = 17 workers (capped at 12 for memory)
-      HTTP_WORKERS: ${HTTP_WORKERS:-12}
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./irrexplorer:/app/irrexplorer
-      - ./alembic.ini:/app/alembic.ini
-      - ./.env:/app/.env
-    networks:
-      - irrexplorer-network
-    restart: unless-stopped
+    # Backend (FastAPI)
+    backend:
+      build:
+        context: .
+        dockerfile: Dockerfile
+      container_name: irrexplorer-backend
+      depends_on:
+        postgres:
+          condition: service_healthy
+        redis:
+          condition: service_healthy
+      environment:
+        DATABASE_URL: postgresql://irrexplorer:irrexplorer@postgres/irrexplorer
+        REDIS_URL: redis://redis:6379/0
+        ROUTINATOR_URL: http://routinator:8080
+        JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-in-production-please}
+      ports:
+        - "8000:8000"
+      networks:
+        - irrexplorer-network
+      restart: unless-stopped
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 40s
 
-  # Frontend (nginx serving React build)
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: irrexplorer-frontend
-    depends_on:
-      - backend
-    ports:
-      - "8080:80"
-    networks:
-      - irrexplorer-network
-    restart: unless-stopped
+    # Frontend (nginx serving React build)
+    frontend:
+      build:
+        context: .
+        dockerfile: Dockerfile.frontend
+      container_name: irrexplorer-frontend
+      depends_on:
+        - backend
+      ports:
+        - "8080:80"
+      networks:
+        - irrexplorer-network
+      restart: unless-stopped
 
-  # BGPalerter - BGP Monitoring and Alerting
-  bgpalerter:
-    image: docker.io/nttgin/bgpalerter:latest
-    container_name: irrexplorer-bgpalerter
-    volumes:
-      - ./bgpalerter/config.yml:/opt/bgpalerter/config.yml
-      - bgpalerter_data:/opt/bgpalerter/volume
-    ports:
-      - "8011:8011"
-    networks:
-      - irrexplorer-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8011/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+    # BGPalerter - BGP Monitoring and Alerting
+    bgpalerter:
+      image: docker.io/nttgin/bgpalerter:latest
+      container_name: irrexplorer-bgpalerter
+      volumes:
+        - ./bgpalerter:/opt/bgpalerter/config
+        - bgpalerter_data:/opt/bgpalerter/volume
+      ports:
+        - "8011:8011"
+      networks:
+        - irrexplorer-network
+      restart: unless-stopped
+      command: ["npx", "--yes", "bgpalerter@latest", "-c", "/opt/bgpalerter/config/config.yml"]
+      healthcheck:
+        test: ["CMD", "wget", "--spider", "-q", "http://localhost:8011/status"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 60s
+
+networks:
+  irrexplorer-network:
+    driver: bridge
 
 volumes:
   postgres_data:
@@ -152,7 +119,3 @@ volumes:
     driver: local
   bgpalerter_data:
     driver: local
-
-networks:
-  irrexplorer-network:
-    driver: bridge
