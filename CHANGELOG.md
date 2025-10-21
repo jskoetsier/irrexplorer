@@ -5,6 +5,21 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-10-21
+
+### Removed
+- **Routinator RPKI Validation Service**
+  - Removed Routinator container from docker-compose.yml
+  - Removed routinator service configuration and volume
+  - Removed ROUTINATOR_URL environment variable
+  - Removed irrexplorer/backends/rpki.py module
+  - Cleaned up Routinator container and volume on remote server
+
+### Changed
+- Version bumped to 2.2.0
+- Further reduced container footprint
+- Simplified deployment architecture
+
 ## [2.1.0] - 2025-10-21
 
 ### Removed
@@ -15,12 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed bgpAuthService.js frontend service
   - Removed backend API endpoints:
     - `/api/bgp-auth/*` - User authentication
-    - `/api/bgp-user/*` - User management  
+    - `/api/bgp-user/*` - User management
     - `/api/bgp-admin/*` - Admin management
     - `/api/bgpalerter/*` - Alerting management
   - Removed backend modules: bgp_auth.py, bgp_admin.py, bgp_user_management.py, bgpalerter_manager.py
   - Cleaned up BGP monitoring configuration files and volumes
-  
+
 ### Changed
 - Version bumped to 2.1.0
 - Streamlined application focus on IRR exploration and RPKI validation
@@ -39,24 +54,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - RDAP client for IP/ASN/domain registration data from all RIRs
   - PeeringDB integration for peering and interconnection information
   - New API endpoints under `/api/datasources/` for all external sources
-  
+
 - **Frontend Enhancements**
   - DataSourcesModal component with tabbed interface (Looking Glass, RDAP, PeeringDB)
   - External data source buttons on ASN and prefix query pages
   - Responsive modal design with dark theme
   - Accessibility improvements (ARIA attributes, keyboard navigation, Escape key support)
-  
+
 - **Configuration & Deployment**
   - Support for multiple BGP feed sources (primary and secondary)
   - Configurable additional IRR sources
   - Automated data import cron script with locking mechanism
   - Scheduled imports every 4 hours with logging
-  
+
 - **Testing & Quality**
   - Comprehensive test suite for all data source backends
   - Mock implementations for external API testing
   - Response parsing tests for all data sources
-  
+
 - **Documentation**
   - New DATA_SOURCES.md with complete API documentation
   - Frontend integration guide with code examples

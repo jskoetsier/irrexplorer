@@ -33,19 +33,6 @@ services:
         timeout: 3s
         retries: 3
 
-    # Routinator for RPKI validation
-    routinator:
-      image: nlnetlabs/routinator:latest
-      container_name: irrexplorer-routinator
-      networks:
-        - irrexplorer-network
-      ports:
-        - "8323:8323"
-      volumes:
-        - routinator_data:/root/.rpki-cache
-      command: server --rtr 0.0.0.0:8323 --http 0.0.0.0:8080
-      restart: unless-stopped
-
     # Backend (FastAPI)
     backend:
       build:
@@ -60,7 +47,6 @@ services:
       environment:
         DATABASE_URL: postgresql://irrexplorer:irrexplorer@postgres/irrexplorer
         REDIS_URL: redis://redis:6379/0
-        ROUTINATOR_URL: http://routinator:8080
         JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-in-production-please}
       ports:
         - "8000:8000"
@@ -94,6 +80,4 @@ networks:
 
 volumes:
   postgres_data:
-    driver: local
-  routinator_data:
     driver: local
