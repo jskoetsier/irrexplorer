@@ -1,4 +1,0 @@
-options:
-  monitorASns:
-    8315:
-      group: default

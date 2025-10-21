@@ -20,10 +20,6 @@ from starlette.routing import Mount, Route
 from irrexplorer.api import (
     advanced_search,
     analysis,
-    bgp_admin,
-    bgp_auth,
-    bgp_user_management,
-    bgpalerter_manager,
     datasources,
     export,
     openapi,
@@ -152,84 +148,6 @@ routes = [
     ),
     Route("/api/datasources/peeringdb/ix/{ix_id:int}", datasources.peeringdb_ix),
     Route("/api/datasources/peeringdb/search", datasources.peeringdb_search),
-    # BGPalerter Management endpoints
-    Route("/api/bgpalerter/status", bgpalerter_manager.get_bgpalerter_status),
-    Route("/api/bgpalerter/monitored-asns", bgpalerter_manager.get_monitored_asns),
-    Route(
-        "/api/bgpalerter/monitored-asns",
-        bgpalerter_manager.add_monitored_asn,
-        methods=["POST"],
-    ),
-    Route(
-        "/api/bgpalerter/monitored-asns/{asn}",
-        bgpalerter_manager.delete_monitored_asn,
-        methods=["DELETE"],
-    ),
-    Route("/api/bgpalerter/alerts", bgpalerter_manager.get_recent_alerts),
-    Route(
-        "/api/bgpalerter/webhook/{alert_type}",
-        bgpalerter_manager.webhook_receiver,
-        methods=["POST"],
-    ),
-    # BGP User Authentication endpoints
-    Route("/api/bgp-auth/register", bgp_auth.register, methods=["POST"]),
-    Route("/api/bgp-auth/login", bgp_auth.login, methods=["POST"]),
-    Route("/api/bgp-auth/me", bgp_auth.me),
-    Route("/api/bgp-auth/change-password", bgp_auth.change_password, methods=["POST"]),
-    # BGP User Management endpoints
-    Route("/api/bgp-user/emails", bgp_user_management.get_user_emails),
-    Route("/api/bgp-user/emails", bgp_user_management.add_user_email, methods=["POST"]),
-    Route(
-        "/api/bgp-user/emails/{email_id:int}",
-        bgp_user_management.delete_user_email,
-        methods=["DELETE"],
-    ),
-    Route("/api/bgp-user/asns", bgp_user_management.get_monitored_asns),
-    Route(
-        "/api/bgp-user/asns", bgp_user_management.add_monitored_asn, methods=["POST"]
-    ),
-    Route(
-        "/api/bgp-user/asns/{asn_id:int}",
-        bgp_user_management.delete_monitored_asn,
-        methods=["DELETE"],
-    ),
-    Route("/api/bgp-user/alert-configs", bgp_user_management.get_alert_configs),
-    Route(
-        "/api/bgp-user/alert-configs",
-        bgp_user_management.add_alert_config,
-        methods=["POST"],
-    ),
-    Route(
-        "/api/bgp-user/alert-configs/{config_id:int}",
-        bgp_user_management.delete_alert_config,
-        methods=["DELETE"],
-    ),
-    Route("/api/bgp-user/alerts", bgp_user_management.get_alert_events),
-    Route(
-        "/api/bgp-user/alerts/{alert_id:int}/acknowledge",
-        bgp_user_management.acknowledge_alert_event,
-        methods=["POST"],
-    ),
-    Route("/api/bgp-user/stats", bgp_user_management.get_user_stats),
-    # BGP Admin endpoints
-    Route("/api/bgp-admin/users", bgp_admin.list_users),
-    Route("/api/bgp-admin/users", bgp_admin.create_user, methods=["POST"]),
-    Route("/api/bgp-admin/users/{user_id:int}", bgp_admin.get_user_detail),
-    Route("/api/bgp-admin/users/{user_id:int}", bgp_admin.update_user, methods=["PUT"]),
-    Route(
-        "/api/bgp-admin/users/{user_id:int}",
-        bgp_admin.delete_user,
-        methods=["DELETE"],
-    ),
-    Route("/api/bgp-admin/config", bgp_admin.get_system_config),
-    Route("/api/bgp-admin/config", bgp_admin.update_system_config, methods=["POST"]),
-    Route(
-        "/api/bgp-admin/config/{key}",
-        bgp_admin.delete_system_config,
-        methods=["DELETE"],
-    ),
-    Route("/api/bgp-admin/metrics", bgp_admin.get_system_metrics),
-    Route("/api/bgp-admin/activity", bgp_admin.get_recent_activity),
 ]
 
 # Only mount static files if not testing and directory exists

@@ -36,10 +36,6 @@ function Home() {
                                 <i className="fas fa-microscope me-2"></i>
                                 Enhanced Analysis
                             </Link>
-                            <Link to="/bgp-monitoring" className="btn btn-outline-warning btn-lg">
-                                <i className="fas fa-shield-alt me-2"></i>
-                                BGP Monitoring
-                            </Link>
                         </div>
                     </div>
 
