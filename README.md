@@ -376,6 +376,13 @@ This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICE
 
 See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 
+### Version 2.1.0 (2025-10-21) - Streamlined Application
+
+**Removed:**
+- BGP Monitoring & Alerting System (BGPalerter integration)
+- Simplified focus on core IRR exploration and RPKI validation
+- Reduced container footprint and application complexity
+
 ### Version 2.0.0 (2025-10-19) - External Data Sources & Major Updates
 
 **Breaking Changes:**

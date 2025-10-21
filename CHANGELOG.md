@@ -5,6 +5,27 @@ All notable changes to IRRExplorer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-10-21
+
+### Removed
+- **BGP Monitoring & Alerting System**
+  - Removed BGPalerter integration and container from docker-compose.yml
+  - Removed BGP monitoring UI components and navigation
+  - Removed bgpalerter frontend components (bgpalerter.jsx, bgpalerter.css)
+  - Removed bgpAuthService.js frontend service
+  - Removed backend API endpoints:
+    - `/api/bgp-auth/*` - User authentication
+    - `/api/bgp-user/*` - User management  
+    - `/api/bgp-admin/*` - Admin management
+    - `/api/bgpalerter/*` - Alerting management
+  - Removed backend modules: bgp_auth.py, bgp_admin.py, bgp_user_management.py, bgpalerter_manager.py
+  - Cleaned up BGP monitoring configuration files and volumes
+  
+### Changed
+- Version bumped to 2.1.0
+- Streamlined application focus on IRR exploration and RPKI validation
+- Reduced container footprint and complexity
+
 ## [2.0.0] - 2025-10-19
 
 ### Breaking Changes

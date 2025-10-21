@@ -327,15 +327,6 @@ IRRExplorer is a comprehensive tool for exploring Internet Routing Registry (IRR
 - API rate tiers for authenticated users
 - API versioning (v2)
 
-**BGP Monitoring & Alerting**
-- Implement BGPalerter integration (https://github.com/nttgin/BGPalerter)
-- Web interface for BGP alert management
-- User registration system for ASN monitoring
-- Real-time BGP anomaly detection and notifications
-- Configurable alert rules and thresholds
-- Email/webhook notifications for BGP events
-- Historical alert log and analysis
-
 ### Long-term (12+ months)
 
 **Advanced Features**
