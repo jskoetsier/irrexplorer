@@ -3,6 +3,7 @@
   "license": "BSD-2-Clause",
   "version": "1.6.1",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7",
     "@fortawesome/fontawesome-svg-core": "^6.7",
@@ -11,7 +12,6 @@
     "@fortawesome/free-solid-svg-icons": "^6.7",
     "@fortawesome/react-fontawesome": "^0.2",
     "@popperjs/core": "^2.11.8",
-    "@reach/router": "^1.3",
     "axios": "^1.11",
     "bootstrap": "^5.3.7",
     "dayjs": "^1.11.13",
@@ -19,25 +19,29 @@
     "react": "^18.3",
     "react-dom": "^18.3",
     "react-force-graph-2d": "^1.25",
-    "react-scripts": "^5.0.1",
+    "react-router-dom": "^6.22",
     "recharts": "^2.12"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:prod": "GENERATE_SOURCEMAP=false react-scripts build",
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
   "devDependencies": {
-    "source-map-explorer": "^2.5.3"
+    "@types/bootstrap": "^5.2.10",
+    "@types/lodash": "^4.17",
+    "@types/node": "^22.0",
+    "@types/react": "^18.3",
+    "@types/react-dom": "^18.3",
+    "@vitejs/plugin-react": "^4.3",
+    "rollup-plugin-visualizer": "^5.12",
+    "typescript": "^5.6",
+    "vite": "^6.0"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "plugin:jsx-a11y/recommended"
-    ]
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:prod": "tsc --noEmit && vite build --mode production",
+    "preview": "vite preview",
+    "analyze": "vite-bundle-visualizer",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
   },
   "browserslist": {
     "production": [
