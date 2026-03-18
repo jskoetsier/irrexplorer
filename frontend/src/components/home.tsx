@@ -4,10 +4,17 @@ import logo from '../logo.png';
 import QueryForm from './common/queryForm';
 import PopularQueries from './popularQueries';
 import SearchHistory from './searchHistory';
+import { getWebsiteStructuredData, setSeo } from '../utils/seo';
 
 export default function Home() {
   useEffect(() => {
-    document.title = 'IRR explorer';
+    setSeo({
+      title: 'IRRExplorer | IRR, BGP, and RPKI Lookup',
+      description:
+        'Look up prefixes, ASNs, AS-SETs, and route-sets with IRR, BGP, RPKI, RDAP, PeeringDB, and Looking Glass data.',
+      path: '/',
+      structuredData: getWebsiteStructuredData(),
+    });
   }, []);
 
   return (

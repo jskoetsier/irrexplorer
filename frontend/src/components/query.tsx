@@ -10,6 +10,7 @@ import PrefixQuery from './prefixQuery';
 import ASNQuery from './asnQuery';
 import SetQuery from './setQuery';
 import type { QueryCategory, AdvancedSearchFilters as Filters } from '../types';
+import { setSeo } from '../utils/seo';
 
 export default function Query() {
   const { query, query1, query2, category } = useParams();
@@ -34,7 +35,11 @@ export default function Query() {
     } else {
       setCleanQuery(cleanResult.cleanedValue);
       setQueryCategory(cleanResult.category);
-      document.title = 'IRR explorer: ' + cleanResult.cleanedValue;
+      setSeo({
+        title: `IRRExplorer | ${cleanResult.cleanedValue}`,
+        description: getQueryDescription(cleanResult.category, cleanResult.cleanedValue),
+        path: `/${cleanResult.category}/${cleanResult.cleanedValue}`,
+      });
       api.addSearchHistory(cleanResult.cleanedValue, cleanResult.category);
     }
   }, [query, query1, query2, category, navigate]);
@@ -104,4 +109,19 @@ export default function Query() {
       )}
     </div>
   );
+}
+
+function getQueryDescription(category: QueryCategory, value: string): string {
+  switch (category) {
+    case 'prefix':
+      return `Analyze prefix ${value} with IRR routes, BGP visibility, RPKI status, and related routing data in IRRExplorer.`;
+    case 'asn':
+      return `Analyze ASN ${value} with announced prefixes, IRR route objects, BGP visibility, and RPKI data in IRRExplorer.`;
+    case 'as-set':
+      return `Expand and inspect AS-SET ${value} with IRRExplorer.`;
+    case 'route-set':
+      return `Expand and inspect route-set ${value} with IRRExplorer.`;
+    default:
+      return `Inspect routing data for ${value} in IRRExplorer.`;
+  }
 }

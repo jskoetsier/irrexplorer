@@ -2,10 +2,16 @@ import { useEffect } from 'react';
 import logo from '../logo.png';
 import Metadata from './common/metadata';
 import { Link } from 'react-router-dom';
+import { setSeo } from '../utils/seo';
 
 export default function Status() {
   useEffect(() => {
-    document.title = 'IRR explorer';
+    setSeo({
+      title: 'IRRExplorer Status | Data Freshness and Source Health',
+      description:
+        'Check IRRExplorer data freshness for BGP, RIR statistics, IRRD, and RPKI-backed sources.',
+      path: '/status/',
+    });
   }, []);
 
   return (

@@ -11,8 +11,7 @@ interface MessageBadgeProps {
 export default function MessageBadge({ category, text, reducedColour }: MessageBadgeProps) {
   let classes = '';
   if (!reducedColour) {
-    classes = `badge bg-${category} `;
-    if (category === 'warning' || category === 'info') classes += 'text-dark ';
+    classes = `badge text-bg-${category} `;
   }
 
   const icons = {

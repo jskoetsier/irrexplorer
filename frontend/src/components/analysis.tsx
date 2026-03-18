@@ -1,5 +1,6 @@
-import { useState, Component, ReactNode, lazy, Suspense } from 'react';
+import { useEffect, useState, Component, ReactNode, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
+import { setSeo } from '../utils/seo';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -46,6 +47,15 @@ const PrefixOverlapExp = lazy(() => import('./analysis/prefixOverlap'));
 
 export default function Analysis() {
   const [activeTab, setActiveTab] = useState('rpki-dashboard');
+
+  useEffect(() => {
+    setSeo({
+      title: 'IRRExplorer Analysis | RPKI, Hijacks, and Prefix Overlap',
+      description:
+        'Use IRRExplorer analysis tools for RPKI validation, hijack detection, and prefix overlap investigation.',
+      path: '/analysis',
+    });
+  }, []);
 
   const renderAnalysis = () => {
     return (

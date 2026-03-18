@@ -1,5 +1,6 @@
-import { useState, Component, ReactNode, lazy, Suspense } from 'react';
+import { useEffect, useState, Component, ReactNode, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
+import { setSeo } from '../utils/seo';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -47,6 +48,15 @@ const RIRDistribution = lazy(() => import('./visualizations/rirDistribution'));
 
 export default function Visualizations() {
   const [activeTab, setActiveTab] = useState('prefix-allocation');
+
+  useEffect(() => {
+    setSeo({
+      title: 'IRRExplorer Visualizations | Prefix and ASN Routing Charts',
+      description:
+        'Explore routing data with IRRExplorer visualizations for prefix allocation, ASN relationships, timelines, and RIR distribution.',
+      path: '/visualizations',
+    });
+  }, []);
 
   const renderVisualization = () => {
     return (
