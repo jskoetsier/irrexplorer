@@ -14,3 +14,4 @@ charts/irrexplorer/values.secrets.yaml
 syntax: glob
 __pycache__
 _build
+.worktrees/
