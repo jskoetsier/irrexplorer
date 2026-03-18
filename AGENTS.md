@@ -241,17 +241,20 @@ Components:
 **Assigned Files**:
 - `.github/workflows/` (all workflows)
 - `irrexplorer/storage/migrations/`
-- `Makefile`
 - `scripts/`
 - `frontend/package.json`
 - `frontend/vite.config.ts`
+- `charts/irrexplorer/` (Helm chart)
 
 **Key Responsibilities**:
-- Execute safe deployment procedures
+- Execute safe deployment procedures to Rancher/Kubernetes
 - Run database migrations with backups
 - Implement smoke tests post-deployment
 - Maintain deployment documentation
 - Optimize TypeScript build pipelines
+
+**Deployment Skill**:
+Use the `.claude/skills/deploy-irrexplorer` skill for all deployments to the Rancher cluster. It covers the full workflow: build verification, git push, rsync to server, Docker image build/push to local registry, and Helm upgrade.
 
 **Deployment Workflow**:
 ```
@@ -259,10 +262,20 @@ Components:
 2. Run type checking (mypy, tsc --noEmit)
 3. Run security scans (bandit, safety, npm audit)
 4. Execute tests (pytest, vitest)
-5. Build containers (multi-stage for Node.js)
-6. Run database migrations
-7. Deploy with health checks
-8. Verify smoke tests
+5. Commit and push to git (ssh://onedev.int.koetsier.org/irrexplorer.git)
+6. Build Docker image on Rancher server (root@10.15.19.50)
+7. Push to local registry (10.15.19.50:30500)
+8. Helm upgrade with --reuse-values and new image tag
+9. Verify rollout with kubectl rollout status
+```
+
+**Infrastructure**:
+```
+- Rancher/RKE2 cluster: 10.15.19.50
+- Local registry: 10.15.19.50:30500
+- Helm release: irrexplorer (namespace: irrexplorer)
+- KUBECONFIG: /etc/rancher/rke2/rke2.yaml
+- kubectl: /var/lib/rancher/rke2/bin/kubectl
 ```
 
 **Rules**:
@@ -273,6 +286,8 @@ Components:
 5. Deployment must complete before continuing
 6. Run `tsc --noEmit` before building frontend
 7. Use Vite for production builds with code splitting
+8. Follow the `.claude/skills/deploy-irrexplorer` skill exactly
+9. Rancher API token in `rancher-api.txt` may expire — use SSH to server instead
 
 ---
 
@@ -644,16 +659,22 @@ alembic upgrade head
 alembic downgrade -1
 ```
 
-#### Deployment
+#### Deployment (Rancher/Kubernetes)
+See `.claude/skills/deploy-irrexplorer/SKILL.md` for the full deployment procedure.
+
 ```bash
-# Build containers
-podman-compose build
+# Build and push frontend image (run on 10.15.19.50)
+docker build -f Dockerfile.frontend -t 10.15.19.50:30500/irrexplorer/frontend:{TAG} .
+docker push 10.15.19.50:30500/irrexplorer/frontend:{TAG}
 
-# Deploy
-podman-compose up -d
+# Helm upgrade
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+helm upgrade irrexplorer charts/irrexplorer -n irrexplorer \
+  --reuse-values --set frontend.image.tag={TAG}
 
-# Health check
-curl -f http://localhost:8000/health || exit 1
+# Verify rollout
+/var/lib/rancher/rke2/bin/kubectl rollout status \
+  deployment/irrexplorer-frontend -n irrexplorer
 ```
 
 ---
