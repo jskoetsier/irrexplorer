@@ -1,605 +1,139 @@
 # IRRExplorer
 
-[![CI](https://github.com/jskoetsier/irrexplorer/actions/workflows/ci.yml/badge.svg)](https://github.com/jskoetsier/irrexplorer/actions/workflows/ci.yml)
-[![Security](https://github.com/jskoetsier/irrexplorer/actions/workflows/security.yml/badge.svg)](https://github.com/jskoetsier/irrexplorer/actions/workflows/security.yml)
-[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-BSD%202--Clause-blue.svg)](LICENSE)
+IRRExplorer is a routing investigation tool for prefixes, ASNs, AS-SETs, and route-sets. It combines local BGP and RIR import data with live IRR, RDAP, PeeringDB, and Looking Glass lookups behind a React frontend and API backend.
 
-Internet Routing Registry Explorer - A web application for exploring and analyzing routing data from BGP, IRR, and RPKI sources.
+Version: `2.3.0`
 
-## Features
+## What It Does
 
-- **Prefix Analysis**: Search and analyze IP prefix information
-- **ASN Lookup**: Explore Autonomous System Numbers and their associated prefixes
-- **Set Expansion**: Resolve and expand RPSL sets
-- **Smart Search**: Autocomplete, search history, and bookmarks
-- **Advanced Filtering**: Filter by resource type and validation status
-- **Popular & Trending**: Discover frequently-queried resources
-- **Data Visualizations**: Interactive charts and graphs for routing data
-- **Export & Reporting**: CSV/JSON export with bulk query support
-- **API Documentation**: Swagger/OpenAPI interactive documentation
-- **Multi-Source Data**: Integrates BGP, IRR, RPKI, and RIR statistics
-- **Real-time Updates**: Fresh data from authoritative sources
-- **Interactive UI**: Modern responsive React-based interface
-- **RESTful API**: Full API access for automation
-- **CI/CD Pipeline**: Automated testing and security scanning
-
-## Quick Start
-
-### Automated Installation (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/jskoetsier/irrexplorer.git
-cd irrexplorer
-
-# Run the installation script
-./install.sh
-```
-
-The script will guide you through:
-- Choosing Podman or native installation
-- Setting up production or development mode
-- Installing all dependencies
-- Importing initial data
-
-### Container Installation with Podman (Manual)
-
-```bash
-# Copy environment configuration
-cp .env.example .env
-
-# Edit configuration (set ALLOWED_ORIGINS for production)
-nano .env
-
-# Start services
-podman-compose up -d
-
-# Import initial data (15-30 minutes)
-podman exec irrexplorer-backend python -m irrexplorer.commands.import_data
-
-# Access the application
-# Frontend: http://localhost
-# Backend: http://localhost:8000
-```
-
-### Native Installation (Manual)
-
-See [INSTALLATION.md](INSTALLATION.md) for detailed instructions.
-
-## System Requirements
-
-### Minimum
-- **CPU**: 2 cores
-- **RAM**: 4GB
-- **Disk**: 10GB free space
-- **OS**: Linux, macOS, or Windows (WSL2)
-
-### Recommended (Production)
-- **CPU**: 8+ cores
-- **RAM**: 16GB+
-- **Disk**: 50GB+ SSD
-- **OS**: Ubuntu 22.04+ or RHEL 9+
-- **Network**: High-bandwidth connection for data imports
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [INSTALLATION.md](INSTALLATION.md) | Complete installation guide for Podman and native setups |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow and coding standards |
-| [ROADMAP.md](ROADMAP.md) | Development roadmap and planned features |
-| [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
-| [DATA_SOURCES.md](DATA_SOURCES.md) | External data sources integration guide |
-| [frontend/OPTIMIZATION.md](frontend/OPTIMIZATION.md) | Frontend optimization guide |
+- Query prefixes and ASNs
+- Expand IRR sets
+- Compare IRR objects with DFZ visibility
+- Show RPKI validation state
+- Expose datasource lookups for RDAP, PeeringDB, and Looking Glass
+- Export and analyze routing data
 
 ## Architecture
 
-```
-┌─────────────────┐
-│   React SPA     │  Frontend (nginx)
-│   Port: 80      │
-└────────┬────────┘
-         │
-         │ /api/* → proxy
-         │
-┌────────▼────────┐
-│   FastAPI       │  Backend API
-│   Port: 8000    │
-└────────┬────────┘
-         │
-         │ PostgreSQL
-         │
-┌────────▼────────┐
-│   Database      │  Data storage
-│   Port: 5432    │
-└─────────────────┘
-```
+Current production stack:
 
-### Technology Stack
+- `frontend/`: React + TypeScript + Vite
+- `irrexplorer/`: Python API and importers
+- `go-backend/`: side-by-side Go migration for read paths
+- `charts/irrexplorer/`: Helm chart for Rancher/Kubernetes deployment
+- PostgreSQL for routing data
+- Redis for caching
 
-**Backend:**
-- Python 3.11+
-- FastAPI - Web framework
-- SQLAlchemy - Database ORM
-- asyncpg - PostgreSQL driver
-- aiohttp - Async HTTP client
+The Go backend is not a full replacement yet. It currently covers a subset of the read API and is intended for incremental migration and side-by-side rollout.
 
-**Frontend:**
-- React 18
-- Bootstrap 5
-- Axios - HTTP client
+## Key Paths
 
-**Database:**
-- PostgreSQL 15 with PostGIS
-- GIST indexes for efficient prefix queries
+- Main Python app: [irrexplorer/app.py](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/irrexplorer/app.py)
+- Frontend entry: [frontend/src/main.tsx](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/frontend/src/main.tsx)
+- Go backend entry: [go-backend/cmd/api/main.go](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/go-backend/cmd/api/main.go)
+- Helm chart: [charts/irrexplorer](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/charts/irrexplorer)
+- Migration doc: [GO_BACKEND_MIGRATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/GO_BACKEND_MIGRATION.md)
 
-**Deployment:**
-- Podman & podman-compose
-- nginx - Reverse proxy
-- uvicorn - ASGI server
+## Running Locally
 
-## Configuration
-
-### Environment Variables
-
-Key configuration options in `.env`:
+### Backend
 
 ```bash
-# Database (Required)
-DATABASE_URL=postgresql://user:password@host:port/database
-
-# IRRd Endpoint (Required)
-IRRD_ENDPOINT=https://irrd.nlnog.net/graphql
-
-# CORS (Required for production)
-ALLOWED_ORIGINS=https://yourdomain.com
-
-# Debug Mode (Default: False)
-DEBUG=False
-
-# BGP Data Source
-BGP_SOURCE=https://bgp.tools/table.jsonl
-
-# Workers
-HTTP_WORKERS=4
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+gunicorn irrexplorer.app:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 ```
 
-See [.env.example](.env.example) for all available options.
-
-## Usage
-
-### Web Interface
-
-1. **Prefix Search**: Enter an IP prefix (e.g., `192.0.2.0/24`)
-2. **ASN Search**: Enter an AS number (e.g., `AS64512` or `64512`)
-3. **Set Expansion**: Enter an AS-SET or ROUTE-SET name (e.g., `AS-EXAMPLE`)
-
-### API
+Required environment:
 
 ```bash
-# Get metadata
-curl http://localhost:8000/api/metadata/
-
-# Search prefix
-curl "http://localhost:8000/api/prefixes/prefix/192.0.2.0/24"
-
-# Search ASN
-curl "http://localhost:8000/api/prefixes/asn/64512"
-
-# Expand set
-curl "http://localhost:8000/api/sets/expand/AS-EXAMPLE"
-
-# API documentation
-# http://localhost:8000/docs
+DATABASE_URL=postgresql://irrexplorer:password@localhost:5432/irrexplorer
+REDIS_URL=redis://localhost:6379/0
+IRRD_ENDPOINT=https://rr.ntt.net/graphql/
+JWT_SECRET_KEY=replace-me
+ALLOWED_ORIGINS=http://localhost:3000
 ```
 
-## Data Sources
-
-IRRExplorer aggregates data from multiple authoritative sources:
-
-- **BGP**: Real-time routing data from bgp.tools
-- **IRRd**: Internet Routing Registry data via GraphQL
-- **RPKI**: Route Origin Authorizations
-- **RIR Stats**: RIPE, ARIN, APNIC, LACNIC, AFRINIC delegation data
-
-## Maintenance
-
-### Update Data
+### Frontend
 
 ```bash
-# Podman
-podman exec irrexplorer-backend python -m irrexplorer.commands.import_data
-
-# Native
-poetry run python -m irrexplorer.commands.import_data
-```
-
-### Automated Updates
-
-Schedule daily updates with cron (see [DATA_SOURCES.md](DATA_SOURCES.md) for details):
-
-```bash
-# Use the provided cron script
-0 */4 * * * /opt/irrexplorer/scripts/import_data_cron.sh >> ~/logs/irrexplorer/data_import.log 2>&1
-```
-
-### Backup Database
-
-```bash
-# Podman
-podman exec irrexplorer-db pg_dump -U irrexplorer irrexplorer > backup.sql
-
-# Native
-pg_dump -U irrexplorer irrexplorer > backup.sql
-```
-
-## Security
-
-### Production Checklist
-
-- [ ] Set `DEBUG=False`
-- [ ] Configure `ALLOWED_ORIGINS` with your domain
-- [ ] Use HTTPS with valid SSL certificate
-- [ ] Enable rate limiting
-- [ ] Configure firewall rules
-- [ ] Set strong database password
-- [ ] Enable security logging
-- [ ] Regular security updates
-
-See [SECURITY_CONFIGURATION.md](SECURITY_CONFIGURATION.md) for complete security setup.
-
-## Performance
-
-### Optimizations Implemented
-
-✅ **Backend:**
-- Input validation and sanitization
-- Query result limits (10,000 max)
-- Set expansion timeouts (30s)
-- Pre-compiled regex patterns
-- Optimized RIR lookups
-- Database GIST indexes
-
-✅ **Frontend:**
-- Tree-shaking (Lodash named imports)
-- React memoization with useMemo/useCallback
-- Optimized re-renders
-- Bundle size reduction (~50KB)
-
-✅ **Security:**
-- CORS whitelist configuration
-- Input length validation
-- Rate limiting support
-- Error message sanitization
-- Security logging
-
-See [PERFORMANCE_OPTIMIZATIONS.md](PERFORMANCE_OPTIMIZATIONS.md) for details.
-
-## Troubleshooting
-
-### Common Issues
-
-**Port already in use:**
-```bash
-# Change port in docker-compose.yml or stop conflicting service
-sudo lsof -i :80
-```
-
-**Database connection failed:**
-```bash
-# Check database is running
-docker-compose ps db
-
-# Check credentials
-echo $DATABASE_URL
-```
-
-**Import hangs:**
-```bash
-# Check network connectivity
-curl -I https://bgp.tools/table.jsonl
-
-# Check logs
-docker-compose logs -f backend
-```
-
-See [INSTALLATION.md](INSTALLATION.md#troubleshooting) for more solutions.
-
-## Development
-
-### Setup Development Environment
-
-```bash
-# Start development mode with hot-reload
-docker-compose -f docker-compose.dev.yml up
-
-# Or manually
-pip install uv
-uv pip install -r requirements-dev.txt
-uvicorn irrexplorer.app:app --reload
-
-# Frontend
 cd frontend
-yarn install
-yarn start
+npm ci
+npm run build
 ```
 
-### Run Tests
+### Go Backend
 
 ```bash
-# Backend tests
-poetry run pytest
-
-# Frontend tests
-cd frontend
-yarn test
-
-# Security scan
-bandit -r irrexplorer/
+cd go-backend
+go test ./...
+go run ./cmd/api
 ```
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for complete development guide.
+## Deployment
 
-## Contributing
+The supported deployment path is the Helm chart in `charts/irrexplorer`.
 
-We welcome contributions! Please follow these steps:
+Important chart features:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and linters
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+- redundant frontend and Python backend replicas
+- bundled PostgreSQL and Redis for simple installs
+- optional Go backend deployment
+- schema migration job
+- recurring importer `CronJob`
+- optional importer bootstrap job for empty clusters
+- ingress routing with optional path splitting to the Go backend
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for coding standards.
+Example:
 
-## Support
+```bash
+helm upgrade --install irrexplorer ./charts/irrexplorer -n irrexplorer -f charts/irrexplorer/values.local.yaml
+```
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/irrexplorer/issues)
-- **Documentation**: See docs/ directory
-- **Security**: security@example.com (see [SECURITY_WORKFLOW.md](SECURITY_WORKFLOW.md))
+Do not commit deployment secrets or local values files.
 
-## License
+## Imports and Data Freshness
 
-This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICENSE) file for details.
+The Python importer is:
 
-## Acknowledgments
+```bash
+python -m irrexplorer.commands.import_data
+```
 
-- **bgp.tools** - BGP routing data
-- **IRRd** - Internet Routing Registry database
-- **RIPE NCC, ARIN, APNIC, LACNIC, AFRINIC** - RIR statistics
-- **RPKI** - Route Origin Authorization data
+It imports:
 
-## Recent Updates
+- BGP table data
+- RIR delegated stats
+- Registro.br ASN data
 
-See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+The Helm chart now includes importer scheduling so production does not depend on manual imports.
 
-### Version 2.1.0 (2025-10-21) - Streamlined Application
+## Go Migration
 
-**Removed:**
-- BGP Monitoring & Alerting System (BGPalerter integration)
-- Simplified focus on core IRR exploration and RPKI validation
-- Reduced container footprint and application complexity
+The repository includes an in-progress Go backend for incremental migration. Current migrated areas include:
 
-### Version 2.0.0 (2025-10-19) - External Data Sources & Major Updates
+- `metadata`
+- `clean_query`
+- `prefixes/prefix`
+- `prefixes/asn`
+- `sets/member-of`
+- `sets/expand`
+- `datasources`
 
-**Breaking Changes:**
-- Migrated from Docker to Podman for container runtime
-- Updated all documentation and scripts for Podman compatibility
+See [GO_BACKEND_MIGRATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/GO_BACKEND_MIGRATION.md) for the migration plan and constraints.
 
-**New Features:**
-- **BGP Looking Glass Integration** - Real-time BGP routing data from NLNOG Ring with RIPE Stat fallback
-- **RDAP Support** - Registration data from all RIRs (ARIN, RIPE, APNIC, LACNIC, AFRINIC)
-- **PeeringDB Integration** - Peering and interconnection information
-- **External Data Sources Modal** - Tabbed interface on ASN/prefix pages for external data
-- **Multiple BGP Feed Sources** - Support for primary and secondary BGP data sources
-- **Additional IRR Sources** - Configurable regional IRR database sources
-- **Automated Data Import Cron** - Scheduled imports with locking and logging
+## Documentation
 
-**Frontend:**
-- New DataSourcesModal component with Looking Glass, RDAP, PeeringDB tabs
-- Responsive modal design with dark theme
-- Accessibility improvements (ARIA attributes, keyboard navigation)
-- External data source buttons on all query result pages
+- [CHANGELOG.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/CHANGELOG.md)
+- [INSTALLATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/INSTALLATION.md)
+- [DEVELOPMENT.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/DEVELOPMENT.md)
+- [DATA_SOURCES.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/DATA_SOURCES.md)
+- [ROADMAP.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/ROADMAP.md)
 
-**Backend:**
-- New API endpoints under `/api/datasources/` for all external sources
-- Comprehensive test suite for all data source backends
-- Error handling and timeout management for external APIs
+## Current Notes
 
-**DevOps:**
-- Container migration from Docker to Podman
-- Automated cron script for data imports (every 4 hours)
-- CI/CD pipeline updates for security scanning
-- Fixed GitHub Actions workflows for Podman compatibility
-
-**Documentation:**
-- New DATA_SOURCES.md with complete API documentation
-- Updated all Docker references to Podman
-- Comprehensive frontend integration guide
-- Cron scheduling documentation
-
-### Version 1.11.0 (2025-10-19) - Enhanced Analysis Release
-
-**New Features:**
-- RPKI Validation Dashboard with comprehensive status overview
-- ROA Coverage Analysis for global and per-ASN metrics
-- IRR Consistency Checker to verify database accuracy
-- BGP Hijack Detection with severity classification
-- Prefix Overlap Analyzer for exact/more/less-specific matches
-- AS-Path Analysis for relationship mapping
-- WHOIS Integration framework
-- New `/analysis` route with tabbed interface
-
-### Version 1.10.0 (2025-10-19) - Export & Reporting Release
-
-**New Features:**
-- CSV/JSON export functionality for query results
-- Bulk query API (up to 100 queries per request)
-- Interactive Swagger/OpenAPI documentation at `/api/docs`
-- Export buttons on all query result pages
-
-### Version 1.9.0 (2025-10-19) - Data Visualization Release
-
-**New Features:**
-- Interactive prefix allocation treemaps
-- ASN relationship force-directed graphs
-- Historical timeline charts (7-90 days)
-- Geographical RIR distribution visualizations
-- Dedicated `/visualizations` page
-
-### Version 1.5.0 (2025-10-17) - Responsive Design & UX Release
-
-**Added:**
-- **Responsive Design**: Complete mobile-first CSS overhaul
-- **Logo Sizing**: Optimized for all screen sizes (150px homepage, 60px queries)
-- **Loading Indicators**: Search button shows spinner during queries
-- **Table Responsiveness**: Horizontal scrolling for large tables on mobile
-- **Enhanced Footer**: Better layout for small screens with proper line breaks
-- **Print Styles**: Optimized for documentation printing
-
-**Performance:**
-- Responsive breakpoints: 576px, 768px, 1200px
-- Optimized font sizes and spacing for all devices
-- Better form handling on mobile
-- Improved overall user experience
-
-**Documentation:**
-- Updated footer to v1.5.0
-- Removed DashCare attribution
-
-### Version 1.4.0 (2025-10-17) - Smart Caching Strategies Release
-
-**Added:**
-- **Stale-While-Revalidate**: Serve stale cache while refreshing in background
-- **Predictive Caching**: Pre-fetch related ASN neighbors automatically
-- **Cache Invalidation**: Resource-specific invalidation by type
-- **Background Refresh**: Automatic cache updates without blocking responses
-
-**Performance:**
-- Zero-latency responses for stale but recent data
-- +10-15% cache hit rate from predictive pre-fetching
-- Improved perceived performance with background operations
-- Smarter cache management and invalidation
-
-**Documentation:**
-- Added predictive caching module
-- Enhanced cache management utilities
-- Updated version to 1.4.0
-
-### Version 1.3.0 (2025-10-17) - Advanced Caching Release
-
-**Added:**
-- **HTTP Cache Headers**: Cache-Control and ETag on all API endpoints
-- **Redis Connection Pooling**: Optimized with 50-connection pool and health checks
-- **Cache Warming**: Auto pre-population of popular ASN queries on startup
-- **Prefix Summary Caching**: 5-minute TTL for all queries
-
-**Performance:**
-- 60-80% reduction in repeated requests (browser/CDN caching)
-- 50-70% reduction in Redis connection overhead
-- 70-85% expected cache hit rate
-- Improved response times for popular queries
-
-**Documentation:**
-- Added cache warming module
-- Updated version to 1.3.0
-
-### Version 1.2.0 (2025-10-17) - Frontend Optimization Release
-
-**Added:**
-- **Code Splitting**: Lazy loading for route components (30-50% smaller initial bundle)
-- **Production Build**: `yarn build:prod` script without source maps (10-15% smaller)
-- **Bundle Analysis**: `yarn analyze` tool for bundle size inspection
-- **Frontend Optimization Guide**: Comprehensive documentation
-
-**Performance:**
-- 30-50% reduction in initial bundle size
-- ~40% improvement in Time to Interactive
-- Separate chunks for better caching
-- 10-15% smaller production builds
-
-**Documentation:**
-- Added `frontend/OPTIMIZATION.md` with detailed guide
-- Updated version to 1.2.0
-
-### Version 1.1.0 (2025-10-17) - Performance & Stability Release
-
-**Added:**
-- **GZip Compression**: Automatic response compression (60-80% bandwidth reduction)
-- **Rate Limiting**: Built-in request throttling (100 requests/minute)
-- **Query Result Limits**: Safety limits (10,000 max) to prevent memory exhaustion
-- **Database Connection Pooling**: Optimized pool (min: 5, max: 20)
-- **Enhanced Logging**: Proper logging infrastructure with configurable levels
-- **Cache Monitoring**: `/api/cache/stats` and `/api/cache/clear` endpoints
-
-**Performance:**
-- 60-80% reduction in response bandwidth
-- 30-40% reduction in server load
-- 2-3x increase in concurrent user capacity
-- Optimized database connection management
-
-**Security:**
-- Built-in rate limiting for abuse prevention
-- Query size limits for resource protection
-- Enhanced error logging for security monitoring
-
-**Documentation:**
-- Comprehensive ROADMAP.md with 6-phase development plan
-- CHANGELOG.md for version tracking
-- Updated all documentation for v1.1.0
-
-### Version 1.0.0 (2024-01-15)
-
-**Added:**
-- Initial release
-- Docker support with docker-compose
-- Automated installation script
-- Complete documentation suite
-- Performance optimizations
-- Security enhancements
-- React-based frontend
-- FastAPI backend
-- Multi-source data integration
-
-**Performance:**
-- Input validation with length limits
-- Set expansion timeouts
-- Optimized database queries
-- Frontend bundle optimization
-- React memoization
-
-**Security:**
-- CORS whitelist configuration
-- Error message sanitization
-- Security logging
-- Rate limiting support
-
-## Roadmap
-
-### Planned Features
-
-- [ ] GraphQL API
-- [ ] WebSocket support for real-time updates
-- [ ] Advanced filtering and search
-- [ ] Historical data tracking
-- [ ] Custom alerting
-- [ ] API rate limiting (built-in)
-- [ ] OAuth2 authentication
-- [ ] Multi-tenancy support
-- [ ] Export functionality (JSON, CSV)
-- [ ] Visualization dashboard
-
-## Project Status
-
-**Status**: Active Development
-
-- **Stability**: Production Ready
-- **Maintenance**: Active
-- **Support**: Community + Commercial options available
-
----
-
-**Made with ❤️ for the networking community**
+- The frontend branding was updated to the new IRRExplorer logo with consistent sizing across home, query, and status pages.
+- Production IRRD access is configured against `https://rr.ntt.net/graphql/`.
+- The Go backend is additive at this stage, not the default production API.

@@ -2,5 +2,5 @@ apiVersion: v2
 name: irrexplorer
 description: Helm chart for IRRExplorer
 type: application
-version: 0.1.0
-appVersion: "1.6.1"
+version: 0.2.0
+appVersion: "2.3.0"
