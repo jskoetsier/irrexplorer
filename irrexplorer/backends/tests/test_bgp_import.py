@@ -28,12 +28,21 @@ async def test_importer_valid():
 
     async with Database(DATABASE_URL) as database:
         rows = await database.fetch_all(query=tables.bgp.select())
-        results = [dict(r) for r in rows]
+        results = sorted([dict(r) for r in rows], key=lambda row: (str(row["prefix"]), row["asn"]))
         assert results == [
-            {"asn": 4200000000, "prefix": IPv6Network("2001:db8::/32")},
-            {"asn": 64500, "prefix": IPv4Network("192.0.2.0/24")},
+            {
+                "asn": 64500,
+                "prefix": IPv4Network("192.0.2.0/24"),
+                "rpki_status": "unknown",
+            },
+            {
+                "asn": 4200000000,
+                "prefix": IPv6Network("2001:db8::/32"),
+                "rpki_status": "unknown",
+            },
         ]
         await database.execute(query=tables.bgp.delete())
+        await database.execute(query=tables.bgp_staging.delete())
 
 
 async def test_importer_invalid_json():

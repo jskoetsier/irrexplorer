@@ -14,6 +14,14 @@ bgp = sa.Table(
     sa.Index("ix_bgp_prefix", sa.text("prefix inet_ops"), postgresql_using="gist"),
 )
 
+bgp_staging = sa.Table(
+    "bgp_staging",
+    sa_metadata,
+    sa.Column("asn", sa.BigInteger, nullable=False),
+    sa.Column("prefix", pg.CIDR, nullable=False),
+    sa.Column("rpki_status", sa.String(20), nullable=True),
+)
+
 rirstats = sa.Table(
     "rirstats",
     sa_metadata,

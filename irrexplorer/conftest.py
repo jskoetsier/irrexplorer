@@ -46,6 +46,7 @@ async def client():
             from irrexplorer.storage import tables
 
             await test_client.app.state.database.execute(tables.bgp.delete())
+            await test_client.app.state.database.execute(tables.bgp_staging.delete())
             await test_client.app.state.database.execute(tables.rirstats.delete())
             # Clear Redis cache
             caching.clear_cache()

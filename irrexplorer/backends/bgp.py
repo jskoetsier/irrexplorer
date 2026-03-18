@@ -1,9 +1,11 @@
 import json
 import logging
-from typing import List, Tuple
+import os
+import tempfile
+from typing import Iterator, Tuple
 
+import asyncpg
 from asgiref.sync import sync_to_async
-from asyncpg import DataError
 from databases import Database
 
 from irrexplorer.backends.common import (
@@ -35,18 +37,18 @@ class BGPImporter:
         url = BGP_SOURCE
         logger.info("Retrieving BGP data from %s", url)
         text = await retrieve_url_text(url)
-        # Parse table and collect prefixes
-        prefixes = await self._parse_table(text)
-        logger.info("Parsed %d BGP prefixes from %s", len(prefixes), url)
-        await self._load_prefixes(prefixes)
+        stats = await self._load_prefixes(text)
+        logger.info(
+            "Loaded %d BGP prefixes into staging from %s (%d filtered out)",
+            stats["loaded"],
+            url,
+            stats["filtered_out"],
+        )
 
-    @sync_to_async
-    def _parse_table(self, text: str):
+    def _parse_table(self, text: str) -> Iterator[Tuple[str, int]]:
         """
-        Parse BGP table data line-by-line for memory efficiency.
-        Returns a list of (prefix, origin) tuples.
+        Parse BGP table data line-by-line and yield (prefix, origin) tuples.
         """
-        prefixes = []
         for line in text.splitlines():
             if not line:
                 continue
@@ -61,8 +63,46 @@ class BGPImporter:
 
             ip_version = 6 if ":" in prefix else 4
             if self._include_route(ip_version, prefix):
-                prefixes.append((prefix, origin))
-        return prefixes
+                yield prefix, origin
+
+    @sync_to_async
+    def _write_staging_file(self, text: str):
+        total_records = 0
+        loaded_records = 0
+        tmp = tempfile.NamedTemporaryFile(mode="w+b", delete=False)
+        try:
+            for line in text.splitlines():
+                if not line:
+                    continue
+                total_records += 1
+                try:
+                    record = json.loads(line)
+                    prefix, origin, hits = (
+                        record["CIDR"],
+                        record["ASN"],
+                        record["Hits"],
+                    )
+                except (ValueError, KeyError) as ve:
+                    raise ImporterError(f"Invalid BGP line: {line}: {ve}")
+
+                if hits < BGP_SOURCE_MINIMUM_HITS:
+                    continue
+
+                ip_version = 6 if ":" in prefix else 4
+                if not self._include_route(ip_version, prefix):
+                    continue
+
+                tmp.write(f"{origin}\t{prefix}\tunknown\n".encode())
+                loaded_records += 1
+
+            tmp.flush()
+            return {
+                "path": tmp.name,
+                "loaded": loaded_records,
+                "filtered_out": total_records - loaded_records,
+            }
+        finally:
+            tmp.close()
 
     def _include_route(self, ip_version: int, prefix: str) -> bool:
         # Filter out router to router links and other tiny blocks
@@ -75,34 +115,59 @@ class BGPImporter:
             ip_version == 6 and length < BGP_IPV6_LENGTH_CUTOFF
         )
 
-    async def _load_prefixes(self, prefixes: List[Tuple[str, int]]):
-        async with Database(DATABASE_URL) as database:
-            async with database.transaction():
-                await database.execute(tables.bgp.delete())
-                if prefixes:
-                    logger.info(
-                        f"Loading {len(prefixes)} BGP routes with RPKI validation..."
-                    )
-                    for chunk in chunks(prefixes, 5000):
-                        values = [
-                            {
-                                "asn": asn,
-                                "prefix": prefix,
-                                "rpki_status": "unknown",
-                            }
-                            for prefix, asn in chunk
-                        ]
-                        try:
-                            await database.execute_many(
-                                query=tables.bgp.insert(), values=values
-                            )
-                        except DataError as de:
-                            raise ImporterError(f"Failed to insert BGP data: {de}")
-                    logger.info(
-                        "BGP import complete. RPKI validation data will be populated by separate validator."
-                    )
-                else:
-                    logger.warning("BGP import produced zero prefixes after filtering")
+    async def _load_prefixes(self, text: str):
+        staging_table_name = tables.bgp_staging.name
+        live_table_name = tables.bgp.name
+
+        conn = await asyncpg.connect(str(DATABASE_URL))
+        try:
+            logger.info("Preparing BGP staging table")
+            await conn.execute(f"TRUNCATE TABLE {staging_table_name}")
+            staging_file = await self._write_staging_file(text)
+
+            if staging_file["loaded"] == 0:
+                logger.warning("BGP import produced zero prefixes after filtering")
+                return {"loaded": 0, "filtered_out": staging_file["filtered_out"]}
+
+            logger.info(
+                "Bulk loading %d BGP routes into staging",
+                staging_file["loaded"],
+            )
+            with open(staging_file["path"], "rb") as f:
+                await conn.copy_to_table(
+                    staging_table_name,
+                    source=f,
+                    columns=["asn", "prefix", "rpki_status"],
+                    format="csv",
+                    delimiter="\t",
+                )
+
+            async with conn.transaction():
+                logger.info("Swapping staged BGP data into live table")
+                await conn.execute(f"LOCK TABLE {live_table_name} IN ACCESS EXCLUSIVE MODE")
+                await conn.execute(f"TRUNCATE TABLE {live_table_name}")
+                await conn.execute(
+                    f"""
+                    INSERT INTO {live_table_name} (asn, prefix, rpki_status)
+                    SELECT asn, prefix, rpki_status
+                    FROM {staging_table_name}
+                    """
+                )
+
+            logger.info(
+                "BGP import complete. RPKI validation data will be populated by separate validator."
+            )
+            return {
+                "loaded": staging_file["loaded"],
+                "filtered_out": staging_file["filtered_out"],
+            }
+        except asyncpg.PostgresError as pe:
+            raise ImporterError(f"Failed to load BGP data: {pe}") from pe
+        finally:
+            staging_path = locals().get("staging_file", {}).get("path")
+            if staging_path and os.path.exists(staging_path):
+                os.unlink(staging_path)
+            await conn.close()
 
 
 class BGPQuery(LocalSQLQueryBase):
@@ -130,9 +195,3 @@ class BGPQuery(LocalSQLQueryBase):
             )
             count += 1
         return results
-
-
-def chunks(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i : i + n]
