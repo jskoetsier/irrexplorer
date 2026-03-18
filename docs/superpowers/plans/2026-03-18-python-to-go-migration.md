@@ -6,7 +6,9 @@
 
 **Architecture:** Both services run simultaneously in Kubernetes; nginx ingress routes by path — Go owns an expanding path list (`goBackendPaths`), Python handles the rest. Each phase adds Go endpoints, verifies parity against Python, then extends `goBackendPaths` to cut traffic over. Phase 6 rewrites the importer in Go and removes all Python infrastructure.
 
-**Tech Stack:** Go 1.22, `net/http` stdlib, `pgx/v5`, `go-redis/v9`, `golang.org/x/time/rate`, `golang-migrate`
+**Tech Stack:** Go 1.22, `net/http` stdlib, `pgx/v5`, `go-redis/v9`, `golang.org/x/time/rate`
+
+**Database migrations:** Plain SQL files in `go-backend/db/migrations/`. Applied manually via `psql` or via the existing `migrate-job.yaml` Helm Job (which runs `psql` on startup). No `golang-migrate` library needed — the migrate job already handles this pattern.
 
 **Spec:** `docs/superpowers/specs/2026-03-18-python-to-go-migration-design.md`
 
@@ -1424,7 +1426,8 @@ type ROACoverageRow struct {
 	Prefix     string `json:"prefix"`
 	ASN        int    `json:"asn"`
 	RPKIStatus string `json:"rpki_status"`
-	IRRFound   bool   `json:"irr_found"`
+	// IRRFound is not populated by the DB query (requires cross-referencing IRRd GraphQL).
+	// It defaults to false; a follow-up can enrich this via the irrd client.
 }
 
 type IRRConsistencyRow struct {
@@ -2940,11 +2943,13 @@ import (
 	"context"
 	"fmt"
 	"math/bits"
-	"net/http"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/sync/errgroup"
 )
