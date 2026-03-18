@@ -1,0 +1,30 @@
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /src
+
+COPY go-backend/go.mod ./go-backend/go.mod
+COPY go-backend/go.sum ./go-backend/go.sum
+WORKDIR /src/go-backend
+
+RUN go mod download
+
+COPY go-backend/ ./
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/irrexplorer-go-backend ./cmd/api
+
+FROM alpine:3.20
+
+RUN addgroup -S app && adduser -S -G app app
+
+WORKDIR /app
+
+COPY --from=builder /out/irrexplorer-go-backend /usr/local/bin/irrexplorer-go-backend
+
+USER app
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1
+
+ENTRYPOINT ["/usr/local/bin/irrexplorer-go-backend"]

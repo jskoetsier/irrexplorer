@@ -54,7 +54,7 @@ services:
         - irrexplorer-network
       restart: unless-stopped
       healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+        test: ["CMD", "curl", "-f", "http://localhost:8000/api/metadata/"]
         interval: 30s
         timeout: 10s
         retries: 3

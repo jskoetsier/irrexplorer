@@ -227,39 +227,40 @@ footer .container {
   }
 }
 
-/* Home page logo sizing */
-.logo {
-  max-width: 150px;
-  width: 100%;
-  height: auto;
+/* Brand logo sizing */
+.brand-logo {
+  width: auto;
   display: block;
   margin: 0 auto;
 }
 
-/* Query page small logo */
-.logo-small {
-  max-width: 60px;
-  width: 100%;
-  height: auto;
+.brand-logo-home {
+  height: 11rem;
+  max-width: min(100%, 34rem);
+}
+
+.brand-logo-compact {
+  height: 4.5rem;
+  max-width: min(100%, 14rem);
 }
 
 @media (max-width: 576px) {
-  .logo {
-    max-width: 100px;
+  .brand-logo-home {
+    height: 7rem;
   }
 
-  .logo-small {
-    max-width: 40px;
+  .brand-logo-compact {
+    height: 3.25rem;
   }
 }
 
 @media (max-width: 768px) {
-  .logo {
-    max-width: 120px;
+  .brand-logo-home {
+    height: 8.5rem;
   }
 
-  .logo-small {
-    max-width: 50px;
+  .brand-logo-compact {
+    height: 3.75rem;
   }
 }
 

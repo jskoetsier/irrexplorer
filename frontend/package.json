@@ -39,7 +39,7 @@
     "build": "tsc --noEmit && vite build",
     "build:prod": "tsc --noEmit && vite build --mode production",
     "preview": "vite preview",
-    "analyze": "vite-bundle-visualizer",
+    "analyze": "npx vite-bundle-visualizer",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },

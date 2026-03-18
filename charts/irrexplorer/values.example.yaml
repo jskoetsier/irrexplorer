@@ -1,0 +1,55 @@
+backend:
+  image:
+    repository: registry.example.com/irrexplorer/backend
+    tag: "2026-03-17"
+
+frontend:
+  image:
+    repository: registry.example.com/irrexplorer/frontend
+    tag: "2026-03-17"
+
+goBackend:
+  enabled: true
+  image:
+    repository: registry.example.com/irrexplorer/go-backend
+    tag: "2026-03-17"
+
+config:
+  allowedOrigins: "https://irrexplorer.example.com"
+  irrdEndpoint: "https://irrd.example.com/graphql"
+  jwtSecretKey: "replace-me"
+
+ingress:
+  enabled: true
+  className: nginx
+  host: irrexplorer.example.com
+  goBackendPaths:
+    - /go-healthz
+    - /api/metadata/
+    - /api/clean_query/
+    - /api/prefixes/prefix/
+    - /api/prefixes/asn/
+    - /api/sets/member-of/
+    - /api/sets/expand/
+    - /api/datasources/
+  tls:
+    - secretName: irrexplorer-tls
+      hosts:
+        - irrexplorer.example.com
+
+# For production HA, prefer external PostgreSQL and Redis.
+postgres:
+  enabled: false
+
+redis:
+  enabled: false
+
+externalDatabase:
+  host: postgres-rw.database.svc.cluster.local
+  port: 5432
+  database: irrexplorer
+  username: irrexplorer
+  password: "replace-me"
+
+externalRedis:
+  url: redis://redis-master.redis.svc.cluster.local:6379/0

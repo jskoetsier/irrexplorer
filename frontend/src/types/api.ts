@@ -2,7 +2,7 @@ export type QueryCategory = 'prefix' | 'asn' | 'as-set' | 'route-set';
 
 export type MessageCategory = 'danger' | 'warning' | 'info' | 'success';
 
-export type RPKIStatus = 'valid' | 'invalid' | 'not-found' | 'unknown';
+export type RPKIStatus = 'VALID' | 'INVALID' | 'NOT_FOUND' | 'unknown';
 
 export interface CleanQueryResult {
   cleanedValue: string;
@@ -14,8 +14,10 @@ export interface Metadata {
   url: string;
   error?: string;
   data?: {
-    sources_last_update: Record<string, string>;
-    version: string;
+    last_update: {
+      irr: Record<string, string>;
+      importer: string | null;
+    };
   };
 }
 

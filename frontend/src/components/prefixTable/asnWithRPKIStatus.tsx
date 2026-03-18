@@ -12,10 +12,10 @@ export default function AsnWithRPKIStatus({ rpkiStatus, asn }: AsnWithRPKIStatus
   let text = '';
   let asnClass = '';
 
-  if (rpkiStatus === 'valid') {
+  if (rpkiStatus === 'VALID') {
     rpkiIcon = faCheckCircle;
     text = 'Route object is RPKI-valid';
-  } else if (rpkiStatus === 'invalid') {
+  } else if (rpkiStatus === 'INVALID') {
     rpkiIcon = faTimesCircle;
     text = 'Route object is RPKI-invalid';
     asnClass = 'text-decoration-line-through';

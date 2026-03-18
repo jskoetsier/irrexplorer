@@ -1,0 +1,16 @@
+{{- if .Values.goBackend.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "irrexplorer.goBackendServiceName" . }}
+  labels:
+    {{- include "irrexplorer.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "irrexplorer.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: go-backend
+  ports:
+    - name: http
+      port: {{ .Values.goBackend.service.port }}
+      targetPort: http
+{{- end }}

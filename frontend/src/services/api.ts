@@ -40,8 +40,10 @@ axios.interceptors.response.use(
 );
 
 export async function getMetadata(): Promise<ApiResult<{
-  sources_last_update: Record<string, string>;
-  version: string;
+  last_update: {
+    irr: Record<string, string>;
+    importer: string | null;
+  };
 }>> {
   try {
     const url = `${apiUrl}/metadata/`;

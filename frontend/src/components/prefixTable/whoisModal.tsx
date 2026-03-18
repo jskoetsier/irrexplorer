@@ -18,7 +18,7 @@ const WhoisModal = forwardRef<WhoisModalHandle, WhoisModalProps>((_, ref) => {
   const rpkiAlertRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (modalRef.current) {
+    if (modalRef.current && window.bootstrap?.Modal) {
       bootstrapModalRef.current = new window.bootstrap.Modal(modalRef.current);
     }
     return () => {
@@ -45,7 +45,7 @@ const WhoisModal = forwardRef<WhoisModalHandle, WhoisModalProps>((_, ref) => {
       }
 
       if (rpslTextRef.current) rpslTextRef.current.innerText = rpslText;
-      if (rpkiAlertRef.current) rpkiAlertRef.current.hidden = rpkiStatus !== 'invalid';
+      if (rpkiAlertRef.current) rpkiAlertRef.current.hidden = rpkiStatus !== 'INVALID';
 
       bootstrapModalRef.current?.show();
     },

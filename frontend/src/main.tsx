@@ -6,21 +6,17 @@ import App from './App';
 import Footer from './components/footer';
 
 import 'bootstrap/dist/css/bootstrap.css';
+import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.js';
 import './index.css';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare global {
   interface Window {
-    bootstrap: any;
+    bootstrap: typeof bootstrap;
   }
 }
 
-const initBootstrap = async () => {
-  const bootstrap = await import('bootstrap/dist/js/bootstrap.bundle.js');
-  window.bootstrap = bootstrap;
-};
-
-initBootstrap();
+window.bootstrap = bootstrap;
 
 const rootElement = document.getElementById('root');
 if (rootElement) {

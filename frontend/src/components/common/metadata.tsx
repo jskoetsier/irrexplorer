@@ -27,8 +27,8 @@ export default function Metadata() {
     if (data) {
       setHasLoaded(true);
       setApiCallUrl(url || '');
-      setLastUpdateImporter(data.sources_last_update?.importer || null);
-      const irrEntries = data.sources_last_update?.irr || {};
+      setLastUpdateImporter(data.last_update?.importer || null);
+      const irrEntries = data.last_update?.irr || {};
       setLastUpdateIrr(orderBy(Object.entries(irrEntries)));
     }
   }, []);

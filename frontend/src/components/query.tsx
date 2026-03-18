@@ -62,7 +62,7 @@ export default function Query() {
       <div className="row d-flex align-items-center mb-5">
         <div className="col-lg-1">
           <Link to="/">
-            <img className="logo-small" src={logo} alt="IRR explorer" />
+            <img className="brand-logo brand-logo-compact" src={logo} alt="IRR explorer" />
           </Link>
         </div>
         <div className="col-lg-5 offset-lg-1">

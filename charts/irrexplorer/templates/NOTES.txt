@@ -1,0 +1,18 @@
+1. Provide real image coordinates in a non-committed values file, for example:
+   helm upgrade --install irrexplorer ./charts/irrexplorer -f charts/irrexplorer/values.local.yaml
+
+2. This chart runs frontend and backend redundantly by default.
+
+3. For real HA data services, disable the bundled PostgreSQL/Redis and point the chart at external services.
+
+{{- if .Values.goBackend.enabled }}
+4. The Go backend scaffold is deployed as a separate service named {{ include "irrexplorer.goBackendServiceName" . }}.
+{{- if .Values.ingress.goBackendPaths }}
+5. The following ingress paths are routed to the Go backend:
+{{- range .Values.ingress.goBackendPaths }}
+   - {{ . }}
+{{- end }}
+{{- else }}
+5. No ingress paths are routed to the Go backend yet.
+{{- end }}
+{{- end }}

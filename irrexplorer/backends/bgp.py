@@ -33,9 +33,11 @@ class BGPImporter:
 
     async def run_import(self):
         url = BGP_SOURCE
+        logger.info("Retrieving BGP data from %s", url)
         text = await retrieve_url_text(url)
         # Parse table and collect prefixes
         prefixes = await self._parse_table(text)
+        logger.info("Parsed %d BGP prefixes from %s", len(prefixes), url)
         await self._load_prefixes(prefixes)
 
     @sync_to_async
@@ -99,6 +101,8 @@ class BGPImporter:
                     logger.info(
                         "BGP import complete. RPKI validation data will be populated by separate validator."
                     )
+                else:
+                    logger.warning("BGP import produced zero prefixes after filtering")
 
 
 class BGPQuery(LocalSQLQueryBase):

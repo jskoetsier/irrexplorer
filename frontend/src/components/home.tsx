@@ -15,7 +15,7 @@ export default function Home() {
       <div className="row justify-content-center">
         <div className="col-lg-8 col-md-10">
           <div className="text-center mt-5">
-            <img className="logo mb-5" src={logo} alt="IRR explorer" />
+            <img className="brand-logo brand-logo-home mb-5" src={logo} alt="IRR explorer" />
           </div>
           <p className="lead">
             IRR explorer shows the routing, IRR and RPKI status for resources,

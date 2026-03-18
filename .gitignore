@@ -5,6 +5,11 @@
 .tmpdirs
 .pytest_cache
 /.env
+rancher-api.txt
+.gocache
+.gomodcache
+charts/irrexplorer/values.local.yaml
+charts/irrexplorer/values.secrets.yaml
 
 syntax: glob
 __pycache__

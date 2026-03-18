@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections import defaultdict
 from datetime import datetime
 from ipaddress import ip_network
@@ -12,6 +13,7 @@ from irrexplorer.settings import config
 from irrexplorer.state import DataSource, IPNetwork, RouteInfo, RPKIStatus
 
 IRRD_TIMEOUT = 600
+logger = logging.getLogger(__name__)
 
 COMMON_GRAPHQL_FIELDS = """
     rpslPk
@@ -142,30 +144,38 @@ class IRRDQuery:
     async def query_last_update(self) -> Dict[str, datetime]:
         if not self.transport:
             return {}
-        async with Client(
-            transport=self.transport, execute_timeout=IRRD_TIMEOUT
-        ) as session:
-            response = await session.execute(GQL_QUERY_LAST_UPDATE)
-            return {
-                status["source"]: datetime.fromisoformat(status["lastUpdate"])
-                for status in response["databaseStatus"]
-            }
+        try:
+            async with Client(
+                transport=self.transport, execute_timeout=IRRD_TIMEOUT
+            ) as session:
+                response = await session.execute(GQL_QUERY_LAST_UPDATE)
+                return {
+                    status["source"]: datetime.fromisoformat(status["lastUpdate"])
+                    for status in response["databaseStatus"]
+                }
+        except Exception as exc:
+            logger.warning("IRRD last-update query failed: %s", exc)
+            return {}
 
     async def query_set_members(
         self, names: List[str]
     ) -> Dict[str, Dict[str, List[str]]]:
         if not self.transport:
             return {}
-        async with Client(
-            transport=self.transport, execute_timeout=IRRD_TIMEOUT
-        ) as session:
-            response = await session.execute(
-                GQL_QUERY_SET_MEMBERS, variable_values={"names": names}
-            )
-            members_per_set: Dict[str, Dict[str, List[str]]] = defaultdict(dict)
-            for item in response["recursiveSetMembers"]:
-                members_per_set[item["rpslPk"]][item["rootSource"]] = item["members"]
-            return dict(members_per_set)
+        try:
+            async with Client(
+                transport=self.transport, execute_timeout=IRRD_TIMEOUT
+            ) as session:
+                response = await session.execute(
+                    GQL_QUERY_SET_MEMBERS, variable_values={"names": names}
+                )
+                members_per_set: Dict[str, Dict[str, List[str]]] = defaultdict(dict)
+                for item in response["recursiveSetMembers"]:
+                    members_per_set[item["rpslPk"]][item["rootSource"]] = item["members"]
+                return dict(members_per_set)
+        except Exception as exc:
+            logger.warning("IRRD set-members query failed for %s: %s", names, exc)
+            return {}
 
     async def query_member_of(self, target: str, object_class: ObjectClass):
         if not self.transport:
@@ -176,44 +186,63 @@ class IRRDQuery:
         }
         if target.isnumeric():
             target = "AS" + target
-        async with Client(
-            transport=self.transport, execute_timeout=IRRD_TIMEOUT
-        ) as session:
-            return await session.execute(
-                queries[object_class], variable_values={"target": target}
+        try:
+            async with Client(
+                transport=self.transport, execute_timeout=IRRD_TIMEOUT
+            ) as session:
+                return await session.execute(
+                    queries[object_class], variable_values={"target": target}
+                )
+        except Exception as exc:
+            logger.warning(
+                "IRRD member-of query failed for %s (%s): %s",
+                target,
+                object_class.value,
+                exc,
             )
+            return {"set": [], "autNum": []}
 
     async def query_asn(self, asn: int):
         if not self.transport:
             return []
-        async with Client(
-            transport=self.transport, execute_timeout=IRRD_TIMEOUT
-        ) as session:
-            result = await session.execute(GQL_QUERY_ASN, variable_values={"asn": asn})
-            return self._graphql_to_route_info(result)
+        try:
+            async with Client(
+                transport=self.transport, execute_timeout=IRRD_TIMEOUT
+            ) as session:
+                result = await session.execute(
+                    GQL_QUERY_ASN, variable_values={"asn": asn}
+                )
+                return self._graphql_to_route_info(result)
+        except Exception as exc:
+            logger.warning("IRRD ASN query failed for AS%s: %s", asn, exc)
+            return []
 
     async def query_prefixes_any(self, prefixes: List[IPNetwork]) -> List[RouteInfo]:
         if not self.transport:
             return []
         tasks = []
-        async with Client(
-            transport=self.transport, execute_timeout=IRRD_TIMEOUT
-        ) as session:
-            for prefix in prefixes:
-                object_class = ["route"] if prefix.version == 4 else ["route6"]
-                task = session.execute(
-                    GQL_QUERY_PREFIX,
-                    variable_values={
-                        "prefix": str(prefix),
-                        "object_class": object_class,
-                    },
-                )
-                tasks.append(task)
-            results_lists = await asyncio.gather(*tasks)
-            objects_lists = [
-                self._graphql_to_route_info(results_list)
-                for results_list in results_lists
-            ]
+        try:
+            async with Client(
+                transport=self.transport, execute_timeout=IRRD_TIMEOUT
+            ) as session:
+                for prefix in prefixes:
+                    object_class = ["route"] if prefix.version == 4 else ["route6"]
+                    task = session.execute(
+                        GQL_QUERY_PREFIX,
+                        variable_values={
+                            "prefix": str(prefix),
+                            "object_class": object_class,
+                        },
+                    )
+                    tasks.append(task)
+                results_lists = await asyncio.gather(*tasks)
+                objects_lists = [
+                    self._graphql_to_route_info(results_list)
+                    for results_list in results_lists
+                ]
+        except Exception as exc:
+            logger.warning("IRRD prefix query failed for %s: %s", prefixes, exc)
+            return []
         return [obj for objects_list in objects_lists for obj in objects_list]
 
     def _graphql_to_route_info(self, graphql_result) -> List[RouteInfo]:
