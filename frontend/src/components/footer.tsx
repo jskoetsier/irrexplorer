@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
     <div className="container">
-      IRR explorer v2.3.0 ·{' '}
+      IRR explorer v2.4.0 ·{' '}
       <a className="link-dark" href="https://www.nlnog.net/">
         Stichting NLNOG
       </a>{' '}

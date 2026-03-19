@@ -10,6 +10,24 @@ The format follows Keep a Changelog and the project uses Semantic Versioning.
 
 - Improved ASN prefix lookup performance by implementing parallel processing with concurrency control (max 10 concurrent operations) for IRRd GraphQL queries and PostgreSQL queries
 
+## [2.4.0] - 2026-03-19
+
+### Added
+
+- Redis caching for IRRd GraphQL queries to dramatically improve performance for large ASNs (e.g., AS 2914)
+- Cache individual prefix queries with 5-minute TTL
+- Cache ASN queries with 10-minute TTL
+- Cache member-of and set member queries
+- Graceful fallback to direct IRRd queries when Redis is unavailable
+- Database index `ix_bgp_asn` on BGP table ASN column for faster queries
+- Pagination support to Go backend ASN queries (limit/offset parameters)
+- 5000 result limit for IRRd GraphQL queries to prevent timeouts
+
+### Fixed
+
+- Fixed "No route objects match DFZ origin" error caused by incomplete ASN query optimization
+- Fixed frontend table rendering issues with "Show All" button for datasets over 500 rows
+
 ## [2.3.1] - 2026-03-19
 
 ### Fixed
