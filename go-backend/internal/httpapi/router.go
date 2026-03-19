@@ -135,13 +135,19 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 	cacheAdmin := cache.NewAdminHandlers(s.cache)
 	cacheAdmin.Register(s.mux)
 	exportHandlers := export.NewHandlers(func(ctx context.Context, query string) (any, error) {
+		if s.store == nil {
+			return nil, fmt.Errorf("database store not configured")
+		}
 		result, err := CleanQuery(query, s.cfg.MinimumPrefixIPv4, s.cfg.MinimumPrefixIPv6)
 		if err != nil {
 			return nil, err
 		}
 		switch result.Category {
 		case QueryCategoryPrefix:
-			prefix, _ := netip.ParsePrefix(result.CleanedValue)
+			prefix, err := netip.ParsePrefix(result.CleanedValue)
+			if err != nil {
+				return nil, fmt.Errorf("invalid prefix %q: %w", result.CleanedValue, err)
+			}
 			summaries, err := s.collectForPrefixes(ctx, []netip.Prefix{prefix})
 			if err != nil {
 				return nil, err
@@ -150,7 +156,10 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 			return summaries, nil
 		case QueryCategoryASN:
 			raw := strings.TrimPrefix(result.CleanedValue, "AS")
-			asn, _ := strconv.Atoi(raw)
+			asn, err := strconv.Atoi(raw)
+			if err != nil {
+				return nil, fmt.Errorf("invalid ASN %q: %w", result.CleanedValue, err)
+			}
 			return s.store.QueryBGPByASN(ctx, asn)
 		default:
 			return nil, fmt.Errorf("unsupported query type: %s", result.Category)
