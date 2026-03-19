@@ -46,7 +46,7 @@ frontend:
   affinity: {}
 
 goBackend:
-  enabled: false
+  enabled: true
   replicaCount: 1
   image:
     repository: ""
@@ -108,7 +108,19 @@ ingress:
   annotations: {}
   host: ""
   tls: []
-  goBackendPaths: []
+  goBackendPaths:
+    - /healthz
+    - /go-healthz
+    - /api/clean_query/
+    - /api/metadata/
+    - /api/prefixes/
+    - /api/sets/
+    - /api/datasources/
+    - /api/autocomplete/
+    - /api/search-history
+    - /api/bookmarks
+    - /api/popular
+    - /api/trending
 
 migrations:
   enabled: true
