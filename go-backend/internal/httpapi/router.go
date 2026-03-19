@@ -359,9 +359,19 @@ func (s *Server) handleASN(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For ASN queries, we already have IRRd data from QueryASN
-	// Skip the expensive per-prefix IRRd queries in collectForPrefixes
-	summaries := s.buildASNPrefixSummaries(prefixes, irrdRoutes, bgpRoutes)
+	// Limit prefixes to prevent 1000+ IRRd queries (performance issue for large ASNs)
+	// For large ASNs, only query IRRd for direct prefixes, not overlaps
+	prefixesToQuery := prefixes
+	if len(prefixes) > 100 {
+		s.logger.Info("limiting prefix queries for large ASN", "asn", asn, "total_prefixes", len(prefixes), "limit", 100)
+		prefixesToQuery = prefixes[:100]
+	}
+
+	summaries, err := s.collectForPrefixes(r.Context(), prefixesToQuery)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	domain.EnrichPrefixSummariesWithReport(summaries)
 
 	result := domain.ASNPrefixes{
@@ -629,66 +639,6 @@ func (s *Server) collectForPrefixes(ctx context.Context, prefixes []netip.Prefix
 	}
 
 	return summaries, nil
-}
-
-// buildASNPrefixSummaries builds prefix summaries for ASN queries using data we already have
-// This avoids making 1000+ separate IRRd queries
-func (s *Server) buildASNPrefixSummaries(prefixes []netip.Prefix, irrdRoutes []irrd.RouteInfo, bgpRoutes []domain.RouteInfo) []domain.PrefixSummary {
-	// Build lookup maps
-	irrdByPrefix := make(map[string][]irrd.RouteInfo)
-	for _, route := range irrdRoutes {
-		key := route.Prefix.String()
-		irrdByPrefix[key] = append(irrdByPrefix[key], route)
-	}
-
-	bgpByPrefix := make(map[string][]domain.RouteInfo)
-	for _, route := range bgpRoutes {
-		key := route.Prefix.String()
-		bgpByPrefix[key] = append(bgpByPrefix[key], route)
-	}
-
-	summaries := make([]domain.PrefixSummary, 0, len(prefixes))
-	for _, prefix := range prefixes {
-		key := prefix.String()
-		summary := domain.PrefixSummary{
-			Prefix:     prefix,
-			RPKIRoutes: []domain.PrefixIRRDetail{},
-			IRRRoutes:  map[string][]domain.PrefixIRRDetail{},
-			Messages:   []domain.ReportMessage{},
-		}
-
-		// BGP origins
-		origins := make(map[int]struct{})
-		for _, route := range bgpByPrefix[key] {
-			if route.ASN != 0 {
-				origins[route.ASN] = struct{}{}
-			}
-		}
-		for asn := range origins {
-			summary.BGPOrigins = append(summary.BGPOrigins, asn)
-		}
-		slices.Sort(summary.BGPOrigins)
-
-		// IRR data from QueryASN (already have it)
-		for _, entry := range irrdByPrefix[key] {
-			detail := domain.PrefixIRRDetail{
-				ASN:           entry.ASN,
-				RPSLText:      entry.RPSLText,
-				RPSLPK:        entry.RPSLPK,
-				RPKIStatus:    entry.RPKIStatus,
-				RPKIMaxLength: entry.RPKIMaxLength,
-			}
-			if entry.IRRSource == "RPKI" {
-				summary.RPKIRoutes = append(summary.RPKIRoutes, detail)
-				continue
-			}
-			summary.IRRRoutes[entry.IRRSource] = append(summary.IRRRoutes[entry.IRRSource], detail)
-		}
-
-		summaries = append(summaries, summary)
-	}
-
-	return summaries
 }
 
 func rirForPrefix(prefix netip.Prefix, rirstats []domain.RouteInfo) *string {
