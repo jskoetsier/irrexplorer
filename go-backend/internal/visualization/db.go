@@ -97,6 +97,10 @@ func (s *Store) PrefixDistribution(ctx context.Context) ([]PrefixLengthCount, er
 	return results, nil
 }
 
+// ASNRelationships returns edges between ASNs based on prefix containment in the BGP table.
+// The <<= join captures cases where the queried ASN originates the more-specific prefix;
+// it does not capture the symmetric case where it originates the less-specific side.
+// A fully bidirectional graph would require a UNION of both containment directions.
 func (s *Store) ASNRelationships(ctx context.Context, asn int) ([]ASNEdge, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.asn, b.asn, COUNT(*) AS weight
