@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sebastiaan/irrexplorer/go-backend/internal/analysis"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/cache"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/config"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/datasources"
@@ -106,6 +107,16 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 			logger.Warn("navigation store init failed", "error", err)
 		} else {
 			navigation.NewHandlers(navStore, s.cache).Register(s.mux)
+		}
+	}
+
+	if cfg.DatabaseURL != "" {
+		analysisStore, err := analysis.NewStore(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			logger.Warn("analysis store init failed", "error", err)
+		} else {
+			analysisHandlers := analysis.NewHandlers(analysisStore, s.cache)
+			analysisHandlers.Register(s.mux)
 		}
 	}
 

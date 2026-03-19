@@ -121,6 +121,9 @@ ingress:
     - /api/bookmarks
     - /api/popular
     - /api/trending
+    - /api/analysis/
+    - /api/filter-options
+    - /api/advanced-search
 
 migrations:
   enabled: true
