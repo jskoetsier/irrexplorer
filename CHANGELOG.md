@@ -4,6 +4,18 @@ All notable changes to IRRExplorer are documented here.
 
 The format follows Keep a Changelog and the project uses Semantic Versioning.
 
+## [2.3.1] - 2026-03-19
+
+### Fixed
+
+- white screen on ASN query pages caused by null `bgpOrigins`, `rpkiRoutes`, `irrRoutes`, and `messages` fields in API responses crashing the prefix table renderer
+- nginx proxy upstream still pointing to the removed Python backend service (`irrexplorer-backend:8000`), causing new frontend pods to CrashLoopBackOff after the Go migration; updated to `irrexplorer-go-backend:8080`
+- Go importer failing to create the BGP staging GIST index when it already existed from a previous import cycle; now drops the index before recreating
+- Go importer receiving zero BGP rows because bgp.tools rejects the default Go User-Agent; set a descriptive `User-Agent` header
+- Go importer silently discarding every BGP line because the JSON struct tags (`prefix`/`asn`) did not match the bgp.tools field names (`CIDR`/`ASN`)
+- RIR stats import failing on PostgreSQL enum mismatch; map keys now use the database enum values (`RIPENCC`, `REGISTROBR`) instead of human-readable names
+- `.gitignore` pattern `importer` inadvertently ignoring the `internal/importer` directory; anchored with leading `/`
+
 ## [2.3.0] - 2026-03-18
 
 ### Added
