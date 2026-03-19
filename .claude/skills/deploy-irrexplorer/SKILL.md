@@ -1,6 +1,6 @@
 ---
 name: deploy-irrexplorer
-description: Use when deploying irrexplorer frontend changes to Rancher/Kubernetes on the internal cluster at 10.15.19.50
+description: Use when deploying irrexplorer frontend or backend changes to Rancher/Kubernetes on the internal cluster at 10.15.19.50
 ---
 
 # Deploy IRRExplorer to Rancher
@@ -25,7 +25,11 @@ Irrexplorer runs on an RKE2 Rancher cluster. Deployment is manual: rsync source 
 
 ### 1. Verify build locally
 ```bash
+# Frontend
 npm run build --prefix frontend
+
+# Go Backend
+cd go-backend && go build ./...
 ```
 
 ### 2. Commit and push to git
@@ -44,20 +48,38 @@ rsync -av --exclude='.git' --exclude='node_modules' --exclude='frontend/build' \
 ```
 
 ### 4. Build Docker image on server
+
+#### Frontend:
 ```bash
 ssh root@10.15.19.50 "cd /tmp/irrexplorer-deploy-{COMMIT} && \
   docker build -f Dockerfile.frontend \
   -t 10.15.19.50:30500/irrexplorer/frontend:{COMMIT}-{description} . 2>&1"
 ```
 
+#### Go Backend:
+```bash
+ssh root@10.15.19.50 "cd /tmp/irrexplorer-deploy-{COMMIT} && \
+  docker build -f Dockerfile.go-backend \
+  -t 10.15.19.50:30500/irrexplorer/go-backend:{COMMIT}-{description} . 2>&1"
+```
+
 Tag format: `{short-commit}-{short-description}` e.g. `2b04ecb-badge1`
 
 ### 5. Push image to registry
+
+#### Frontend:
 ```bash
 ssh root@10.15.19.50 "docker push 10.15.19.50:30500/irrexplorer/frontend:{TAG}"
 ```
 
+#### Go Backend:
+```bash
+ssh root@10.15.19.50 "docker push 10.15.19.50:30500/irrexplorer/go-backend:{TAG}"
+```
+
 ### 6. Helm upgrade
+
+#### Frontend only:
 ```bash
 ssh root@10.15.19.50 "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && \
   helm upgrade irrexplorer /tmp/irrexplorer-deploy-{COMMIT}/charts/irrexplorer \
@@ -65,11 +87,37 @@ ssh root@10.15.19.50 "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && \
   --set frontend.image.tag={TAG}"
 ```
 
+#### Go Backend only:
+```bash
+ssh root@10.15.19.50 "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && \
+  helm upgrade irrexplorer /tmp/irrexplorer-deploy-{COMMIT}/charts/irrexplorer \
+  -n irrexplorer --reuse-values \
+  --set goBackend.image.tag={TAG}"
+```
+
+#### Both:
+```bash
+ssh root@10.15.19.50 "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && \
+  helm upgrade irrexplorer /tmp/irrexplorer-deploy-{COMMIT}/charts/irrexplorer \
+  -n irrexplorer --reuse-values \
+  --set frontend.image.tag={FRONTEND_TAG} \
+  --set goBackend.image.tag={BACKEND_TAG}"
+```
+
 ### 7. Verify rollout
+
+#### Frontend:
 ```bash
 ssh root@10.15.19.50 "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && \
   /var/lib/rancher/rke2/bin/kubectl rollout status \
   deployment/irrexplorer-frontend -n irrexplorer"
+```
+
+#### Go Backend:
+```bash
+ssh root@10.15.19.50 "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && \
+  /var/lib/rancher/rke2/bin/kubectl rollout status \
+  deployment/irrexplorer-go-backend -n irrexplorer"
 ```
 
 ## Check Current Deployment
