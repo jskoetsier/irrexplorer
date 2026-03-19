@@ -12,11 +12,14 @@ import (
 
 const (
 	lastUpdateQuery       = `query lastUpdate { databaseStatus { source lastUpdate } }`
-	queryASN              = `query getRoutes ($asn: [ASN!]!) { rpslObjects(asn: $asn, objectClass: ["route", "route6"], rpkiStatus: [valid,invalid,not_found]) { rpslPk source objectText ... on RPSLRoute { prefix asn rpkiStatus rpkiMaxLength } ... on RPSLRoute6 { prefix asn rpkiStatus rpkiMaxLength } } }`
+	queryASN              = `query getRoutes ($asn: [ASN!]!, $limit: Int) { rpslObjects(asn: $asn, objectClass: ["route", "route6"], rpkiStatus: [valid,invalid,not_found], limit: $limit) { rpslPk source objectText ... on RPSLRoute { prefix asn rpkiStatus rpkiMaxLength } ... on RPSLRoute6 { prefix asn rpkiStatus rpkiMaxLength } } }`
 	queryPrefix           = `query getRoutes ($prefix: IP!, $object_class: [String!]!) { rpslObjects(ipAny: $prefix, objectClass: $object_class, rpkiStatus: [valid,invalid,not_found]) { rpslPk source objectText ... on RPSLRoute { prefix asn rpkiStatus rpkiMaxLength } ... on RPSLRoute6 { prefix asn rpkiStatus rpkiMaxLength } } }`
 	queryMemberOfASSet    = `query getMemberOf($target: String!) { set: rpslObjects(members: [$target], objectClass: ["as-set"], rpkiStatus: [valid, invalid, not_found]) { rpslPk source } autNum: rpslObjects(rpslPk: [$target], objectClass: ["aut-num"], rpkiStatus: [valid, invalid, not_found]) { rpslPk source mntBy ... on RPSLAutNum { memberOfObjs { rpslPk source mbrsByRef } } } }`
 	queryMemberOfRouteSet = `query getMemberOf($target: String!) { set: rpslObjects(members: [$target], objectClass: ["route-set"], rpkiStatus: [valid, invalid, not_found]) { rpslPk source } }`
 	querySetMembers       = `query setMembers($names: [String!]!) { recursiveSetMembers(setNames:$names, depth:1) { rpslPk rootSource members } }`
+
+	// Max IRRd results per query to prevent timeouts on large ASNs
+	maxIRRdResults = 5000
 )
 
 type Client struct {
@@ -136,7 +139,10 @@ func (c *Client) QueryASN(ctx context.Context, asn int) ([]RouteInfo, error) {
 	}
 
 	var decoded graphqlResponse
-	if err := c.execute(ctx, queryASN, map[string]any{"asn": asn}, &decoded); err != nil {
+	if err := c.execute(ctx, queryASN, map[string]any{
+		"asn":   asn,
+		"limit": maxIRRdResults,
+	}, &decoded); err != nil {
 		return []RouteInfo{}, err
 	}
 	return toRouteInfo(decoded), nil
