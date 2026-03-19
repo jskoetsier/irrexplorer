@@ -17,6 +17,7 @@ import (
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/domain"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/irrd"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/middleware"
+	"github.com/sebastiaan/irrexplorer/go-backend/internal/navigation"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/store"
 )
 
@@ -96,6 +97,15 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 			logger.Warn("redis cache init failed", "error", err)
 		} else {
 			s.cache = c
+		}
+	}
+
+	if cfg.DatabaseURL != "" {
+		navStore, err := navigation.NewStore(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			logger.Warn("navigation store init failed", "error", err)
+		} else {
+			navigation.NewHandlers(navStore, s.cache).Register(s.mux)
 		}
 	}
 
