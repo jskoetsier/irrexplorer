@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
@@ -34,7 +35,7 @@ func ParseBGPLine(data []byte) (BGPEntry, error) {
 
 // ImportBGP downloads bgp.tools/table.jsonl, streams into bgp_staging via COPY,
 // builds the GIST index on staging, then atomically swaps bgp_staging → bgp.
-func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client) error {
+func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client, logger *slog.Logger) error {
 	resp, err := httpClient.Get(bgpToolsURL)
 	if err != nil {
 		return fmt.Errorf("download bgp.tools: %w", err)
@@ -126,6 +127,6 @@ func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client)
 		return fmt.Errorf("drop bgp_old: %w", err)
 	}
 
-	_ = count
+	logger.Info("bgp import complete", "rows", count)
 	return nil
 }

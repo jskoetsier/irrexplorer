@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"log/slog"
 	"math/bits"
 	"net"
 	"net/http"
@@ -83,7 +84,7 @@ func ParseRIRLine(line, rir string) (RIREntry, bool) {
 
 // ImportRIRStats downloads all RIR delegation files concurrently, parses them,
 // and inserts into rirstats (replacing all rows).
-func ImportRIRStats(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client) error {
+func ImportRIRStats(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client, logger *slog.Logger) error {
 	type sourceResult struct {
 		rir     string
 		entries []RIREntry
@@ -111,7 +112,7 @@ func ImportRIRStats(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Cl
 	for _, r := range results {
 		if r.err != nil {
 			// Per-source failure: log and continue with other sources.
-			fmt.Printf("WARNING: RIR source %s failed: %v\n", r.rir, r.err)
+			logger.Warn("RIR source failed", "rir", r.rir, "error", r.err)
 			continue
 		}
 		allEntries = append(allEntries, r.entries...)
@@ -145,7 +146,11 @@ func ImportRIRStats(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Cl
 }
 
 func fetchRIR(ctx context.Context, client *http.Client, url, rir string) ([]RIREntry, error) {
-	resp, err := client.Do(newRequestWithContext(ctx, url))
+	req, err := newRequestWithContext(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +166,6 @@ func fetchRIR(ctx context.Context, client *http.Client, url, rir string) ([]RIRE
 	return entries, scanner.Err()
 }
 
-func newRequestWithContext(ctx context.Context, url string) *http.Request {
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	return req
+func newRequestWithContext(ctx context.Context, url string) (*http.Request, error) {
+	return http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 }
