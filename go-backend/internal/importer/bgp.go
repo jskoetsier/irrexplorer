@@ -15,10 +15,10 @@ import (
 const bgpToolsURL = "https://bgp.tools/table.jsonl"
 
 // BGPEntry is one line from bgp.tools/table.jsonl.
+// bgp.tools uses uppercase keys: {"CIDR":"...","ASN":...,"Hits":...}
 type BGPEntry struct {
-	Prefix     string `json:"prefix"`
-	ASN        int    `json:"asn"`
-	RPKIStatus string `json:"rpki_status"`
+	Prefix string `json:"CIDR"`
+	ASN    int    `json:"ASN"`
 }
 
 // ParseBGPLine parses a single JSONL line. Exported for testing.
@@ -70,7 +70,7 @@ func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client,
 		}
 		_, err := conn.Conn().CopyFrom(ctx,
 			pgx.Identifier{"bgp_staging"},
-			[]string{"prefix", "asn", "rpki_status"},
+			[]string{"prefix", "asn"},
 			pgx.CopyFromRows(rows),
 		)
 		rows = rows[:0]
@@ -86,7 +86,7 @@ func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client,
 		if err != nil {
 			continue // skip malformed lines
 		}
-		rows = append(rows, []any{entry.Prefix, entry.ASN, entry.RPKIStatus})
+		rows = append(rows, []any{entry.Prefix, entry.ASN})
 		count++
 		if len(rows) >= 10000 {
 			if err := flushRows(); err != nil {
