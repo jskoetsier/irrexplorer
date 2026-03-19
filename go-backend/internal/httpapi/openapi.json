@@ -1,0 +1,28 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "IRRExplorer API",
+    "version": "2.4.0",
+    "description": "IRRExplorer Go backend API"
+  },
+  "paths": {
+    "/api/metadata/": {"get": {"summary": "Metadata and last import timestamps", "responses": {"200": {"description": "OK"}}}},
+    "/api/prefixes/prefix/{prefix}": {"get": {"summary": "Prefix lookup", "responses": {"200": {"description": "OK"}}}},
+    "/api/prefixes/asn/{asn}": {"get": {"summary": "ASN prefix lookup", "responses": {"200": {"description": "OK"}}}},
+    "/api/sets/expand/{name}": {"get": {"summary": "Set expansion", "responses": {"200": {"description": "OK"}}}},
+    "/api/sets/member-of/{class}/{target}": {"get": {"summary": "Member-of lookup", "responses": {"200": {"description": "OK"}}}},
+    "/api/autocomplete/{query}": {"get": {"summary": "Query autocomplete", "responses": {"200": {"description": "OK"}}}},
+    "/api/analysis/rpki-dashboard": {"get": {"summary": "RPKI status dashboard", "responses": {"200": {"description": "OK"}}}},
+    "/api/analysis/hijack-detection": {"get": {"summary": "Hijack detection (INVALID routes)", "responses": {"200": {"description": "OK"}}}},
+    "/api/analysis/roa-coverage": {"get": {"summary": "ROA coverage analysis", "responses": {"200": {"description": "OK"}}}},
+    "/api/analysis/irr-consistency": {"get": {"summary": "IRR/RPKI consistency check", "responses": {"200": {"description": "OK"}}}},
+    "/api/viz/prefix-allocation": {"get": {"summary": "Prefix allocation by RIR", "responses": {"200": {"description": "OK"}}}},
+    "/api/viz/rir-distribution": {"get": {"summary": "RIR distribution", "responses": {"200": {"description": "OK"}}}},
+    "/api/viz/timeline": {"get": {"summary": "Query timeline", "responses": {"200": {"description": "OK"}}}},
+    "/api/bulk-query": {"post": {"summary": "Bulk prefix/ASN query (max 100)", "responses": {"200": {"description": "OK"}}}},
+    "/api/export/csv": {"post": {"summary": "Export results as CSV", "responses": {"200": {"description": "OK"}}}},
+    "/api/export/json": {"post": {"summary": "Export results as JSON", "responses": {"200": {"description": "OK"}}}},
+    "/api/cache/stats": {"get": {"summary": "Cache statistics", "responses": {"200": {"description": "OK"}}}},
+    "/api/cache/clear": {"get": {"summary": "Clear go: cache keys", "responses": {"200": {"description": "OK"}}}}
+  }
+}

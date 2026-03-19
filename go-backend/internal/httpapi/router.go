@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/netip"
@@ -133,8 +134,29 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 
 	cacheAdmin := cache.NewAdminHandlers(s.cache)
 	cacheAdmin.Register(s.mux)
-	// Export handlers are wired with queryRunner in Task 5.3
-	export.NewHandlers(nil).Register(s.mux)
+	exportHandlers := export.NewHandlers(func(ctx context.Context, query string) (any, error) {
+		result, err := CleanQuery(query, s.cfg.MinimumPrefixIPv4, s.cfg.MinimumPrefixIPv6)
+		if err != nil {
+			return nil, err
+		}
+		switch result.Category {
+		case QueryCategoryPrefix:
+			prefix, _ := netip.ParsePrefix(result.CleanedValue)
+			summaries, err := s.collectForPrefixes(ctx, []netip.Prefix{prefix})
+			if err != nil {
+				return nil, err
+			}
+			domain.EnrichPrefixSummariesWithReport(summaries)
+			return summaries, nil
+		case QueryCategoryASN:
+			raw := strings.TrimPrefix(result.CleanedValue, "AS")
+			asn, _ := strconv.Atoi(raw)
+			return s.store.QueryBGPByASN(ctx, asn)
+		default:
+			return nil, fmt.Errorf("unsupported query type: %s", result.Category)
+		}
+	})
+	exportHandlers.Register(s.mux)
 
 	s.registerRoutes()
 	return s
@@ -149,6 +171,8 @@ func (s *Server) Handler() http.Handler {
 }
 
 func (s *Server) registerRoutes() {
+	s.mux.HandleFunc("/api/docs/openapi.json", s.handleOpenAPISchema)
+	s.mux.HandleFunc("/api/docs", s.handleSwaggerUI)
 	s.mux.HandleFunc("/healthz", s.handleHealthz)
 	s.mux.HandleFunc("/go-healthz", s.handleHealthz)
 	s.mux.HandleFunc("/api/clean_query/", s.handleCleanQuery)
