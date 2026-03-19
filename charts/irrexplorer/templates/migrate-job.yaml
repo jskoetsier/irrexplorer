@@ -20,26 +20,24 @@ spec:
       {{- end }}
       containers:
         - name: migrate
-          image: "{{ required "backend.image.repository is required" .Values.backend.image.repository }}:{{ required "backend.image.tag is required" .Values.backend.image.tag }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
           command:
             - sh
             - -c
-            - until alembic upgrade head; do echo "waiting for database"; sleep 5; done
+            - |
+              psql "$DATABASE_URL" <<'SQL'
+              DROP TABLE IF EXISTS bgp_alert_events CASCADE;
+              DROP TABLE IF EXISTS alert_configurations CASCADE;
+              DROP TABLE IF EXISTS user_monitored_asns CASCADE;
+              DROP TABLE IF EXISTS user_emails CASCADE;
+              DROP TABLE IF EXISTS bgp_users CASCADE;
+              DROP TABLE IF EXISTS system_config CASCADE;
+              SQL
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "irrexplorer.fullname" . }}-app
                   key: DATABASE_URL
-            - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "irrexplorer.fullname" . }}-app
-                  key: REDIS_URL
-            - name: JWT_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "irrexplorer.fullname" . }}-app
-                  key: JWT_SECRET_KEY
 {{- end }}
