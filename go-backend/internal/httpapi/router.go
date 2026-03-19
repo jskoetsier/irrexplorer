@@ -14,6 +14,7 @@ import (
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/analysis"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/cache"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/config"
+	"github.com/sebastiaan/irrexplorer/go-backend/internal/export"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/datasources"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/domain"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/irrd"
@@ -129,6 +130,11 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 			visualization.NewHandlers(vizStore, s.cache).Register(s.mux)
 		}
 	}
+
+	cacheAdmin := cache.NewAdminHandlers(s.cache)
+	cacheAdmin.Register(s.mux)
+	// Export handlers are wired with queryRunner in Task 5.3
+	export.NewHandlers(nil).Register(s.mux)
 
 	s.registerRoutes()
 	return s

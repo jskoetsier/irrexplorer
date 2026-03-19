@@ -125,6 +125,10 @@ ingress:
     - /api/filter-options
     - /api/advanced-search
     - /api/viz/
+    - /api/export/
+    - /api/bulk-query
+    - /api/cache/
+    - /api/docs/
 
 migrations:
   enabled: true
