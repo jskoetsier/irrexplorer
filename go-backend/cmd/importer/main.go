@@ -29,6 +29,11 @@ func main() {
 	}
 	defer pool.Close()
 
+	if err := pool.Ping(ctx); err != nil {
+		logger.Error("database ping failed", "error", err)
+		os.Exit(1)
+	}
+
 	if err := importer.Run(ctx, pool, logger); err != nil {
 		logger.Error("import failed", "error", err)
 		os.Exit(1)

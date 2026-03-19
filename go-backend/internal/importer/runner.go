@@ -29,11 +29,20 @@ func Run(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logger) error {
 		logger.Info("RIR stats import complete")
 	}
 
-	if _, err := pool.Exec(ctx, `
-		INSERT INTO last_data_import (last_data_import) VALUES (NOW())
-		ON CONFLICT (id) DO UPDATE SET last_data_import = NOW()
-	`); err != nil {
-		logger.Warn("failed to update last_data_import", "error", err)
+	// Update last_data_import: delete existing row then insert current timestamp.
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		logger.Warn("failed to begin last_data_import transaction", "error", err)
+	} else {
+		if _, execErr := tx.Exec(ctx, "DELETE FROM last_data_import"); execErr != nil {
+			logger.Warn("failed to delete last_data_import", "error", execErr)
+			_ = tx.Rollback(ctx)
+		} else if _, execErr := tx.Exec(ctx, "INSERT INTO last_data_import (last_data_import) VALUES (NOW())"); execErr != nil {
+			logger.Warn("failed to insert last_data_import", "error", execErr)
+			_ = tx.Rollback(ctx)
+		} else if commitErr := tx.Commit(ctx); commitErr != nil {
+			logger.Warn("failed to commit last_data_import", "error", commitErr)
+		}
 	}
 
 	return nil
