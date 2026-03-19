@@ -97,6 +97,10 @@ func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client,
 	}
 
 	// Build GIST index on staging before the swap (this is the slow part).
+	// Drop first in case it was carried over from a previous cycle or LIKE INCLUDING ALL.
+	if _, err := pool.Exec(ctx, `DROP INDEX IF EXISTS ix_bgp_staging_prefix`); err != nil {
+		return fmt.Errorf("drop old staging index: %w", err)
+	}
 	if _, err := pool.Exec(ctx, `CREATE INDEX ix_bgp_staging_prefix ON bgp_staging USING GIST (prefix inet_ops)`); err != nil {
 		return fmt.Errorf("build staging index: %w", err)
 	}
@@ -114,7 +118,7 @@ func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client,
 		_ = tx.Rollback(ctx)
 		return fmt.Errorf("rename bgp_staging to bgp: %w", err)
 	}
-	if _, err := tx.Exec(ctx, "CREATE TABLE bgp_staging (LIKE bgp INCLUDING ALL)"); err != nil {
+	if _, err := tx.Exec(ctx, "CREATE TABLE bgp_staging (LIKE bgp INCLUDING DEFAULTS INCLUDING CONSTRAINTS)"); err != nil {
 		_ = tx.Rollback(ctx)
 		return fmt.Errorf("create fresh bgp_staging: %w", err)
 	}
