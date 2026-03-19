@@ -17,6 +17,9 @@ interface PrefixTableProps {
   defaultSortSmallestFirst?: boolean;
 }
 
+// Maximum rows to render initially - helps with performance on large ASNs
+const INITIAL_ROW_LIMIT = 500;
+
 export default function PrefixTable({
   prefixesData,
   hasLoaded,
@@ -28,6 +31,7 @@ export default function PrefixTable({
   const whoisModalRef = useRef<WhoisModalHandle>(null);
   const [sortKey, setSortKey] = useState(defaultSortSmallestFirst ? 'prefixSmallestFirst' : 'prefix');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showAllRows, setShowAllRows] = useState(false);
 
   const irrSourceColumns = useMemo(() => {
     return findIrrSourceColumns(prefixesData);
@@ -36,6 +40,14 @@ export default function PrefixTable({
   const sortedPrefixesData = useMemo(() => {
     return sortPrefixesDataBy(prefixesData, sortKey, sortOrder);
   }, [prefixesData, sortKey, sortOrder]);
+
+  // Limit rows for performance on large datasets
+  const displayData = useMemo(() => {
+    if (showAllRows || sortedPrefixesData.length <= INITIAL_ROW_LIMIT) {
+      return sortedPrefixesData;
+    }
+    return sortedPrefixesData.slice(0, INITIAL_ROW_LIMIT);
+  }, [sortedPrefixesData, showAllRows]);
 
   const handleSort = useCallback(({ key, order }: { key: string; order: 'asc' | 'desc' }) => {
     setSortKey(key);
@@ -64,11 +76,11 @@ export default function PrefixTable({
   const renderTableContent = () => {
     if (!hasLoaded) return renderTablePlaceholder(<Spinner />);
     if (!prefixesData.length)
-      return renderTablePlaceholder('No prefixes were found or query was too large to execute.');
+      return renderTablePlaceholder('No prefixes were found.');
     return (
       <PrefixTableBody
         irrSourceColumns={irrSourceColumns}
-        prefixesData={sortedPrefixesData}
+        prefixesData={displayData}
         reducedColour={reducedColour ?? false}
         filterWarningError={filterWarningError ?? false}
         handleIrrRouteSelect={handleIrrRouteSelect}
@@ -76,10 +88,12 @@ export default function PrefixTable({
     );
   };
 
+  const hasMoreRows = sortedPrefixesData.length > INITIAL_ROW_LIMIT && !showAllRows;
+
   return (
     <>
       <div className="table-responsive">
-        <table className="table table-sm mb-5 table-fixed table-striped">
+        <table className="table table-sm mb-2 table-fixed table-striped">
           <PrefixTableHeader
             irrSourceColumns={irrSourceColumns}
             onSort={handleSort}
@@ -88,6 +102,16 @@ export default function PrefixTable({
           {renderTableContent()}
           <TableFooter url={apiCallUrl} />
         </table>
+        {hasMoreRows && (
+          <div className="text-center mb-4">
+            <button
+              className="btn btn-outline-primary btn-sm"
+              onClick={() => setShowAllRows(true)}
+            >
+              Show all {sortedPrefixesData.length.toLocaleString()} rows (currently showing {INITIAL_ROW_LIMIT})
+            </button>
+          </div>
+        )}
       </div>
       <WhoisModal ref={whoisModalRef} />
     </>
