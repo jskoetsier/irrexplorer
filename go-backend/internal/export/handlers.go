@@ -29,7 +29,11 @@ func (h *Handlers) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/bulk-query", h.bulkQuery)
 }
 
-func (h *Handlers) exportPDF(w http.ResponseWriter, _ *http.Request) {
+func (h *Handlers) exportPDF(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.NotFound(w, r)
+		return
+	}
 	http.Error(w, "PDF export not implemented", http.StatusNotImplemented)
 }
 
@@ -83,7 +87,9 @@ func (h *Handlers) exportCSV(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/csv")
 	w.Header().Set("Content-Disposition", `attachment; filename="export.csv"`)
 	enc := csv.NewWriter(w)
-	// Marshal result to JSON then write as a single CSV row (simple format matching Python).
+	// Marshal result to JSON and write as a single CSV cell.
+	// This matches the Python backend's behaviour. Proper column-per-field serialization
+	// is deferred to a future improvement.
 	data, _ := json.Marshal(result)
 	_ = enc.Write([]string{string(data)})
 	enc.Flush()
