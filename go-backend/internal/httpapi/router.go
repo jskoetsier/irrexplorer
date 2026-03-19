@@ -20,6 +20,7 @@ import (
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/middleware"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/navigation"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/store"
+	"github.com/sebastiaan/irrexplorer/go-backend/internal/visualization"
 )
 
 type Server struct {
@@ -117,6 +118,15 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 		} else {
 			analysisHandlers := analysis.NewHandlers(analysisStore, s.cache)
 			analysisHandlers.Register(s.mux)
+		}
+	}
+
+	if cfg.DatabaseURL != "" {
+		vizStore, err := visualization.NewStore(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			logger.Warn("visualization store init failed", "error", err)
+		} else {
+			visualization.NewHandlers(vizStore, s.cache).Register(s.mux)
 		}
 	}
 

@@ -124,6 +124,7 @@ ingress:
     - /api/analysis/
     - /api/filter-options
     - /api/advanced-search
+    - /api/viz/
 
 migrations:
   enabled: true

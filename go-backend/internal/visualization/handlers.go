@@ -1,0 +1,104 @@
+package visualization
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+)
+
+type vizStore interface {
+	PrefixAllocation(ctx context.Context) ([]RIRCount, error)
+	RIRDistribution(ctx context.Context) ([]RIRCount, error)
+	PrefixDistribution(ctx context.Context) ([]PrefixLengthCount, error)
+	ASNRelationships(ctx context.Context, asn int) ([]ASNEdge, error)
+	Timeline(ctx context.Context) ([]TimelinePoint, error)
+}
+
+type cacheAccessor interface {
+	Get(ctx context.Context, key string, dest any) bool
+	Set(ctx context.Context, key string, value any, ttl time.Duration)
+}
+
+type Handlers struct {
+	store vizStore
+	cache cacheAccessor
+}
+
+func NewHandlers(store vizStore, cache cacheAccessor) *Handlers {
+	return &Handlers{store: store, cache: cache}
+}
+
+func (h *Handlers) Register(mux *http.ServeMux) {
+	mux.HandleFunc("/api/viz/prefix-allocation", h.prefixAllocation)
+	mux.HandleFunc("/api/viz/rir-distribution", h.rirDistribution)
+	mux.HandleFunc("/api/viz/prefix-distribution", h.prefixDistribution)
+	mux.HandleFunc("/api/viz/asn-relationships/", h.asnRelationships)
+	mux.HandleFunc("/api/viz/timeline", h.timeline)
+}
+
+func (h *Handlers) prefixAllocation(w http.ResponseWriter, r *http.Request) {
+	h.cached(w, r, "go:viz:prefix-allocation", 60*time.Minute, func(ctx context.Context) (any, error) {
+		return h.store.PrefixAllocation(ctx)
+	})
+}
+
+func (h *Handlers) rirDistribution(w http.ResponseWriter, r *http.Request) {
+	h.cached(w, r, "go:viz:rir-distribution", 60*time.Minute, func(ctx context.Context) (any, error) {
+		return h.store.RIRDistribution(ctx)
+	})
+}
+
+func (h *Handlers) prefixDistribution(w http.ResponseWriter, r *http.Request) {
+	h.cached(w, r, "go:viz:prefix-distribution", 60*time.Minute, func(ctx context.Context) (any, error) {
+		return h.store.PrefixDistribution(ctx)
+	})
+}
+
+func (h *Handlers) asnRelationships(w http.ResponseWriter, r *http.Request) {
+	raw := strings.TrimPrefix(r.URL.Path, "/api/viz/asn-relationships/")
+	raw = strings.TrimPrefix(strings.ToUpper(raw), "AS")
+	asn, err := strconv.Atoi(raw)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid ASN"})
+		return
+	}
+	key := "go:viz:asn-relationships:" + strconv.Itoa(asn)
+	h.cached(w, r, key, 30*time.Minute, func(ctx context.Context) (any, error) {
+		return h.store.ASNRelationships(ctx, asn)
+	})
+}
+
+func (h *Handlers) timeline(w http.ResponseWriter, r *http.Request) {
+	h.cached(w, r, "go:viz:timeline", 15*time.Minute, func(ctx context.Context) (any, error) {
+		return h.store.Timeline(ctx)
+	})
+}
+
+func (h *Handlers) cached(w http.ResponseWriter, r *http.Request, key string, ttl time.Duration, fn func(context.Context) (any, error)) {
+	if h.cache != nil {
+		var raw json.RawMessage
+		if h.cache.Get(r.Context(), key, &raw) {
+			writeJSON(w, http.StatusOK, raw)
+			return
+		}
+	}
+	result, err := fn(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if h.cache != nil {
+		// Use context.Background() so the cache write isn't dropped if the client disconnects.
+		h.cache.Set(context.Background(), key, result, ttl)
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
+func writeJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(payload)
+}
