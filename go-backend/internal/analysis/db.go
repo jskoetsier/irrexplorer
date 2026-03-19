@@ -142,7 +142,9 @@ func (s *Store) ROACoverage(ctx context.Context) ([]ROACoverageRow, error) {
 	return results, nil
 }
 
-// IRRConsistency returns BGP routes where RPKI and IRR status diverge.
+// IRRConsistency is a stub that currently returns INVALID RPKI routes (same semantics as
+// HijackDetection but with a higher LIMIT). A proper implementation would join against
+// IRR route data to identify routes where RPKI and IRR origin ASNs disagree.
 func (s *Store) IRRConsistency(ctx context.Context) ([]IRRConsistencyRow, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT prefix::text, asn, rpki_status

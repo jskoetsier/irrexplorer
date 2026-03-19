@@ -61,7 +61,7 @@ func (h *Handlers) cachedHandler(key string, ttl time.Duration, fn func(context.
 			return
 		}
 		if h.cache != nil {
-			h.cache.Set(r.Context(), key, result, ttl)
+			h.cache.Set(context.Background(), key, result, ttl)
 		}
 		writeJSON(w, http.StatusOK, result)
 	}
@@ -113,6 +113,8 @@ func (h *Handlers) whois(w http.ResponseWriter, r *http.Request) {
 }
 
 // filterOptions returns the valid vocabulary for frontend filter controls.
+// The irr_sources list is a static stub; a follow-up can derive it from
+// a DISTINCT query on the IRR routes table or from application config.
 func (h *Handlers) filterOptions(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"rpki_status": []string{"VALID", "INVALID", "UNKNOWN", "NOT_FOUND"},
