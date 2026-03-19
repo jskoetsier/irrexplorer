@@ -16,6 +16,10 @@ func NewStore(ctx context.Context, databaseURL string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
 	return &Store{pool: pool}, nil
 }
 
@@ -25,9 +29,9 @@ type RPKIDashboardRow struct {
 }
 
 type HijackEntry struct {
-	Prefix string `json:"prefix"`
-	ASN    int    `json:"asn"`
-	Status string `json:"rpki_status"`
+	Prefix     string `json:"prefix"`
+	ASN        int    `json:"asn"`
+	RPKIStatus string `json:"rpki_status"`
 }
 
 type PrefixOverlapEntry struct {
@@ -56,6 +60,9 @@ func (s *Store) RPKIDashboard(ctx context.Context) ([]RPKIDashboardRow, error) {
 		}
 		results = append(results, r)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if results == nil {
 		results = []RPKIDashboardRow{}
 	}
@@ -77,10 +84,13 @@ func (s *Store) HijackDetection(ctx context.Context) ([]HijackEntry, error) {
 	var results []HijackEntry
 	for rows.Next() {
 		var e HijackEntry
-		if err := rows.Scan(&e.Prefix, &e.ASN, &e.Status); err != nil {
+		if err := rows.Scan(&e.Prefix, &e.ASN, &e.RPKIStatus); err != nil {
 			return nil, err
 		}
 		results = append(results, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	if results == nil {
 		results = []HijackEntry{}
@@ -123,6 +133,9 @@ func (s *Store) ROACoverage(ctx context.Context) ([]ROACoverageRow, error) {
 		}
 		results = append(results, r)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if results == nil {
 		results = []ROACoverageRow{}
 	}
@@ -150,6 +163,9 @@ func (s *Store) IRRConsistency(ctx context.Context) ([]IRRConsistencyRow, error)
 		}
 		results = append(results, r)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if results == nil {
 		results = []IRRConsistencyRow{}
 	}
@@ -174,6 +190,9 @@ func (s *Store) PrefixOverlap(ctx context.Context, prefix netip.Prefix) ([]Prefi
 			return nil, err
 		}
 		results = append(results, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	if results == nil {
 		results = []PrefixOverlapEntry{}
