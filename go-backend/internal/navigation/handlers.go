@@ -71,7 +71,7 @@ func (h *Handlers) handleAutocomplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.cache != nil {
-		h.cache.Set(r.Context(), cacheKey, results, 1*time.Minute)
+		h.cache.Set(context.Background(), cacheKey, results, 1*time.Minute)
 	}
 
 	writeJSON(w, http.StatusOK, results)

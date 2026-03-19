@@ -18,6 +18,10 @@ func New(ctx context.Context, databaseURL string) (*PostgresStore, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
 	return &PostgresStore{pool: pool}, nil
 }
 
@@ -52,6 +56,9 @@ func (s *PostgresStore) QueryPrefixesAny(ctx context.Context, prefixes []netip.P
 			bgp = append(bgp, domain.RouteInfo{Prefix: parsed.Masked(), ASN: asn, RPKIStatus: status})
 		}
 		rows.Close()
+		if err := rows.Err(); err != nil {
+			return nil, nil, err
+		}
 
 		rirRows, err := s.pool.Query(ctx, `
 			SELECT prefix::text, rir::text FROM rirstats
@@ -76,6 +83,9 @@ func (s *PostgresStore) QueryPrefixesAny(ctx context.Context, prefixes []netip.P
 			rir = append(rir, domain.RouteInfo{Prefix: parsed.Masked(), RIR: &rirValue})
 		}
 		rirRows.Close()
+		if err := rirRows.Err(); err != nil {
+			return nil, nil, err
+		}
 	}
 	return bgp, rir, nil
 }
@@ -104,6 +114,9 @@ func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int) ([]domain.Ro
 			status = *rpkiStatus
 		}
 		results = append(results, domain.RouteInfo{Prefix: parsed.Masked(), ASN: scannedASN, RPKIStatus: status})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return results, nil
 }

@@ -39,6 +39,10 @@ func (h *AdminHandlers) scanGoKeys(ctx context.Context) ([]string, error) {
 }
 
 func (h *AdminHandlers) handleStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 	if h.cache == nil {
 		http.Error(w, "cache not configured", http.StatusServiceUnavailable)
 		return
@@ -62,6 +66,10 @@ func (h *AdminHandlers) handleStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandlers) handleClear(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 	if h.cache == nil {
 		http.Error(w, "cache not configured", http.StatusServiceUnavailable)
 		return

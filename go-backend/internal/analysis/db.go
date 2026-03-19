@@ -117,7 +117,7 @@ func (s *Store) ROACoverage(ctx context.Context) ([]ROACoverageRow, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT prefix::text, asn, COALESCE(rpki_status, 'NOT_FOUND')
 		FROM bgp
-		WHERE rpki_status IN ('VALID', 'INVALID', 'NOT_FOUND')
+		WHERE rpki_status IN ('VALID', 'INVALID') OR rpki_status IS NULL
 		ORDER BY prefix
 		LIMIT 5000
 	`)
