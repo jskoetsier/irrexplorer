@@ -15,9 +15,9 @@ import (
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/analysis"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/cache"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/config"
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/export"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/datasources"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/domain"
+	"github.com/sebastiaan/irrexplorer/go-backend/internal/export"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/irrd"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/middleware"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/navigation"
@@ -49,7 +49,7 @@ type irrdClient interface {
 
 type prefixStore interface {
 	QueryPrefixesAny(ctx context.Context, prefixes []netip.Prefix) ([]domain.RouteInfo, []domain.RouteInfo, error)
-	QueryBGPByASN(ctx context.Context, asn int) ([]domain.RouteInfo, error)
+	QueryBGPByASN(ctx context.Context, asn int, limit, offset int) ([]domain.RouteInfo, int, error)
 	GetLastImporterUpdate(ctx context.Context) (*time.Time, error)
 }
 
@@ -160,7 +160,8 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 			if err != nil {
 				return nil, fmt.Errorf("invalid ASN %q: %w", result.CleanedValue, err)
 			}
-			return s.store.QueryBGPByASN(ctx, asn)
+			routes, _, err := s.store.QueryBGPByASN(ctx, asn, 10000, 0)
+			return routes, err
 		default:
 			return nil, fmt.Errorf("unsupported query type: %s", result.Category)
 		}
@@ -309,15 +310,33 @@ func (s *Server) handleASN(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Parse pagination params
+	limit := 1000
+	offset := 0
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 10000 {
+			limit = parsed
+		}
+	}
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
 	irrdRoutes, err := s.irrdClient.QueryASN(r.Context(), asn)
 	if err != nil {
 		s.logger.Warn("irrd asn query failed", "asn", asn, "error", err)
 		irrdRoutes = []irrd.RouteInfo{}
 	}
-	bgpRoutes, err := s.store.QueryBGPByASN(r.Context(), asn)
+	bgpRoutes, totalCount, err := s.store.QueryBGPByASN(r.Context(), asn, limit, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	// Log warning if results are truncated
+	if totalCount > limit {
+		s.logger.Info("asn query results truncated", "asn", asn, "total", totalCount, "returned", len(bgpRoutes), "limit", limit)
 	}
 
 	prefixSet := make(map[string]netip.Prefix)

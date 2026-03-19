@@ -58,8 +58,8 @@ func (f fakeStore) QueryPrefixesAny(_ context.Context, _ []netip.Prefix) ([]doma
 	return f.bgpByPrefix, f.rirByPrefix, f.queryPrefixErr
 }
 
-func (f fakeStore) QueryBGPByASN(_ context.Context, _ int) ([]domain.RouteInfo, error) {
-	return f.bgpByASN, f.queryASNErr
+func (f fakeStore) QueryBGPByASN(_ context.Context, _ int, _ int, _ int) ([]domain.RouteInfo, int, error) {
+	return f.bgpByASN, len(f.bgpByASN), f.queryASNErr
 }
 
 func (f fakeStore) GetLastImporterUpdate(_ context.Context) (*time.Time, error) {

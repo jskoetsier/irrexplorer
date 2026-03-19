@@ -143,10 +143,30 @@ func (s *PostgresStore) QueryPrefixesAny(ctx context.Context, prefixes []netip.P
 	return allBGP, allRIR, nil
 }
 
-func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int) ([]domain.RouteInfo, error) {
-	rows, err := s.pool.Query(ctx, `SELECT prefix::text, asn, rpki_status FROM bgp WHERE asn = $1 LIMIT 10000`, asn)
+func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int, limit, offset int) ([]domain.RouteInfo, int, error) {
+	// Get total count first
+	var totalCount int
+	err := s.pool.QueryRow(ctx, `SELECT COUNT(*) FROM bgp WHERE asn = $1`, asn).Scan(&totalCount)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	// Apply pagination limits
+	if limit <= 0 || limit > 10000 {
+		limit = 10000
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	rows, err := s.pool.Query(ctx, `
+		SELECT prefix::text, asn, rpki_status 
+		FROM bgp 
+		WHERE asn = $1 
+		ORDER BY prefix 
+		LIMIT $2 OFFSET $3`, asn, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -156,7 +176,7 @@ func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int) ([]domain.Ro
 		var scannedASN int
 		var rpkiStatus *string
 		if err := rows.Scan(&prefixText, &scannedASN, &rpkiStatus); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		parsed, err := netip.ParsePrefix(prefixText)
 		if err != nil {
@@ -169,9 +189,9 @@ func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int) ([]domain.Ro
 		results = append(results, domain.RouteInfo{Prefix: parsed.Masked(), ASN: scannedASN, RPKIStatus: status})
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return results, nil
+	return results, totalCount, nil
 }
 
 func (s *PostgresStore) GetLastImporterUpdate(ctx context.Context) (*time.Time, error) {
