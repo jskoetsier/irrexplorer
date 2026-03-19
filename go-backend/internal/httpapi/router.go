@@ -58,7 +58,7 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 		cfg:        cfg,
 		logger:     logger,
 		mux:        http.NewServeMux(),
-		irrdClient: irrd.New(cfg.IRRDEndpoint),
+		irrdClient: irrd.NewCachedClient(irrd.New(cfg.IRRDEndpoint), nil),
 		importerUTC: func() any {
 			return nil
 		},
@@ -101,6 +101,8 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 			logger.Warn("redis cache init failed", "error", err)
 		} else {
 			s.cache = c
+			// Wrap IRRd client with cache
+			s.irrdClient = irrd.NewCachedClient(irrd.New(cfg.IRRDEndpoint), c)
 		}
 	}
 
@@ -359,15 +361,7 @@ func (s *Server) handleASN(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit prefixes to prevent 1000+ IRRd queries (performance issue for large ASNs)
-	// For large ASNs, only query IRRd for direct prefixes, not overlaps
-	prefixesToQuery := prefixes
-	if len(prefixes) > 100 {
-		s.logger.Info("limiting prefix queries for large ASN", "asn", asn, "total_prefixes", len(prefixes), "limit", 100)
-		prefixesToQuery = prefixes[:100]
-	}
-
-	summaries, err := s.collectForPrefixes(r.Context(), prefixesToQuery)
+	summaries, err := s.collectForPrefixes(r.Context(), prefixes)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
