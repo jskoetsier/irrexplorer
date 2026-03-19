@@ -1,30 +1,32 @@
 # IRRExplorer
 
-IRRExplorer is a routing investigation tool for prefixes, ASNs, AS-SETs, and route-sets. It combines local BGP and RIR import data with live IRR, RDAP, PeeringDB, and Looking Glass lookups behind a React frontend and API backend.
+IRRExplorer is a routing investigation tool for prefixes, ASNs, AS-SETs, and route-sets. It combines local BGP and RIR import data with live IRR, RDAP, RPKI, PeeringDB, and Looking Glass lookups behind a React frontend and API backend.
 
 Version: `2.3.0`
 
 ## What It Does
 
-- Query prefixes and ASNs
-- Expand IRR sets
-- Compare IRR objects with DFZ visibility
-- Show RPKI validation state
+- Query prefixes, ASNs, AS-SETs, and route-sets
+- Expand IRR sets recursively with cycle detection
+- Compare IRR objects with DFZ (Default-Free Zone) visibility
+- Show RPKI validation state and ROA information
+- Detect BGP hijacks and routing anomalies
 - Expose datasource lookups for RDAP, PeeringDB, and Looking Glass
-- Export and analyze routing data
+- Export routing data in multiple formats
+- Visualize routing relationships with interactive graphs
 
 ## Architecture
 
 Current production stack:
 
-- `frontend/`: React + TypeScript + Vite
-- `irrexplorer/`: Python API and importers
-- `go-backend/`: side-by-side Go migration for read paths
+- `frontend/`: React 18 + TypeScript + Vite + Bootstrap 5
+- `irrexplorer/`: Python async API (Starlette) and data importers
+- `go-backend/`: Go backend for read-heavy API paths (in-progress migration)
 - `charts/irrexplorer/`: Helm chart for Rancher/Kubernetes deployment
-- PostgreSQL for routing data
-- Redis for caching
+- PostgreSQL with PostGIS for routing data
+- Redis for caching layer
 
-The Go backend is not a full replacement yet. It currently covers a subset of the read API and is intended for incremental migration and side-by-side rollout.
+The Go backend is an incremental migration that currently covers a subset of read-only API endpoints, running side-by-side with the Python backend.
 
 ## Key Paths
 
@@ -35,6 +37,14 @@ The Go backend is not a full replacement yet. It currently covers a subset of th
 - Migration doc: [GO_BACKEND_MIGRATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/GO_BACKEND_MIGRATION.md)
 
 ## Running Locally
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 20 LTS
+- PostgreSQL 15+ with PostGIS
+- Redis 7+
+- Go 1.21+ (optional, for Go backend)
 
 ### Backend
 
@@ -53,7 +63,7 @@ DATABASE_URL=postgresql://irrexplorer:password@localhost:5432/irrexplorer
 REDIS_URL=redis://localhost:6379/0
 IRRD_ENDPOINT=https://rr.ntt.net/graphql/
 JWT_SECRET_KEY=replace-me
-ALLOWED_ORIGINS=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:5173
 ```
 
 ### Frontend
@@ -61,10 +71,18 @@ ALLOWED_ORIGINS=http://localhost:3000
 ```bash
 cd frontend
 npm ci
+npm run dev
+```
+
+For production build:
+
+```bash
+cd frontend
+npm ci
 npm run build
 ```
 
-### Go Backend
+### Go Backend (Optional)
 
 ```bash
 cd go-backend
@@ -78,13 +96,13 @@ The supported deployment path is the Helm chart in `charts/irrexplorer`.
 
 Important chart features:
 
-- redundant frontend and Python backend replicas
-- bundled PostgreSQL and Redis for simple installs
-- optional Go backend deployment
-- schema migration job
-- recurring importer `CronJob`
-- optional importer bootstrap job for empty clusters
-- ingress routing with optional path splitting to the Go backend
+- Redundant frontend and Python backend replicas
+- Bundled PostgreSQL and Redis for simple installs
+- Optional Go backend deployment
+- Schema migration job (runs on upgrade)
+- Recurring importer CronJob
+- Optional importer bootstrap job for empty clusters
+- Ingress routing with optional path splitting to the Go backend
 
 Example:
 
@@ -96,7 +114,7 @@ Do not commit deployment secrets or local values files.
 
 ## Imports and Data Freshness
 
-The Python importer is:
+The Python importer runs via:
 
 ```bash
 python -m irrexplorer.commands.import_data
@@ -104,36 +122,66 @@ python -m irrexplorer.commands.import_data
 
 It imports:
 
-- BGP table data
-- RIR delegated stats
+- BGP table data from RouteViews and RIPE RIS
+- RIR delegated stats (IANA allocations)
 - Registro.br ASN data
 
-The Helm chart now includes importer scheduling so production does not depend on manual imports.
+The Helm chart includes CronJob scheduling so production imports run automatically.
 
 ## Go Migration
 
-The repository includes an in-progress Go backend for incremental migration. Current migrated areas include:
+The repository includes an in-progress Go backend for incremental migration. Current migrated endpoints include:
 
-- `metadata`
-- `clean_query`
-- `prefixes/prefix`
-- `prefixes/asn`
-- `sets/member-of`
-- `sets/expand`
-- `datasources`
+- `GET /api/metadata` - System metadata
+- `GET /api/clean_query` - Query normalization
+- `GET /api/prefixes/prefix/{prefix}` - Prefix lookup
+- `GET /api/prefixes/asn/{asn}` - ASN prefix lookup
+- `GET /api/sets/member-of` - Set membership queries
+- `GET /api/sets/expand` - AS-SET/route-set expansion
+- `GET /api/datasources` - Datasource status
 
-See [GO_BACKEND_MIGRATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/GO_BACKEND_MIGRATION.md) for the migration plan and constraints.
+See [GO_BACKEND_MIGRATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/GO_BACKEND_MIGRATION.md) for the full migration plan.
+
+## Development
+
+### Backend Development
+
+```bash
+# Lint and format
+ruff check irrexplorer/
+ruff format irrexplorer/
+
+# Type checking
+mypy irrexplorer/
+
+# Tests
+pytest tests/ -v
+```
+
+### Frontend Development
+
+```bash
+cd frontend
+
+# Lint
+npm run lint
+
+# Type check
+npx tsc --noEmit
+
+# Test
+npm test
+```
 
 ## Documentation
 
-- [CHANGELOG.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/CHANGELOG.md)
-- [INSTALLATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/INSTALLATION.md)
-- [DEVELOPMENT.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/DEVELOPMENT.md)
-- [DATA_SOURCES.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/DATA_SOURCES.md)
-- [ROADMAP.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/ROADMAP.md)
+- [CHANGELOG.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/CHANGELOG.md) - Release notes
+- [INSTALLATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/INSTALLATION.md) - Detailed installation guide
+- [DEVELOPMENT.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/DEVELOPMENT.md) - Development setup and workflows
+- [DATA_SOURCES.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/DATA_SOURCES.md) - Data source documentation
+- [ROADMAP.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/ROADMAP.md) - Project roadmap
+- [AGENTS.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/AGENTS.md) - Multi-agent development configuration
 
-## Current Notes
+## License
 
-- The frontend branding was updated to the new IRRExplorer logo with consistent sizing across home, query, and status pages.
-- Production IRRD access is configured against `https://rr.ntt.net/graphql/`.
-- The Go backend is additive at this stage, not the default production API.
+Copyright © Stichting NLNOG. Source available on [GitHub](https://github.com/jskoetsier/irrexplorer).
