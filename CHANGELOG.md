@@ -4,6 +4,12 @@ All notable changes to IRRExplorer are documented here.
 
 The format follows Keep a Changelog and the project uses Semantic Versioning.
 
+## [Unreleased]
+
+### Changed
+
+- Improved ASN prefix lookup performance by implementing parallel processing with concurrency control (max 10 concurrent operations) for IRRd GraphQL queries and PostgreSQL queries
+
 ## [2.3.1] - 2026-03-19
 
 ### Fixed

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/netip"
+	"sync"
 	"time"
 )
 
@@ -146,23 +147,62 @@ func (c *Client) QueryPrefixesAny(ctx context.Context, prefixes []netip.Prefix) 
 		return []RouteInfo{}, nil
 	}
 
-	results := make([]RouteInfo, 0)
-	for _, prefix := range prefixes {
-		objectClass := []string{"route"}
-		if prefix.Addr().Is6() {
-			objectClass = []string{"route6"}
-		}
-
-		var decoded graphqlResponse
-		if err := c.execute(ctx, queryPrefix, map[string]any{
-			"prefix":       prefix.String(),
-			"object_class": objectClass,
-		}, &decoded); err != nil {
-			return []RouteInfo{}, err
-		}
-		results = append(results, toRouteInfo(decoded)...)
+	if len(prefixes) == 0 {
+		return []RouteInfo{}, nil
 	}
-	return results, nil
+
+	// Use parallel processing for large prefix lists
+	const maxConcurrency = 10
+
+	type result struct {
+		routes []RouteInfo
+		err    error
+	}
+
+	resultsChan := make(chan result, len(prefixes))
+	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, maxConcurrency)
+
+	for _, prefix := range prefixes {
+		wg.Add(1)
+		go func(p netip.Prefix) {
+			defer wg.Done()
+
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			objectClass := []string{"route"}
+			if p.Addr().Is6() {
+				objectClass = []string{"route6"}
+			}
+
+			var decoded graphqlResponse
+			if err := c.execute(ctx, queryPrefix, map[string]any{
+				"prefix":       p.String(),
+				"object_class": objectClass,
+			}, &decoded); err != nil {
+				resultsChan <- result{err: err}
+				return
+			}
+
+			resultsChan <- result{routes: toRouteInfo(decoded)}
+		}(prefix)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	allResults := make([]RouteInfo, 0)
+	for res := range resultsChan {
+		if res.err != nil {
+			return []RouteInfo{}, res.err
+		}
+		allResults = append(allResults, res.routes...)
+	}
+
+	return allResults, nil
 }
 
 func (c *Client) QueryMemberOf(ctx context.Context, target string, objectClass string) (MemberOfResult, error) {
