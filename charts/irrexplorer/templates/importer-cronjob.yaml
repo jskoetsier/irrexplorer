@@ -28,13 +28,10 @@ spec:
           {{- end }}
           containers:
             - name: importer
-              image: "{{ required "backend.image.repository is required" .Values.backend.image.repository }}:{{ required "backend.image.tag is required" .Values.backend.image.tag }}"
-              imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+              image: "{{ required "goBackend.image.repository is required" .Values.goBackend.image.repository }}:{{ required "goBackend.image.tag is required" .Values.goBackend.image.tag }}"
+              imagePullPolicy: {{ .Values.goBackend.image.pullPolicy }}
               command:
-                - python
-                - -u
-                - -m
-                - irrexplorer.commands.import_data
+                - /app/importer
               env:
                 - name: DATABASE_URL
                   valueFrom:
@@ -63,9 +60,9 @@ spec:
                   value: {{ .Values.config.bgpSource | quote }}
                 - name: ADDITIONAL_IRR_SOURCES
                   value: {{ .Values.config.additionalIrrSources | quote }}
-                {{- with .Values.backend.extraEnv }}
+                {{- with .Values.goBackend.extraEnv }}
                 {{- toYaml . | nindent 16 }}
                 {{- end }}
               resources:
-                {{- toYaml .Values.backend.resources | nindent 16 }}
+                {{- toYaml .Values.goBackend.resources | nindent 16 }}
 {{- end }}

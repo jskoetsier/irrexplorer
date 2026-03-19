@@ -18,15 +18,20 @@ spec:
       http:
         paths:
           {{- if .Values.goBackend.enabled }}
-          {{- range .Values.ingress.goBackendPaths }}
-          - path: {{ . | quote }}
+          - path: /api/
             pathType: Prefix
             backend:
               service:
-                name: {{ include "irrexplorer.goBackendServiceName" $ }}
+                name: {{ include "irrexplorer.goBackendServiceName" . }}
                 port:
-                  number: {{ $.Values.goBackend.service.port }}
-          {{- end }}
+                  number: {{ .Values.goBackend.service.port }}
+          - path: /healthz
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "irrexplorer.goBackendServiceName" . }}
+                port:
+                  number: {{ .Values.goBackend.service.port }}
           {{- end }}
           - path: /
             pathType: Prefix

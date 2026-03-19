@@ -3,32 +3,6 @@ fullnameOverride: ""
 
 imagePullSecrets: []
 
-backend:
-  replicaCount: 2
-  image:
-    repository: ""
-    tag: ""
-    pullPolicy: IfNotPresent
-  service:
-    port: 8000
-  resources: {}
-  podAnnotations: {}
-  podLabels: {}
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
-  extraEnv: []
-  command:
-    - gunicorn
-    - irrexplorer.app:app
-    - --workers
-    - "4"
-    - --worker-class
-    - uvicorn.workers.UvicornWorker
-    - --bind
-    - 0.0.0.0:8000
-    - --timeout
-    - "120"
 
 frontend:
   replicaCount: 2
@@ -108,27 +82,6 @@ ingress:
   annotations: {}
   host: ""
   tls: []
-  goBackendPaths:
-    - /healthz
-    - /go-healthz
-    - /api/clean_query/
-    - /api/metadata/
-    - /api/prefixes/
-    - /api/sets/
-    - /api/datasources/
-    - /api/autocomplete/
-    - /api/search-history
-    - /api/bookmarks
-    - /api/popular
-    - /api/trending
-    - /api/analysis/
-    - /api/filter-options
-    - /api/advanced-search
-    - /api/viz/
-    - /api/export/
-    - /api/bulk-query
-    - /api/cache/
-    - /api/docs/
 
 migrations:
   enabled: true
