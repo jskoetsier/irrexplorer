@@ -90,7 +90,12 @@ export default function PrefixTableBody({
 
   return (
     <tbody>
-      {tableData.map(({ prefix, categoryOverall, rir, bgpOrigins, rpkiRoutes, irrRoutes, messages }) => (
+      {tableData.map(({ prefix, categoryOverall, rir, bgpOrigins, rpkiRoutes, irrRoutes, messages }) => {
+        const safeBgpOrigins = bgpOrigins ?? [];
+        const safeRpkiRoutes = rpkiRoutes ?? [];
+        const safeIrrRoutes = irrRoutes ?? {};
+        const safeMessages = messages ?? [];
+        return (
         <tr key={prefix} className={classNameForRow(categoryOverall)}>
           <td key="prefix">
             <Link to={`/prefix/${prefix}`} className="link-dark">
@@ -102,23 +107,24 @@ export default function PrefixTableBody({
           </td>
           <td key="bgpOrigins">
             <a href={`https://lg.ring.nlnog.net/prefix?q=${prefix}&match=exact&peer=all`} className="link-dark">
-              {bgpOrigins.join(', ')}
+              {safeBgpOrigins.join(', ')}
             </a>
           </td>
-          {renderRpkiCells(rpkiRoutes)}
-          {irrSourceColumns.map((sourceName) => renderSourceCell(prefix, irrRoutes, sourceName))}
+          {renderRpkiCells(safeRpkiRoutes)}
+          {irrSourceColumns.map((sourceName) => renderSourceCell(prefix, safeIrrRoutes, sourceName))}
           {reducedColour && (
             <td key="adviceIcon" className="lead">
               <FontAwesomeIcon icon={icons[categoryOverall]} title={`Status: ${categoryOverall}`} />
             </td>
           )}
           <td key="messages">
-            {messages.map(({ category, text }) => (
+            {safeMessages.map(({ category, text }) => (
               <MessageBadge key={text} category={category} text={text} reducedColour={reducedColour} />
             ))}
           </td>
         </tr>
-      ))}
+        );
+      })}
     </tbody>
   );
 }

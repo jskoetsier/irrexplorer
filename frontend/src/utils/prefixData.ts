@@ -4,7 +4,7 @@ import type { PrefixData } from '../types';
 export function findIrrSourceColumns(prefixesData: PrefixData[]): string[] {
   const irrSources: string[] = [];
   for (const prefixData of prefixesData) {
-    const sourcesForPrefix = Object.keys(prefixData.irrRoutes);
+    const sourcesForPrefix = Object.keys(prefixData.irrRoutes ?? {});
     irrSources.push(...sourcesForPrefix);
   }
   return uniq(irrSources).sort();
