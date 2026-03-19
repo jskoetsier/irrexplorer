@@ -18,13 +18,14 @@ import (
 )
 
 // RIR delegation file URLs (one per registry).
+// Map keys must match the PostgreSQL rir enum: RIPENCC, ARIN, AFRINIC, LACNIC, APNIC, REGISTROBR.
 var rirURLs = map[string]string{
-	"APNIC":       "https://ftp.apnic.net/stats/apnic/delegated-apnic-latest",
-	"ARIN":        "https://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest",
-	"RIPE NCC":    "https://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-latest",
-	"LACNIC":      "https://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-latest",
-	"AFRINIC":     "https://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-latest",
-	"Registro.BR": "https://ftp.registro.br/pub/numeracao/origin/nicbr-asn-blk-latest.txt",
+	"APNIC":      "https://ftp.apnic.net/stats/apnic/delegated-apnic-latest",
+	"ARIN":       "https://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest",
+	"RIPENCC":    "https://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-latest",
+	"LACNIC":     "https://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-latest",
+	"AFRINIC":    "https://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-latest",
+	"REGISTROBR": "https://ftp.registro.br/pub/numeracao/origin/nicbr-asn-blk-latest.txt",
 }
 
 // RIREntry is a parsed prefix from a delegation file.

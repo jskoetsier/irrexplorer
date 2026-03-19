@@ -36,7 +36,12 @@ func ParseBGPLine(data []byte) (BGPEntry, error) {
 // ImportBGP downloads bgp.tools/table.jsonl, streams into bgp_staging via COPY,
 // builds the GIST index on staging, then atomically swaps bgp_staging → bgp.
 func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client, logger *slog.Logger) error {
-	resp, err := httpClient.Get(bgpToolsURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, bgpToolsURL, nil)
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("User-Agent", "irrexplorer/2.3 (https://irrexplorer.rxtx.nl)")
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("download bgp.tools: %w", err)
 	}
