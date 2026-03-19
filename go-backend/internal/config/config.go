@@ -15,6 +15,7 @@ type Config struct {
 	MinimumPrefixIPv4  int
 	MinimumPrefixIPv6  int
 	ImporterLastUpdate string
+	AllowedOrigins     string
 }
 
 func Load() Config {
@@ -28,6 +29,7 @@ func Load() Config {
 		MinimumPrefixIPv4:  intFromEnv("MINIMUM_PREFIX_SIZE_IPV4", 9),
 		MinimumPrefixIPv6:  intFromEnv("MINIMUM_PREFIX_SIZE_IPV6", 29),
 		ImporterLastUpdate: os.Getenv("IMPORTER_LAST_UPDATE"),
+		AllowedOrigins:     stringFromEnv("ALLOWED_ORIGINS", "*"),
 	}
 }
 

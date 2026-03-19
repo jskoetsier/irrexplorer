@@ -11,10 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sebastiaan/irrexplorer/go-backend/internal/cache"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/config"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/datasources"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/domain"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/irrd"
+	"github.com/sebastiaan/irrexplorer/go-backend/internal/middleware"
 	"github.com/sebastiaan/irrexplorer/go-backend/internal/store"
 )
 
@@ -28,6 +30,8 @@ type Server struct {
 	rdapClient  *datasources.RDAPClient
 	pdbClient   *datasources.PeeringDBClient
 	lgClient    *datasources.LookingGlassClient
+	cache       *cache.Cache
+	rateLimiter *middleware.RateLimiter
 }
 
 type irrdClient interface {
@@ -84,12 +88,27 @@ func NewServer(cfg config.Config, logger *slog.Logger) *Server {
 		}
 	}
 
+	s.rateLimiter = middleware.NewRateLimiter(100)
+
+	if cfg.RedisURL != "" {
+		c, err := cache.New(cfg.RedisURL, logger)
+		if err != nil {
+			logger.Warn("redis cache init failed", "error", err)
+		} else {
+			s.cache = c
+		}
+	}
+
 	s.registerRoutes()
 	return s
 }
 
 func (s *Server) Handler() http.Handler {
-	return s.loggingMiddleware(s.mux)
+	return s.rateLimiter.Middleware(
+		middleware.CORS(s.cfg.AllowedOrigins)(
+			s.loggingMiddleware(s.mux),
+		),
+	)
 }
 
 func (s *Server) registerRoutes() {
@@ -123,6 +142,12 @@ func (s *Server) handleHealthz(w http.ResponseWriter, _ *http.Request) {
 
 func (s *Server) handleMetadata(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=60")
+
+	key := cacheKey("metadata")
+	if s.tryCache(w, key) {
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -132,12 +157,14 @@ func (s *Server) handleMetadata(w http.ResponseWriter, _ *http.Request) {
 		irrUpdates = map[string]string{}
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
+	result := map[string]any{
 		"last_update": map[string]any{
 			"irr":      irrUpdates,
 			"importer": s.importerUTC(),
 		},
-	})
+	}
+	s.setCache(key, result, ttlMetadata)
+	writeJSON(w, http.StatusOK, result)
 }
 
 func (s *Server) handleCleanQuery(w http.ResponseWriter, r *http.Request) {
@@ -178,12 +205,18 @@ func (s *Server) handlePrefix(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	key := cacheKey("prefix", prefix.String())
+	if s.tryCache(w, key) {
+		return
+	}
+
 	summaries, err := s.collectForPrefixes(r.Context(), []netip.Prefix{prefix})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	domain.EnrichPrefixSummariesWithReport(summaries)
+	s.setCache(key, summaries, ttlPrefix)
 	writeJSON(w, http.StatusOK, summaries)
 }
 
@@ -198,6 +231,11 @@ func (s *Server) handleASN(w http.ResponseWriter, r *http.Request) {
 	asn, err := strconv.Atoi(rawASN)
 	if err != nil {
 		http.NotFound(w, r)
+		return
+	}
+
+	key := cacheKey("asn", strconv.Itoa(asn))
+	if s.tryCache(w, key) {
 		return
 	}
 
@@ -250,6 +288,7 @@ func (s *Server) handleASN(w http.ResponseWriter, r *http.Request) {
 			result.Overlaps = append(result.Overlaps, summary)
 		}
 	}
+	s.setCache(key, result, ttlASN)
 	writeJSON(w, http.StatusOK, result)
 }
 
@@ -276,6 +315,11 @@ func (s *Server) handleMemberOf(w http.ResponseWriter, r *http.Request) {
 	}
 	if isNumeric(target) {
 		target = "AS" + target
+	}
+
+	key := cacheKey("member_of", objectClass, target)
+	if s.tryCache(w, key) {
+		return
 	}
 
 	result, err := s.irrdClient.QueryMemberOf(r.Context(), target, objectClass)
@@ -324,11 +368,18 @@ func (s *Server) handleMemberOf(w http.ResponseWriter, r *http.Request) {
 		memberOf.SetsPerIRR[irr] = items
 	}
 
+	s.setCache(key, memberOf, ttlMemberOf)
 	writeJSON(w, http.StatusOK, memberOf)
 }
 
 func (s *Server) handleSetExpand(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(r.URL.Path, "/api/sets/expand/")
+
+	key := cacheKey("set_expand", name)
+	if s.tryCache(w, key) {
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
@@ -414,6 +465,7 @@ func (s *Server) handleSetExpand(w http.ResponseWriter, r *http.Request) {
 		return 0
 	})
 
+	s.setCache(key, results, ttlSetExpand)
 	writeJSON(w, http.StatusOK, results)
 }
 
@@ -673,6 +725,41 @@ func (s *Server) handlePeeringDBSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	results := s.pdbClient.SearchNetworks(r.Context(), query)
 	writeJSON(w, http.StatusOK, map[string]any{"results": results, "total": len(results)})
+}
+
+const (
+	ttlMetadata  = 1 * time.Minute
+	ttlPrefix    = 5 * time.Minute
+	ttlASN       = 5 * time.Minute
+	ttlSetExpand = 5 * time.Minute
+	ttlMemberOf  = 5 * time.Minute
+)
+
+func cacheKey(parts ...string) string {
+	return "go:" + strings.Join(parts, ":")
+}
+
+func (s *Server) tryCache(w http.ResponseWriter, key string) bool {
+	if s.cache == nil {
+		return false
+	}
+	var raw json.RawMessage
+	if !s.cache.Get(context.Background(), key, &raw) {
+		return false
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Cache", "HIT")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(raw)
+	_, _ = w.Write([]byte("\n"))
+	return true
+}
+
+func (s *Server) setCache(key string, value any, ttl time.Duration) {
+	if s.cache == nil {
+		return
+	}
+	s.cache.Set(context.Background(), key, value, ttl)
 }
 
 func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
