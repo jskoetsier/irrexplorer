@@ -6,7 +6,7 @@ Complete installation guide for IRRExplorer - Internet Routing Registry Explorer
 
 1. [System Requirements](#system-requirements)
 2. [Installation Methods](#installation-methods)
-3. [Podman Installation (Recommended)](#docker-installation-recommended)
+3. [Docker/Podman Installation](#dockerpodman-installation)
 4. [Manual Installation](#manual-installation)
 5. [Database Setup](#database-setup)
 6. [Initial Data Import](#initial-data-import)
@@ -30,21 +30,21 @@ Complete installation guide for IRRExplorer - Internet Routing Registry Explorer
 
 ### Software Prerequisites
 
-#### For Docker Installation
-- Podman 20.10+
-- podman-compose 2.0+
+#### For Docker/Podman Installation
+- Podman 20.10+ or Docker 20.10+
+- docker-compose/podman-compose 2.0+
 
 #### For Manual Installation
-- Python 3.9+
-- PostgreSQL 13+
+- Go 1.25+
+- PostgreSQL 15+
 - Node.js 18+
-- Yarn or npm
+- Redis 7+
 
 ## Installation Methods
 
 ### Quick Decision Guide
 
-**Choose Podman if:**
+**Choose Docker/Podman if:**
 - You want the fastest setup
 - You need isolated environments
 - You're deploying to production
@@ -52,34 +52,38 @@ Complete installation guide for IRRExplorer - Internet Routing Registry Explorer
 
 **Choose Manual if:**
 - You need to customize the stack
-- You're actively developing
-- You have specific Python/Node versions
+- You're actively developing the Go backend
+- You have specific versions of dependencies
 - You need fine-grained control
 
-## Podman Installation (Recommended)
+## Docker/Podman Installation
 
-### 1. Install Docker
+### 1. Install Podman or Docker
 
 #### Ubuntu/Debian
 ```bash
-curl -fsSL https://podman.io -o get-podmansh
-sudo sh get-podmansh
-sudo usermod -aG docker $USER
+# Podman (recommended)
+curl -fsSL https://podman.io -o get-podman.sh
+sudo sh get-podman.sh
+
+# Or Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 ```
 
 #### macOS
 ```bash
-brew install --cask docker
-# Or download from https://www.podmancom/products/docker-desktop
+brew install --cask podman
+# Or download from https://www.podman.com/products/podman-desktop
 ```
 
 #### Windows
-Download Podman Desktop from https://www.podmancom/products/docker-desktop
+Download Podman Desktop from https://www.podman.com/products/podman-desktop
 
 ### 2. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/irrexplorer.git
+git clone https://github.com/jskoetsier/irrexplorer.git
 cd irrexplorer
 ```
 
@@ -93,35 +97,30 @@ nano .env  # Edit configuration
 Required settings:
 ```bash
 DATABASE_URL=postgresql://irrexplorer:irrexplorer_password@db:5432/irrexplorer
+REDIS_URL=redis://redis:6379/0
 IRRD_ENDPOINT=https://irrd.nlnog.net/graphql
-ALLOWED_ORIGINS=http://localhost,http://localhost:3000
+ALLOWED_ORIGINS=http://localhost,http://localhost:8080
 DEBUG=False
 ```
 
 ### 4. Start Services
 
-#### Production
 ```bash
 podman-compose up -d
-```
-
-#### Development
-```bash
-podman-compose -f podman-compose.dev.yml up
+# or: docker compose up -d
 ```
 
 ### 5. Import Initial Data
 
 ```bash
 # This will take 15-30 minutes depending on your connection
-podman-compose exec backend python -m irrexplorer.commands.import_data
+podman-compose run go-backend go run ./cmd/importer
 ```
 
 ### 6. Access Application
 
-- **Frontend**: http://localhost
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+- **Frontend**: http://localhost:8080
+- **Backend API**: http://localhost:8080/api
 
 ### 7. Verify Installation
 
@@ -130,10 +129,10 @@ podman-compose exec backend python -m irrexplorer.commands.import_data
 podman-compose ps
 
 # Check backend health
-curl http://localhost:8000/api/metadata/
+curl http://localhost:8080/api/healthz
 
 # Check frontend
-curl http://localhost/
+curl http://localhost:8080/
 ```
 
 ## Manual Installation
@@ -144,44 +143,29 @@ curl http://localhost/
 ```bash
 sudo apt-get update
 sudo apt-get install -y \
-    python3.11 \
-    python3.11-dev \
-    python3-pip \
+    golang-go \
     postgresql-15 \
     postgresql-contrib \
     postgresql-15-postgis-3 \
-    build-essential \
-    libpq-dev \
     nodejs \
-    npm
+    npm \
+    redis-server
 ```
 
 #### macOS
 ```bash
-brew install python@3.11 postgresql@15 node
+brew install go postgresql@15 node redis
 brew services start postgresql@15
 ```
 
-### 2. Install uv (Fast Python Package Installer)
-
-```bash
-pip install uv
-```
-
-### 3. Clone and Setup Backend
+### 2. Clone and Setup
 
 ```bash
 git clone https://github.com/jskoetsier/irrexplorer.git
 cd irrexplorer
-
-# Install Python dependencies (10-100x faster than pip)
-uv pip install -r requirements.txt
-
-# For development
-uv pip install -r requirements-dev.txt
 ```
 
-### 4. Setup PostgreSQL Database
+### 3. Setup PostgreSQL Database
 
 ```bash
 # Connect to PostgreSQL
@@ -198,7 +182,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 \q
 ```
 
-### 5. Configure Backend
+### 4. Configure Backend
 
 ```bash
 # Create .env file
@@ -211,44 +195,41 @@ nano .env
 Update these values:
 ```bash
 DATABASE_URL=postgresql://irrexplorer:your_secure_password@localhost:5432/irrexplorer
+REDIS_URL=redis://localhost:6379/0
 IRRD_ENDPOINT=https://irrd.nlnog.net/graphql
 DEBUG=False
-ALLOWED_ORIGINS=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:8080
 ```
 
-### 6. Run Database Migrations
-
-```bash
-alembic upgrade head
-```
-
-### 7. Setup Frontend
+### 5. Setup Frontend
 
 ```bash
 cd frontend
 
 # Install dependencies
-yarn install
-# or: npm install
+npm install
+# or: yarn install
 
 # Build for production
-yarn build
-# or: npm run build
+npm run build
 
 cd ..
 ```
 
-### 8. Start Backend Server
+### 6. Start Backend (Go)
 
 ```bash
-# Production (from project root)
-uvicorn irrexplorer.app:app --host 0.0.0.0 --port 8000
+cd go-backend
 
-# Or with gunicorn for production
-gunicorn irrexplorer.app:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+# Run API server
+go run ./cmd/api
+
+# Or build and run
+go build ./cmd/api
+./api
 ```
 
-### 9. Serve Frontend
+### 7. Serve Frontend
 
 #### Option A: Use nginx
 ```bash
@@ -261,17 +242,10 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-#### Option B: Simple Python Server (Development only)
+#### Option B: Simple HTTP Server (Development only)
 ```bash
 cd frontend/build
-python3 -m http.server 3000
-```
-
-### 10. Import Initial Data
-
-```bash
-# From project root (with poetry shell active)
-python -m irrexplorer.commands.import_data
+npx serve -p 8080
 ```
 
 ## Database Setup
@@ -317,21 +291,22 @@ sudo systemctl restart postgresql
 
 ### Create Database Indexes
 
-The migrations create these automatically, but verify:
+Create necessary indexes for performance:
 
 ```sql
 -- Connect to database
 psql -U irrexplorer -d irrexplorer
 
--- Check indexes
-\di
+-- Create indexes for BGP table
+CREATE INDEX IF NOT EXISTS idx_bgp_asn ON bgp(asn);
+CREATE INDEX IF NOT EXISTS idx_bgp_prefix ON bgp USING gist(prefix);
 
--- Expected indexes:
--- ix_bgp_asn (btree)
--- ix_bgp_prefix (gist)
--- ix_rirstats_prefix (gist)
--- ix_rpki_asn (btree)
--- ix_rpki_prefix (gist)
+-- Create indexes for RIR stats table
+CREATE INDEX IF NOT EXISTS idx_rirstats_prefix ON rirstats USING gist(prefix);
+
+-- Create indexes for RPKI table
+CREATE INDEX IF NOT EXISTS idx_rpki_asn ON rpki(asn);
+CREATE INDEX IF NOT EXISTS idx_rpki_prefix ON rpki USING gist(prefix);
 ```
 
 ## Initial Data Import
@@ -349,73 +324,30 @@ The data import consists of three main sources:
    - Updates: Daily delegation stats
 
 3. **RPKI** (~500K entries, ~5 minutes)
-   - Source: Multiple RPKI validators
+   - Source: RPKI validators
    - Updates: ROA data
 
 ### Running Full Import
 
 ```bash
 # Docker
-podman-compose exec backend python -m irrexplorer.commands.import_data
+podman-compose run go-backend go run ./cmd/importer
 
 # Manual
-poetry run python -m irrexplorer.commands.import_data
-```
-
-### Partial Imports
-
-```bash
-# BGP only
-poetry run python -c "from irrexplorer.backends.bgp import BGPImporter; import asyncio; asyncio.run(BGPImporter().run_import())"
-
-# RIR Stats only
-poetry run python -c "from irrexplorer.backends.rirstats import import_all; import asyncio; asyncio.run(import_all())"
+cd go-backend
+go run ./cmd/importer
 ```
 
 ### Scheduling Automatic Updates
 
-#### Using cron (Linux/macOS)
+The Helm chart includes a CronJob for automatic imports. For manual scheduling using cron:
 
 ```bash
 # Edit crontab
 crontab -e
 
 # Add daily update at 2 AM
-0 2 * * * cd /path/to/irrexplorer && podman-compose exec -T backend python -m irrexplorer.commands.import_data >> /var/log/irrexplorer-import.log 2>&1
-```
-
-#### Using systemd timer (Linux)
-
-Create `/etc/systemd/system/irrexplorer-import.service`:
-```ini
-[Unit]
-Description=IRRExplorer Data Import
-After=network.target
-
-[Service]
-Type=oneshot
-User=irrexplorer
-WorkingDirectory=/opt/irrexplorer
-ExecStart=/usr/local/bin/podman-compose exec -T backend python -m irrexplorer.commands.import_data
-```
-
-Create `/etc/systemd/system/irrexplorer-import.timer`:
-```ini
-[Unit]
-Description=IRRExplorer Daily Import Timer
-
-[Timer]
-OnCalendar=daily
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
-
-Enable timer:
-```bash
-sudo systemctl enable irrexplorer-import.timer
-sudo systemctl start irrexplorer-import.timer
+0 2 * * * cd /path/to/irrexplorer && docker compose run go-backend go run ./cmd/importer >> /var/log/irrexplorer-import.log 2>&1
 ```
 
 ## Configuration
@@ -426,6 +358,9 @@ sudo systemctl start irrexplorer-import.timer
 # Database (Required)
 DATABASE_URL=postgresql://user:password@host:port/database
 
+# Redis (Required)
+REDIS_URL=redis://host:port/0
+
 # IRRd Endpoint (Required)
 IRRD_ENDPOINT=https://irrd.nlnog.net/graphql
 
@@ -435,39 +370,23 @@ ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 # Debug Mode (Default: False)
 DEBUG=False
 
-# BGP Source (Default: https://bgp.tools/table.jsonl)
-BGP_SOURCE=https://bgp.tools/table.jsonl
-BGP_SOURCE_MINIMUM_HITS=20
-
-# HTTP Server (Defaults shown)
-HTTP_PORT=8000
-HTTP_WORKERS=4
+# Looking Glass URL
+LOOKING_GLASS_URL=https://lg.ring.nlnog.net
 
 # Prefix Filters (Defaults shown)
 MINIMUM_PREFIX_SIZE_IPV4=9
 MINIMUM_PREFIX_SIZE_IPV6=29
-BGP_IPV4_LENGTH_CUTOFF=29
-BGP_IPV6_LENGTH_CUTOFF=124
-
-# RIR Stats URLs (Optional overrides)
-RIRSTATS_URL_RIPENCC=https://ftp.ripe.net/ripe/stats/delegated-ripencc-latest
-RIRSTATS_URL_ARIN=https://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest
-RIRSTATS_URL_AFRINIC=https://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-latest
-RIRSTATS_URL_LACNIC=https://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-latest
-RIRSTATS_URL_APNIC=https://ftp.apnic.net/stats/apnic/delegated-apnic-latest
 ```
 
-### Frontend Configuration
+### Go Backend Configuration
 
-Edit `frontend/src/config.json`:
+The Go backend accepts these additional options via command line or environment:
 
-```json
-{
-  "apiEndpoint": "/api",
-  "title": "IRR Explorer",
-  "refreshInterval": 300000
-}
-```
+- `--port`: Server port (default: 8080)
+- `--database-url`: PostgreSQL connection string
+- `--redis-url`: Redis connection string
+- `--irrd-endpoint`: IRRd GraphQL endpoint
+- `--allowed-origins`: CORS allowed origins
 
 ## Verification
 
@@ -483,29 +402,25 @@ podman-compose ps
 ### 2. Test Backend API
 
 ```bash
-# Metadata endpoint
-curl http://localhost:8000/api/metadata/
+# Health endpoint
+curl http://localhost:8080/api/healthz
 
-# Expected: JSON with last_import timestamps
+# Expected: {"status":"ok","service":"irrexplorer-go-backend"}
+
+# Metadata endpoint
+curl http://localhost:8080/api/metadata/
 
 # Search endpoint
-curl "http://localhost:8000/api/prefixes/prefix/8.8.8.0/24"
-
-# Expected: JSON with prefix data
+curl "http://localhost:8080/api/prefixes/prefix/8.8.8.0/24"
 ```
 
 ### 3. Test Frontend
 
 ```bash
 # Homepage
-curl -I http://localhost/
+curl -I http://localhost:8080/
 
 # Expected: HTTP 200 OK
-
-# Check API proxy
-curl http://localhost/api/metadata/
-
-# Expected: Same as direct backend call
 ```
 
 ### 4. Verify Database
@@ -524,7 +439,7 @@ psql -U irrexplorer -c "SELECT COUNT(*) FROM bgp;"
 
 ```bash
 # Time a query
-time curl -s "http://localhost:8000/api/prefixes/prefix/1.1.1.0/24" > /dev/null
+time curl -s "http://localhost:8080/api/prefixes/prefix/1.1.1.0/24" > /dev/null
 
 # Expected: <1 second for cached queries
 ```
@@ -533,16 +448,14 @@ time curl -s "http://localhost:8000/api/prefixes/prefix/1.1.1.0/24" > /dev/null
 
 ### Port Already in Use
 
-**Symptom**: `Error: port 80 is already in use`
+**Symptom**: `Error: port 8080 is already in use`
 
 **Solution**:
 ```bash
 # Find process using port
-sudo lsof -i :80
+sudo lsof -i :8080
 
-# Kill process or change port in podman-compose.yml
-ports:
-  - "8080:80"  # Use port 8080 instead
+# Kill process or change port in docker-compose.yml
 ```
 
 ### Database Connection Failed
@@ -552,13 +465,10 @@ ports:
 **Solution**:
 ```bash
 # Docker: Check database is healthy
-podman-compose ps db
+podman-compose ps postgres
 
 # Manual: Check PostgreSQL is running
 sudo systemctl status postgresql
-
-# Check credentials
-echo $DATABASE_URL
 
 # Test connection
 psql $DATABASE_URL -c "SELECT 1;"
@@ -583,13 +493,7 @@ df -h
 
 3. Check logs:
 ```bash
-podman-compose logs -f backend
-```
-
-4. Increase timeout if needed (edit source):
-```python
-# irrexplorer/backends/common.py
-TIMEOUT = 300  # Increase from default
+podman-compose logs go-backend
 ```
 
 ### Frontend Shows Blank Page
@@ -606,15 +510,13 @@ ls -la frontend/build/
 2. Rebuild frontend:
 ```bash
 cd frontend
-yarn build
+npm run build
 ```
 
-3. Check nginx logs (Docker):
+3. Check nginx logs:
 ```bash
 podman-compose logs frontend
 ```
-
-4. Verify API endpoint in browser console
 
 ### Slow Query Performance
 
@@ -637,62 +539,41 @@ podman-compose exec db psql -U irrexplorer -d irrexplorer -c "ANALYZE;"
 EXPLAIN ANALYZE SELECT * FROM bgp WHERE prefix >>= '1.1.1.0/24';
 ```
 
-4. See `PERFORMANCE_OPTIMIZATIONS.md` for detailed tuning
-
 ### Memory Issues
 
 **Symptom**: Services crash with OOM errors
 
 **Solutions**:
 
-1. Reduce workers:
-```bash
-HTTP_WORKERS=2  # In .env
-```
-
-2. Limit Docker memory:
+1. Limit Docker memory:
 ```yaml
-# podman-compose.yml
+# docker-compose.yml
 services:
-  backend:
+  go-backend:
     mem_limit: 2g
 ```
 
-3. Optimize PostgreSQL (reduce shared_buffers)
-
-### SSL/TLS Errors
-
-**Symptom**: `SSL certificate verification failed`
-
-**Solution**:
-```bash
-# If behind corporate proxy, disable verification (not recommended)
-export PYTHONHTTPSVERIFY=0
-
-# Or add corporate CA certificate
-export REQUESTS_CA_BUNDLE=/path/to/ca-bundle.crt
-```
+2. Optimize PostgreSQL (reduce shared_buffers)
 
 ## Next Steps
 
 After successful installation:
 
-1. **Review Security**: See `SECURITY_CONFIGURATION.md`
+1. **Review Security**: Ensure ALLOWED_ORIGINS is properly configured
 2. **Setup Monitoring**: Configure logging and alerting
 3. **Enable HTTPS**: Use Let's Encrypt or similar
 4. **Configure Backups**: Automate database backups
-5. **Performance Tuning**: See `PERFORMANCE_OPTIMIZATIONS.md`
-6. **Development Setup**: See `DEVELOPMENT.md`
+5. **Development Setup**: See DEVELOPMENT.md
 
 ## Getting Help
 
-- **Documentation**: See `DOCKER.md`, `SECURITY_CONFIGURATION.md`
-- **Issues**: https://github.com/yourusername/irrexplorer/issues
-- **Logs**: `podman-compose logs -f` or check `/var/log/`
+- **Documentation**: See DOCKER.md
+- **Issues**: https://github.com/jskoetsier/irrexplorer/issues
+- **Logs**: `podman-compose logs -f`
 
 ## Uninstallation
 
-### Docker
+### Docker/Podman
 
 ```bash
 # Stop and remove containers
@@ -702,14 +583,14 @@ podman-compose down
 podman-compose down -v
 
 # Remove images
-docker rmi irrexplorer_backend irrexplorer_frontend
+podman rmi irrexplorer_go-backend irrexplorer_frontend
 ```
 
 ### Manual
 
 ```bash
 # Stop services
-sudo systemctl stop irrexplorer
+# (Ctrl+C the running go-backend process)
 
 # Remove files
 rm -rf /opt/irrexplorer

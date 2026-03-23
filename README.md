@@ -1,8 +1,8 @@
 # IRRExplorer
 
-IRRExplorer is a routing investigation tool for prefixes, ASNs, AS-SETs, and route-sets. It combines local BGP and RIR import data with live IRR, RDAP, RPKI, PeeringDB, and Looking Glass lookups behind a React frontend and API backend.
+IRRExplorer is a routing investigation tool for prefixes, ASNs, AS-SETs, and route-sets. It combines local BGP and RIR import data with live IRR, RDAP, RPKI, PeeringDB, and Looking Glass lookups behind a React frontend and Go API backend.
 
-Version: `2.3.0`
+Version: `2.4.0`
 
 ## What It Does
 
@@ -17,43 +17,35 @@ Version: `2.3.0`
 
 ## Architecture
 
-Current production stack:
+Production stack:
 
 - `frontend/`: React 18 + TypeScript + Vite + Bootstrap 5
-- `irrexplorer/`: Python async API (Starlette) and data importers
-- `go-backend/`: Go backend for read-heavy API paths (in-progress migration)
-- `charts/irrexplorer/`: Helm chart for Rancher/Kubernetes deployment
-- PostgreSQL with PostGIS for routing data
-- Redis for caching layer
-
-The Go backend is an incremental migration that currently covers a subset of read-only API endpoints, running side-by-side with the Python backend.
+- `go-backend/`: Go backend for API (Starlette-based Python backend removed)
+- `charts/irrexplorer/`: Helm chart for Kubernetes deployment
+- PostgreSQL 15 with PostGIS for routing data
+- Redis 7 for caching layer
 
 ## Key Paths
 
-- Main Python app: [irrexplorer/app.py](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/irrexplorer/app.py)
-- Frontend entry: [frontend/src/main.tsx](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/frontend/src/main.tsx)
-- Go backend entry: [go-backend/cmd/api/main.go](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/go-backend/cmd/api/main.go)
-- Helm chart: [charts/irrexplorer](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/charts/irrexplorer)
-- Migration doc: [GO_BACKEND_MIGRATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/GO_BACKEND_MIGRATION.md)
+- Frontend entry: [frontend/src/main.tsx](frontend/src/main.tsx)
+- Go backend entry: [go-backend/cmd/api/main.go](go-backend/cmd/api/main.go)
+- Helm chart: [charts/irrexplorer](charts/irrexplorer)
 
 ## Running Locally
 
 ### Prerequisites
 
-- Python 3.11+
+- Go 1.25+
 - Node.js 20 LTS
 - PostgreSQL 15+ with PostGIS
 - Redis 7+
-- Go 1.21+ (optional, for Go backend)
 
-### Backend
+### Go Backend
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-alembic upgrade head
-gunicorn irrexplorer.app:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+cd go-backend
+go test ./...
+go run ./cmd/api
 ```
 
 Required environment:
@@ -62,7 +54,6 @@ Required environment:
 DATABASE_URL=postgresql://irrexplorer:password@localhost:5432/irrexplorer
 REDIS_URL=redis://localhost:6379/0
 IRRD_ENDPOINT=https://rr.ntt.net/graphql/
-JWT_SECRET_KEY=replace-me
 ALLOWED_ORIGINS=http://localhost:5173
 ```
 
@@ -70,7 +61,7 @@ ALLOWED_ORIGINS=http://localhost:5173
 
 ```bash
 cd frontend
-npm ci
+npm install
 npm run dev
 ```
 
@@ -78,17 +69,19 @@ For production build:
 
 ```bash
 cd frontend
-npm ci
+npm install
 npm run build
 ```
 
-### Go Backend (Optional)
+### Docker Compose (Recommended)
 
 ```bash
-cd go-backend
-go test ./...
-go run ./cmd/api
+docker compose up -d
 ```
+
+Access:
+- Frontend: http://localhost:8080
+- Backend API: http://localhost:8080/api
 
 ## Deployment
 
@@ -96,13 +89,12 @@ The supported deployment path is the Helm chart in `charts/irrexplorer`.
 
 Important chart features:
 
-- Redundant frontend and Python backend replicas
+- Redundant frontend and Go backend replicas
 - Bundled PostgreSQL and Redis for simple installs
-- Optional Go backend deployment
 - Schema migration job (runs on upgrade)
 - Recurring importer CronJob
 - Optional importer bootstrap job for empty clusters
-- Ingress routing with optional path splitting to the Go backend
+- Ingress routing
 
 Example:
 
@@ -112,12 +104,13 @@ helm upgrade --install irrexplorer ./charts/irrexplorer -n irrexplorer -f charts
 
 Do not commit deployment secrets or local values files.
 
-## Imports and Data Freshness
+## Data Import
 
-The Python importer runs via:
+The Go importer runs via:
 
 ```bash
-python -m irrexplorer.commands.import_data
+cd go-backend
+go run ./cmd/importer
 ```
 
 It imports:
@@ -128,34 +121,21 @@ It imports:
 
 The Helm chart includes CronJob scheduling so production imports run automatically.
 
-## Go Migration
-
-The repository includes an in-progress Go backend for incremental migration. Current migrated endpoints include:
-
-- `GET /api/metadata` - System metadata
-- `GET /api/clean_query` - Query normalization
-- `GET /api/prefixes/prefix/{prefix}` - Prefix lookup
-- `GET /api/prefixes/asn/{asn}` - ASN prefix lookup
-- `GET /api/sets/member-of` - Set membership queries
-- `GET /api/sets/expand` - AS-SET/route-set expansion
-- `GET /api/datasources` - Datasource status
-
-See [GO_BACKEND_MIGRATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/GO_BACKEND_MIGRATION.md) for the full migration plan.
-
 ## Development
 
-### Backend Development
+### Backend Development (Go)
 
 ```bash
-# Lint and format
-ruff check irrexplorer/
-ruff format irrexplorer/
+cd go-backend
 
-# Type checking
-mypy irrexplorer/
+# Test
+go test ./...
 
-# Tests
-pytest tests/ -v
+# Build
+go build ./cmd/...
+
+# Vet
+go vet ./...
 ```
 
 ### Frontend Development
@@ -175,12 +155,12 @@ npm test
 
 ## Documentation
 
-- [CHANGELOG.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/CHANGELOG.md) - Release notes
-- [INSTALLATION.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/INSTALLATION.md) - Detailed installation guide
-- [DEVELOPMENT.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/DEVELOPMENT.md) - Development setup and workflows
-- [DATA_SOURCES.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/DATA_SOURCES.md) - Data source documentation
-- [ROADMAP.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/ROADMAP.md) - Project roadmap
-- [AGENTS.md](/Users/sebastiaan.koetsier/dev/projects/irrexplorer/AGENTS.md) - Multi-agent development configuration
+- [CHANGELOG.md](CHANGELOG.md) - Release notes
+- [INSTALLATION.md](INSTALLATION.md) - Detailed installation guide
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Development setup and workflows
+- [DATA_SOURCES.md](DATA_SOURCES.md) - Data source documentation
+- [ROADMAP.md](ROADMAP.md) - Project roadmap
+- [AGENTS.md](AGENTS.md) - Multi-agent development configuration
 
 ## License
 

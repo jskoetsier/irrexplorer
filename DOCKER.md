@@ -4,8 +4,8 @@ This guide explains how to run IRRExplorer using Docker Compose.
 
 ## Prerequisites
 
-- Docker Engine 20.10+
-- Docker Compose 2.0+
+- Docker Engine 20.10+ or Podman 20.10+
+- Docker Compose 2.0+ or podman-compose 2.0+
 - 4GB+ RAM available
 - 10GB+ disk space
 
@@ -15,7 +15,7 @@ This guide explains how to run IRRExplorer using Docker Compose.
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/jskoetsier/irrexplorer.git
    cd irrexplorer
    ```
 
@@ -35,17 +35,18 @@ This guide explains how to run IRRExplorer using Docker Compose.
 
 4. **Build and start services**
    ```bash
-   docker-compose up -d
+   docker compose up -d
+   # or: podman-compose up -d
    ```
 
 5. **Import initial data**
    ```bash
-   docker-compose exec backend python -m irrexplorer.commands.import_data
+   docker compose run go-backend go run ./cmd/importer
    ```
 
 6. **Access the application**
-   - Frontend: http://localhost
-   - Backend API: http://localhost:8000
+   - Frontend: http://localhost:8080
+   - Backend API: http://localhost:8080/api
    - Database: localhost:5432
 
 ### Development Mode
@@ -53,66 +54,75 @@ This guide explains how to run IRRExplorer using Docker Compose.
 For development with hot-reload:
 
 ```bash
-docker-compose -f docker-compose.dev.yml up
+# Start services
+docker compose up -d
+
+# The frontend and backend support development workflows
+# Frontend: use npm run dev in frontend/ directory
+# Backend: use go run ./cmd/api in go-backend/ directory
 ```
-
-This will:
-- Enable hot-reload for backend (uvicorn --reload)
-- Enable hot-reload for frontend (yarn start)
-- Set DEBUG=True
-- Allow all CORS origins
-
-Access:
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8000
 
 ## Architecture
 
 ```
 ┌─────────────────┐
-│   Frontend      │  nginx:alpine (production)
-│   (React SPA)   │  node:18 (development)
-│   Port: 80/3000 │
+│   Frontend      │  nginx:alpine
+│   (React SPA)   │  Port: 80 → mapped to 8080
 └────────┬────────┘
          │
          │ /api/* → proxy
          │
 ┌────────▼────────┐
-│   Backend       │  Python 3.11
-│   (FastAPI)     │  uvicorn
-│   Port: 8000    │
+│   Go Backend    │  golang:alpine
+│   Port: 8080    │
 └────────┬────────┘
          │
          │ PostgreSQL protocol
          │
 ┌────────▼────────┐
-│   Database      │  PostgreSQL 15
+│   PostgreSQL    │  postgres:15
 │   Port: 5432    │
+└────────┬────────┘
+         │
+         │ Redis protocol
+         │
+┌────────▼────────┐
+│   Redis         │  redis:7-alpine
+│   Port: 6379    │
 └─────────────────┘
 ```
 
 ## Docker Services
 
-### 1. Database (`db`)
+### 1. PostgreSQL (`postgres`)
 - **Image**: postgres:15-alpine
 - **Purpose**: Store BGP routes, IRR data, RIR stats
 - **Volume**: `postgres_data` (persistent)
 - **Health check**: pg_isready
 
-### 2. Backend (`backend`)
-- **Build**: Dockerfile
-- **Purpose**: FastAPI application serving GraphQL and REST APIs
-- **Dependencies**: Requires `db` to be healthy
-- **Auto-migration**: Runs `alembic upgrade head` on startup
+### 2. Redis (`redis`)
+- **Image**: redis:7-alpine
+- **Purpose**: Caching layer for API responses
+- **Health check**: redis-cli ping
 
-### 3. Frontend (`frontend`)
+### 3. Go Backend (`go-backend`)
+- **Build**: Dockerfile.go-backend
+- **Purpose**: Go API server serving REST endpoints
+- **Dependencies**: Requires `postgres` and `redis` to be healthy
+- **Features**:
+  - Rate limiting
+  - CORS handling
+  - Redis caching
+  - IRRd GraphQL integration
+
+### 4. Frontend (`frontend`)
 - **Build**: Dockerfile.frontend (multi-stage)
-- **Purpose**: Serve React SPA and proxy API requests
+- **Purpose**: Serve React SPA and proxy API requests to Go backend
 - **Features**:
   - Gzip compression
   - Static asset caching
   - Security headers
-  - API proxying to backend
+  - API proxying to go-backend
 
 ## Configuration
 
@@ -122,145 +132,121 @@ Create a `.env` file based on `.env.example`:
 
 ```bash
 # Required
-DATABASE_URL=postgresql://irrexplorer:irrexplorer_password@db:5432/irrexplorer
+DATABASE_URL=postgresql://irrexplorer:irrexplorer_password@postgres:5432/irrexplorer
+REDIS_URL=redis://redis:6379/0
 IRRD_ENDPOINT=https://irrd.nlnog.net/graphql
 ALLOWED_ORIGINS=https://yourdomain.com
 
 # Optional (with defaults)
 DEBUG=False
-BGP_SOURCE=https://bgp.tools/table.jsonl
-BGP_SOURCE_MINIMUM_HITS=20
-HTTP_WORKERS=4
+LOOKING_GLASS_URL=https://lg.ring.nlnog.net
+MINIMUM_PREFIX_SIZE_IPV4=9
+MINIMUM_PREFIX_SIZE_IPV6=29
 ```
 
 ### Port Mapping
 
 Default ports (configurable in docker-compose.yml):
-- **80**: Frontend (nginx)
-- **8000**: Backend API
+- **8080**: Frontend (nginx) → mapped to host
 - **5432**: PostgreSQL
-
-To change ports, edit `docker-compose.yml`:
-```yaml
-ports:
-  - "8080:80"  # Frontend on port 8080
-  - "9000:8000"  # Backend on port 9000
-```
+- **6379**: Redis
 
 ## Common Operations
 
 ### Start Services
 ```bash
-# Production
-docker-compose up -d
-
-# Development
-docker-compose -f docker-compose.dev.yml up
+docker compose up -d
 ```
 
 ### Stop Services
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### View Logs
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f db
+docker compose logs -f go-backend
+docker compose logs -f frontend
+docker compose logs -f postgres
 ```
 
 ### Rebuild Services
 ```bash
 # Rebuild all
-docker-compose up -d --build
+docker compose up -d --build
 
 # Rebuild specific service
-docker-compose up -d --build backend
+docker compose up -d --build go-backend
 ```
 
 ### Database Operations
 
 #### Access PostgreSQL
 ```bash
-docker-compose exec db psql -U irrexplorer -d irrexplorer
+docker compose exec postgres psql -U irrexplorer -d irrexplorer
 ```
 
-#### Run Migrations
+#### Run SQL Migrations
 ```bash
-docker-compose exec backend alembic upgrade head
-```
-
-#### Create Migration
-```bash
-docker-compose exec backend alembic revision --autogenerate -m "description"
+docker compose exec go-backend sh -c 'go run ./cmd/api -migrate'
+# Or manually:
+docker compose exec postgres psql -U irrexplorer -d irrexplorer -f /docker-entrypoint-initdb.d/001_init.sql
 ```
 
 #### Backup Database
 ```bash
-docker-compose exec db pg_dump -U irrexplorer irrexplorer > backup.sql
+docker compose exec postgres pg_dump -U irrexplorer irrexplorer > backup.sql
 ```
 
 #### Restore Database
 ```bash
-cat backup.sql | docker-compose exec -T db psql -U irrexplorer -d irrexplorer
+cat backup.sql | docker compose exec -T postgres psql -U irrexplorer -d irrexplorer
 ```
 
 ### Import Data
 
-#### Full Import (BGP + RIR Stats)
 ```bash
-docker-compose exec backend python -m irrexplorer.commands.import_data
-```
-
-#### BGP Only
-```bash
-docker-compose exec backend python -c "from irrexplorer.backends.bgp import BGPImporter; import asyncio; asyncio.run(BGPImporter().run_import())"
-```
-
-#### RIR Stats Only
-```bash
-docker-compose exec backend python -c "from irrexplorer.backends.rirstats import import_all; import asyncio; asyncio.run(import_all())"
+# Full import (BGP + RIR Stats + RPKI)
+docker compose run go-backend go run ./cmd/importer
 ```
 
 ### Shell Access
 
 ```bash
-# Backend shell
-docker-compose exec backend bash
+# Go backend shell
+docker compose exec go-backend sh
 
 # Frontend shell (production)
-docker-compose exec frontend sh
+docker compose exec frontend sh
 
 # Database shell
-docker-compose exec db sh
+docker compose exec postgres sh
 ```
 
 ### Health Checks
 
 Check service health:
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 Test endpoints:
 ```bash
 # Backend health
-curl http://localhost:8000/api/metadata/
+curl http://localhost:8080/api/healthz
 
 # Frontend health
-curl http://localhost/
+curl http://localhost:8080/
 ```
 
 ## Volumes and Data Persistence
 
 ### Named Volumes
 - `postgres_data`: PostgreSQL database files
-- `postgres_data_dev`: Development database (separate)
 
 ### Volume Management
 
@@ -276,7 +262,7 @@ docker volume inspect irrexplorer_postgres_data
 
 Remove volumes (CAUTION: Data loss):
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 Backup volume:
@@ -293,9 +279,9 @@ docker run --rm -v irrexplorer_postgres_data:/data -v $(pwd):/backup alpine tar 
 
 ### 1. Use Production Compose File
 
-Ensure you're using `docker-compose.yml` (not dev):
+Ensure you're using `docker-compose.yml`:
 ```bash
-docker-compose -f docker-compose.yml up -d
+docker compose up -d
 ```
 
 ### 2. Set Production Environment Variables
@@ -308,11 +294,10 @@ ALLOWED_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
 
 ### 3. Enable HTTPS
 
-Use a reverse proxy like Traefik, nginx, or Caddy:
+Use a reverse proxy like Traefik, nginx, or Caddy with SSL certificates.
 
-#### Option A: Traefik (Recommended)
+#### Traefik Example (docker-compose.prod.yml)
 ```yaml
-# docker-compose.prod.yml
 services:
   frontend:
     labels:
@@ -321,44 +306,31 @@ services:
       - "traefik.http.routers.irrexplorer.tls.certresolver=letsencrypt"
 ```
 
-#### Option B: nginx Reverse Proxy
-See `SECURITY_CONFIGURATION.md` for nginx SSL setup.
-
 ### 4. Configure Resource Limits
 
 Add resource constraints:
 ```yaml
 services:
-  backend:
+  go-backend:
     deploy:
       resources:
         limits:
           cpus: '2'
-          memory: 4G
+          memory: 2G
         reservations:
           cpus: '1'
-          memory: 2G
+          memory: 1G
 ```
 
 ### 5. Set Up Monitoring
 
-Add monitoring services:
-```yaml
-services:
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
-```
+Add monitoring services (Prometheus, Grafana) as needed.
 
 ### 6. Configure Log Rotation
 
 ```yaml
 services:
-  backend:
+  go-backend:
     logging:
       driver: "json-file"
       options:
@@ -372,49 +344,47 @@ services:
 
 1. Check logs:
    ```bash
-   docker-compose logs backend
+   docker compose logs go-backend
    ```
 
 2. Verify environment variables:
    ```bash
-   docker-compose config
+   docker compose config
    ```
 
 3. Check port conflicts:
    ```bash
-   netstat -tuln | grep -E "80|8000|5432"
+   netstat -tuln | grep -E "5432|6379|8080"
    ```
 
 ### Database Connection Issues
 
 1. Verify database is healthy:
    ```bash
-   docker-compose ps db
+   docker compose ps postgres
    ```
 
-2. Test connection:
+2. Test connection from backend:
    ```bash
-   docker-compose exec backend python -c "from irrexplorer.settings import DATABASE_URL; print(DATABASE_URL)"
+   docker compose exec go-backend sh -c 'echo $DATABASE_URL'
    ```
 
 3. Check network:
    ```bash
-   docker-compose exec backend ping db
+   docker compose exec go-backend ping postgres
    ```
 
 ### Frontend Can't Reach Backend
 
 1. Check nginx configuration:
    ```bash
-   docker-compose exec frontend cat /etc/nginx/conf.d/default.conf
+   docker compose exec frontend cat /etc/nginx/conf.d/default.conf
    ```
 
 2. Test backend from frontend container:
    ```bash
-   docker-compose exec frontend wget -O- http://backend:8000/api/metadata/
+   docker compose exec frontend wget -O- http://go-backend:8080/api/healthz
    ```
-
-3. Verify CORS settings in backend logs
 
 ### High Memory Usage
 
@@ -423,15 +393,10 @@ services:
    docker stats
    ```
 
-2. Reduce workers:
-   ```bash
-   HTTP_WORKERS=2
-   ```
-
-3. Limit container memory:
+2. Limit container memory:
    ```yaml
    services:
-     backend:
+     go-backend:
        mem_limit: 2g
    ```
 
@@ -444,16 +409,16 @@ services:
 
 2. Optimize database:
    ```bash
-   docker-compose exec db psql -U irrexplorer -c "VACUUM ANALYZE;"
+   docker compose exec postgres psql -U irrexplorer -d irrexplorer -c "VACUUM ANALYZE;"
    ```
 
-3. Review database indexes (see `PERFORMANCE_OPTIMIZATIONS.md`)
+3. Review database indexes
 
 ### Build Failures
 
 1. Clear build cache:
    ```bash
-   docker-compose build --no-cache
+   docker compose build --no-cache
    ```
 
 2. Remove old images:
@@ -472,18 +437,18 @@ services:
 
 1. **Update data** (daily/weekly):
    ```bash
-   docker-compose exec backend python -m irrexplorer.commands.import_data
+   docker compose run go-backend go run ./cmd/importer
    ```
 
 2. **Backup database** (daily):
    ```bash
-   docker-compose exec db pg_dump -U irrexplorer irrexplorer | gzip > backup-$(date +%Y%m%d).sql.gz
+   docker compose exec postgres pg_dump -U irrexplorer irrexplorer | gzip > backup-$(date +%Y%m%d).sql.gz
    ```
 
 3. **Update images** (monthly):
    ```bash
-   docker-compose pull
-   docker-compose up -d
+   docker compose pull
+   docker compose up -d
    ```
 
 4. **Clean up** (weekly):
@@ -493,11 +458,11 @@ services:
 
 ### Scheduled Data Import
 
-Use cron or systemd timer:
+Use cron:
 
 ```cron
 # /etc/cron.d/irrexplorer-import
-0 2 * * * cd /path/to/irrexplorer && docker-compose exec -T backend python -m irrexplorer.commands.import_data >> /var/log/irrexplorer-import.log 2>&1
+0 2 * * * cd /path/to/irrexplorer && docker compose run -T go-backend go run ./cmd/importer >> /var/log/irrexplorer-import.log 2>&1
 ```
 
 ## Security Considerations
@@ -508,9 +473,9 @@ Use cron or systemd timer:
      POSTGRES_PASSWORD: use_strong_random_password
    ```
 
-2. **Don't expose PostgreSQL** in production:
+2. **Don't expose PostgreSQL/Redis** in production:
    ```yaml
-   # Remove ports section from db service
+   # Remove ports section from postgres/redis services
    ```
 
 3. **Use secrets** for sensitive data:
@@ -525,12 +490,13 @@ Use cron or systemd timer:
    ufw allow 80/tcp
    ufw allow 443/tcp
    ufw deny 5432/tcp
+   ufw deny 6379/tcp
    ```
 
 5. **Regular updates**:
    ```bash
-   docker-compose pull
-   docker-compose up -d
+   docker compose pull
+   docker compose up -d
    ```
 
 ## Performance Tuning
@@ -540,7 +506,7 @@ Use cron or systemd timer:
 Add to docker-compose.yml:
 ```yaml
 services:
-  db:
+  postgres:
     command:
       - "postgres"
       - "-c"
@@ -553,13 +519,13 @@ services:
       - "max_connections=100"
 ```
 
-### Backend
+### Go Backend
 
-Adjust workers based on available CPU:
-```yaml
-environment:
-  HTTP_WORKERS: 4  # num_cores * 2
-```
+The Go backend is already optimized with:
+- Connection pooling via pgx
+- Redis caching for external queries
+- Concurrent query processing
+- Rate limiting
 
 ### Frontend (nginx)
 
@@ -579,13 +545,10 @@ Already optimized with:
 
 2. Rebuild and restart:
    ```bash
-   docker-compose up -d --build
+   docker compose up -d --build
    ```
 
-3. Run migrations:
-   ```bash
-   docker-compose exec backend alembic upgrade head
-   ```
+3. Run any database migrations if needed
 
 ### Database Migration
 
@@ -600,6 +563,5 @@ For major version upgrades:
 
 - Docker Compose docs: https://docs.docker.com/compose/
 - PostgreSQL Docker: https://hub.docker.com/_/postgres
+- Redis Docker: https://hub.docker.com/_/redis
 - nginx Docker: https://hub.docker.com/_/nginx
-- Performance guide: `PERFORMANCE_OPTIMIZATIONS.md`
-- Security guide: `SECURITY_CONFIGURATION.md`
