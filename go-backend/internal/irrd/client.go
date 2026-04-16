@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/netip"
 	"sync"
@@ -38,6 +39,9 @@ type RouteInfo struct {
 }
 
 type graphqlResponse struct {
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
 	Data struct {
 		DatabaseStatus []struct {
 			Source     string `json:"source"`
@@ -140,7 +144,7 @@ func (c *Client) QueryASN(ctx context.Context, asn int) ([]RouteInfo, error) {
 
 	var decoded graphqlResponse
 	if err := c.execute(ctx, queryASN, map[string]any{
-		"asn":   asn,
+		"asn":   []int{asn},
 		"limit": maxIRRdResults,
 	}, &decoded); err != nil {
 		return []RouteInfo{}, err
@@ -294,7 +298,19 @@ func (c *Client) execute(ctx context.Context, query string, variables map[string
 	}
 	defer resp.Body.Close()
 
-	return json.NewDecoder(resp.Body).Decode(target)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("irrd returned http %d", resp.StatusCode)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
+		return err
+	}
+
+	if response, ok := target.(*graphqlResponse); ok && len(response.Errors) > 0 {
+		return fmt.Errorf("irrd graphql error: %s", response.Errors[0].Message)
+	}
+
+	return nil
 }
 
 func toRouteInfo(decoded graphqlResponse) []RouteInfo {
