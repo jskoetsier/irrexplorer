@@ -10,6 +10,8 @@ rancher-api.txt
 .gomodcache
 charts/irrexplorer/values.local.yaml
 charts/irrexplorer/values.secrets.yaml
+AGENTS.md
+scripts.py
 
 syntax: glob
 __pycache__
