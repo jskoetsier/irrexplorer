@@ -1,14 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import PrefixTableExplanation from './prefixTable/prefixTableExplanation';
 import PrefixTable from './prefixTable/prefixTable';
-import VirtualPrefixTable from './prefixTable/VirtualPrefixTable';
 import api from '../services/api';
 import SetIncludedTable from './common/setIncludedTable';
 import DataSourcesModal from './dataSources/DataSourcesModal';
 import type { PrefixData, QueryCategory, AdvancedSearchFilters } from '../types';
-
-// Use virtual table for datasets larger than this threshold
-const VIRTUALIZATION_THRESHOLD = 100;
 
 interface ASNQueryProps {
   query: string;
@@ -59,44 +55,23 @@ export default function ASNQuery({ query, reducedColour, filterWarningError }: A
       <PrefixTableExplanation />
       <h2 className="h3 mt-4">Prefixes originated by {query}</h2>
       <hr />
-      {directOriginPrefixes.length > VIRTUALIZATION_THRESHOLD ? (
-        <VirtualPrefixTable
-          prefixesData={directOriginPrefixes}
-          hasLoaded={hasLoadedPrefixes}
-          reducedColour={reducedColour}
-          filterWarningError={filterWarningError}
-          apiCallUrl={apiCallUrl}
-        />
-      ) : (
-        <PrefixTable
-          prefixesData={directOriginPrefixes}
-          hasLoaded={hasLoadedPrefixes}
-          reducedColour={reducedColour}
-          filterWarningError={filterWarningError}
-          apiCallUrl={apiCallUrl}
-        />
-      )}
+      <PrefixTable
+        prefixesData={directOriginPrefixes}
+        hasLoaded={hasLoadedPrefixes}
+        reducedColour={reducedColour}
+        filterWarningError={filterWarningError}
+        apiCallUrl={apiCallUrl}
+      />
       <h2 className="h3 mt-4">Other prefixes overlapping with prefixes originated by {query}</h2>
       <hr />
-      {overlapPrefixes.length > VIRTUALIZATION_THRESHOLD ? (
-        <VirtualPrefixTable
-          prefixesData={overlapPrefixes}
-          hasLoaded={hasLoadedPrefixes}
-          reducedColour={reducedColour}
-          filterWarningError={filterWarningError}
-          apiCallUrl={apiCallUrl}
-          defaultSortSmallestFirst
-        />
-      ) : (
-        <PrefixTable
-          prefixesData={overlapPrefixes}
-          hasLoaded={hasLoadedPrefixes}
-          reducedColour={reducedColour}
-          filterWarningError={filterWarningError}
-          apiCallUrl={apiCallUrl}
-          defaultSortSmallestFirst
-        />
-      )}
+      <PrefixTable
+        prefixesData={overlapPrefixes}
+        hasLoaded={hasLoadedPrefixes}
+        reducedColour={reducedColour}
+        filterWarningError={filterWarningError}
+        apiCallUrl={apiCallUrl}
+        defaultSortSmallestFirst
+      />
       <h2 className="h3 mt-4">Included in the following AS sets:</h2>
       <hr />
       <SetIncludedTable query={query} objectClass="as-set" />
