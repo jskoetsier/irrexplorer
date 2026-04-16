@@ -12,6 +12,7 @@ charts/irrexplorer/values.local.yaml
 charts/irrexplorer/values.secrets.yaml
 AGENTS.md
 scripts.py
+.claude/
 
 syntax: glob
 __pycache__
