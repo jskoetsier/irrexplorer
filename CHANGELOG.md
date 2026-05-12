@@ -6,9 +6,33 @@ The format follows Keep a Changelog and the project uses Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-12
+
 ### Changed
 
-- Improved ASN prefix lookup performance by implementing parallel processing with concurrency control (max 10 concurrent operations) for IRRd GraphQL queries and PostgreSQL queries
+- Single database pool shared across all subsystems instead of three independent connections
+- `NewServer` now returns error on failure instead of silently starting in degraded state
+- Replaced per-prefix goroutine farm in `QueryPrefixesAny` with single `unnest()` CTE query per table
+- Split monolithic `router.go` into per-feature files (`prefix.go`, `asn.go`, `sets.go`, `datasources_*.go`, `caching.go`)
+- Extracted shared `writeJSON` into `internal/httputil` package, deleted three copies
+- ASN fields widened to `int64` across all domain types, stores, IRRd client, and datasources to support 4-byte ASNs
+- Replaced hand-rolled `containsInt`/`containsString` helpers with `slices.Contains`
+- Rate limiter uses `net.SplitHostPort` for correct IPv6 address extraction
+- `PrefixSummary` JSON marshaling uses type-alias pattern instead of field-duplicated struct
+- Frontend error handling distinguishes 4xx/5xx/network errors; replaced deprecated `CancelToken` with `AbortController`
+- Go module path corrected from `github.com/sebastiaan/irrexplorer` to `gitlab.int.koetsier.org/sebas/irrexplorer`
+
+### Fixed
+
+- Cache-hit responses in analysis and visualization handlers were double-encoded (JSON-in-JSON); now write raw bytes directly
+- RIR import failures were silently swallowed; now surface as errors and exposed via per-RIR freshness in `/api/metadata/`
+
+### Removed
+
+- Navigation package (`bookmarks`, `history`, `popular`, `trending`) — no database schema or UI wiring existed; handlers always returned 500
+- Dead redirect handlers (`asPath`, `whois`, `advancedSearch`) from analysis routes
+- `prefixSortKey*` fields from API wire format — sorting is handled server-side
+- Stale project files: `GO_BACKEND_MIGRATION.md`, `PHASE_SUMMARY.md`, `TEST_ISSUES.md`, `install.sh`
 
 ## [2.4.0] - 2026-03-19
 
