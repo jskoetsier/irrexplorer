@@ -193,8 +193,7 @@ docker compose exec postgres psql -U irrexplorer -d irrexplorer
 #### Run SQL Migrations
 ```bash
 docker compose exec go-backend sh -c 'go run ./cmd/api -migrate'
-# Or manually:
-docker compose exec postgres psql -U irrexplorer -d irrexplorer -f /docker-entrypoint-initdb.d/001_init.sql
+# Migrations are managed in charts/irrexplorer/migrations/
 ```
 
 #### Backup Database

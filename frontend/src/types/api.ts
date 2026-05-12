@@ -107,6 +107,7 @@ export interface ApiResult<T> {
   data: T | null;
   url: string | null;
   error?: string;
+  statusCode?: number;
 }
 
 export interface SuccessResult {

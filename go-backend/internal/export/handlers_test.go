@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/export"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/export"
 )
 
 func TestExportPDFReturns501(t *testing.T) {

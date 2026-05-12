@@ -1,6 +1,9 @@
 package domain
 
-import "net/netip"
+import (
+	"net/netip"
+	"slices"
+)
 
 type specialUsePrefix struct {
 	Name   string
@@ -35,26 +38,26 @@ func EnrichPrefixSummariesWithReport(prefixSummaries []PrefixSummary) {
 		if len(s.BGPOrigins) == 0 && len(irrOrigins) > 0 {
 			s.Info("Route objects exist, but prefix not seen in DFZ")
 		}
-		if len(s.BGPOrigins) == 0 && len(rpkiOrigins) > 0 && !equalIntSets(rpkiOrigins, []int{0}) {
+		if len(s.BGPOrigins) == 0 && len(rpkiOrigins) > 0 && !equalInt64Sets(rpkiOrigins, []int64{0}) {
 			s.Info("RPKI ROA exists, but prefix not seen in DFZ")
 		}
 		if s.IRRExpectedRIR() != "" && len(s.IRRRoutes) > 0 && len(s.IRRRoutesExpectedRIR()) == 0 {
 			s.Warning("Expected route object in " + s.IRRExpectedRIR() + ", but only found in other IRRs")
 		}
-		if diffIntSets(s.BGPOrigins, irrOrigins) {
-			if intersectsIntSets(s.BGPOrigins, irrOrigins) {
+		if diffInt64Sets(s.BGPOrigins, irrOrigins) {
+			if intersectsInt64Sets(s.BGPOrigins, irrOrigins) {
 				s.Danger("No route objects for some DFZ origins")
 			} else {
 				s.Danger("No route objects match DFZ origin")
 			}
-		} else if len(s.IRRRoutesExpectedRIR()) > 0 && diffIntSets(s.BGPOrigins, s.IRROriginsExpectedRIR()) {
+		} else if len(s.IRRRoutesExpectedRIR()) > 0 && diffInt64Sets(s.BGPOrigins, s.IRROriginsExpectedRIR()) {
 			s.Danger("Expected route object in " + s.IRRExpectedRIR() + ", but BGP origin does not match. Objects from other IRRs do match BGP origin")
-		} else if len(s.IRROriginsNotExpectedRIR()) > 0 && diffIntSets(s.BGPOrigins, s.IRROriginsNotExpectedRIR()) {
+		} else if len(s.IRROriginsNotExpectedRIR()) > 0 && diffInt64Sets(s.BGPOrigins, s.IRROriginsNotExpectedRIR()) {
 			s.Warning("Expected route object in " + s.IRRExpectedRIR() + " matches BGP origin, but non-matching objects exist in other IRRs")
 		} else if len(irrOrigins) > 1 && len(s.BGPOrigins) == 1 {
 			s.Warning("Multiple route objects exist with different origins, but DFZ only has one")
 		}
-		if len(rpkiOrigins) > 0 && diffIntSets(s.BGPOrigins, rpkiOrigins) {
+		if len(rpkiOrigins) > 0 && diffInt64Sets(s.BGPOrigins, rpkiOrigins) {
 			s.Danger("RPKI origin does not match BGP origin")
 		}
 		irrRoutesAll := flattenDetails(s.IRRRoutes)
@@ -76,35 +79,26 @@ func Overlaps(a, b netip.Prefix) bool {
 	return a.Contains(b.Addr()) || b.Contains(a.Addr())
 }
 
-func diffIntSets(a, b []int) bool {
+func diffInt64Sets(a, b []int64) bool {
 	for _, item := range a {
-		if !containsInt(b, item) {
+		if !slices.Contains(b, item) {
 			return true
 		}
 	}
 	return false
 }
 
-func intersectsIntSets(a, b []int) bool {
+func intersectsInt64Sets(a, b []int64) bool {
 	for _, item := range a {
-		if containsInt(b, item) {
+		if slices.Contains(b, item) {
 			return true
 		}
 	}
 	return false
 }
 
-func equalIntSets(a, b []int) bool {
-	return len(a) == len(b) && !diffIntSets(a, b) && !diffIntSets(b, a)
-}
-
-func containsInt(values []int, target int) bool {
-	for _, value := range values {
-		if value == target {
-			return true
-		}
-	}
-	return false
+func equalInt64Sets(a, b []int64) bool {
+	return len(a) == len(b) && !diffInt64Sets(a, b) && !diffInt64Sets(b, a)
 }
 
 func anyStatus(items []PrefixIRRDetail, status string) bool {

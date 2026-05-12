@@ -10,16 +10,9 @@ type Store struct {
 	pool *pgxpool.Pool
 }
 
-func NewStore(ctx context.Context, databaseURL string) (*Store, error) {
-	pool, err := pgxpool.New(ctx, databaseURL)
-	if err != nil {
-		return nil, err
-	}
-	if err := pool.Ping(ctx); err != nil {
-		pool.Close()
-		return nil, err
-	}
-	return &Store{pool: pool}, nil
+// NewStore wraps an existing connection pool. The caller owns the pool's lifecycle.
+func NewStore(pool *pgxpool.Pool) *Store {
+	return &Store{pool: pool}
 }
 
 type RIRCount struct {
@@ -33,9 +26,9 @@ type PrefixLengthCount struct {
 }
 
 type ASNEdge struct {
-	Source int `json:"source"`
-	Target int `json:"target"`
-	Weight int `json:"weight"`
+	Source int64 `json:"source"`
+	Target int64 `json:"target"`
+	Weight int   `json:"weight"`
 }
 
 type TimelinePoint struct {
@@ -69,7 +62,7 @@ func (s *Store) PrefixAllocation(ctx context.Context) ([]RIRCount, error) {
 }
 
 func (s *Store) RIRDistribution(ctx context.Context) ([]RIRCount, error) {
-	return s.PrefixAllocation(ctx) // same query, different semantic context
+	return s.PrefixAllocation(ctx)
 }
 
 func (s *Store) PrefixDistribution(ctx context.Context) ([]PrefixLengthCount, error) {
@@ -98,10 +91,7 @@ func (s *Store) PrefixDistribution(ctx context.Context) ([]PrefixLengthCount, er
 }
 
 // ASNRelationships returns edges between ASNs based on prefix containment in the BGP table.
-// The <<= join captures cases where the queried ASN originates the more-specific prefix;
-// it does not capture the symmetric case where it originates the less-specific side.
-// A fully bidirectional graph would require a UNION of both containment directions.
-func (s *Store) ASNRelationships(ctx context.Context, asn int) ([]ASNEdge, error) {
+func (s *Store) ASNRelationships(ctx context.Context, asn int64) ([]ASNEdge, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.asn, b.asn, COUNT(*) AS weight
 		FROM bgp a

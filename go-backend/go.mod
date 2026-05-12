@@ -1,4 +1,4 @@
-module github.com/sebastiaan/irrexplorer/go-backend
+module gitlab.int.koetsier.org/sebas/irrexplorer/go-backend
 
 go 1.25.0
 

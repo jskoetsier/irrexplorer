@@ -18,7 +18,7 @@ import type {
 
 import axios from 'axios';
 
-let source = axios.CancelToken.source();
+let abortController = new AbortController();
 
 const apiUrl = import.meta.env.VITE_BACKEND || `${window.location.origin}/api`;
 
@@ -30,7 +30,7 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     const expectedError =
-      error.message === 'cancel' ||
+      error.name === 'CanceledError' ||
       (error.response && error.response.status >= 400 && error.response.status < 500);
     if (!expectedError) {
       console.log('Unexpected HTTP error', error);
@@ -38,6 +38,31 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+function extractAxiosError(exc: unknown): { error: string; statusCode?: number } {
+  if (axios.isCancel(exc)) {
+    return { error: 'Request cancelled' };
+  }
+
+  if (axios.isAxiosError(exc)) {
+    if (!exc.response) {
+      return { error: 'Network error: unable to reach API' };
+    }
+
+    const status = exc.response.status;
+    const serverMessage =
+      typeof exc.response.data === 'string'
+        ? exc.response.data
+        : exc.response.data?.error ?? exc.response.data?.detail;
+
+    if (status >= 500) {
+      return { error: serverMessage || 'Server error', statusCode: status };
+    }
+    return { error: serverMessage || `Request failed (${status})`, statusCode: status };
+  }
+
+  return { error: 'Unknown error' };
+}
 
 export async function getMetadata(): Promise<ApiResult<{
   last_update: {
@@ -50,10 +75,7 @@ export async function getMetadata(): Promise<ApiResult<{
     const response = await axios.get(url);
     return { data: response.data, url };
   } catch (exc: unknown) {
-    if (axios.isAxiosError(exc) && exc.response) {
-      return { error: 'Error: unable to reach API: ' + exc.response.data, data: null, url: '' };
-    }
-    return { error: 'Error: unable to reach API', data: null, url: '' };
+    return { data: null, url: `${apiUrl}/metadata/`, ...extractAxiosError(exc) };
   }
 }
 
@@ -62,19 +84,17 @@ export async function cleanQuery(query: string): Promise<CleanQueryResult> {
     const response = await axios.get<CleanQueryResult>(`${apiUrl}/clean_query/${query}`);
     return response.data;
   } catch (exc: unknown) {
-    if (axios.isAxiosError(exc) && exc.response) {
-      return { cleanedValue: '', category: 'prefix' as QueryCategory, error: 'Error: unable to reach API: ' + exc.response.data };
-    }
-    return { cleanedValue: '', category: 'prefix' as QueryCategory, error: 'Error: unable to reach API' };
+    const { error } = extractAxiosError(exc);
+    return { cleanedValue: '', category: 'prefix' as QueryCategory, error };
   }
 }
 
 async function performRequest<T>(url: string): Promise<ApiResult<T>> {
   try {
-    const response = await axios.get<T>(url, { cancelToken: source.token });
+    const response = await axios.get<T>(url, { signal: abortController.signal });
     return { data: response.data, url };
-  } catch {
-    return { data: null, url };
+  } catch (exc: unknown) {
+    return { data: null, url, ...extractAxiosError(exc) };
   }
 }
 
@@ -95,33 +115,36 @@ export async function getSetExpansion(target: string): Promise<ApiResult<SetExpa
 }
 
 export async function cancelAllRequests(): Promise<void> {
-  await source.cancel('cancel');
-  source = axios.CancelToken.source();
+  abortController.abort();
+  abortController = new AbortController();
 }
 
 export async function autocomplete(query: string, limit = 10): Promise<ApiResult<AutocompleteResult[]>> {
+  const url = `${apiUrl}/autocomplete/${query}?limit=${limit}`;
   try {
-    const response = await axios.get<AutocompleteResult[]>(`${apiUrl}/autocomplete/${query}?limit=${limit}`);
-    return { data: response.data, url: `${apiUrl}/autocomplete/${query}` };
-  } catch {
-    return { data: null, url: null };
+    const response = await axios.get<AutocompleteResult[]>(url);
+    return { data: response.data, url };
+  } catch (exc: unknown) {
+    return { data: null, url, ...extractAxiosError(exc) };
   }
 }
 
 export async function addSearchHistory(query: string, queryType: QueryCategory): Promise<void> {
   try {
     await axios.post(`${apiUrl}/search-history`, { query, query_type: queryType });
-  } catch (exc) {
-    console.error('Failed to add search history', exc);
+  } catch (exc: unknown) {
+    const { error } = extractAxiosError(exc);
+    console.error('Failed to add search history:', error);
   }
 }
 
 export async function getSearchHistory(limit = 20): Promise<ApiResult<SearchResult[]>> {
+  const url = `${apiUrl}/search-history?limit=${limit}`;
   try {
-    const response = await axios.get<SearchResult[]>(`${apiUrl}/search-history?limit=${limit}`);
-    return { data: response.data, url: `${apiUrl}/search-history` };
-  } catch {
-    return { data: null, url: null };
+    const response = await axios.get<SearchResult[]>(url);
+    return { data: response.data, url };
+  } catch (exc: unknown) {
+    return { data: null, url, ...extractAxiosError(exc) };
   }
 }
 
@@ -129,8 +152,9 @@ export async function clearSearchHistory(): Promise<SuccessResult> {
   try {
     await axios.delete(`${apiUrl}/search-history/clear`);
     return { success: true };
-  } catch {
-    return { success: false };
+  } catch (exc: unknown) {
+    const { error } = extractAxiosError(exc);
+    return { success: false, error };
   }
 }
 
@@ -139,19 +163,18 @@ export async function addBookmark(query: string, queryType: QueryCategory, name 
     await axios.post(`${apiUrl}/bookmarks`, { query, query_type: queryType, name });
     return { success: true };
   } catch (exc: unknown) {
-    if (axios.isAxiosError(exc)) {
-      return { success: false, error: exc.response?.data?.error || 'Failed to add bookmark' };
-    }
-    return { success: false, error: 'Failed to add bookmark' };
+    const { error } = extractAxiosError(exc);
+    return { success: false, error };
   }
 }
 
 export async function getBookmarks(): Promise<ApiResult<Bookmark[]>> {
+  const url = `${apiUrl}/bookmarks`;
   try {
-    const response = await axios.get<Bookmark[]>(`${apiUrl}/bookmarks`);
-    return { data: response.data, url: `${apiUrl}/bookmarks` };
-  } catch {
-    return { data: null, url: null };
+    const response = await axios.get<Bookmark[]>(url);
+    return { data: response.data, url };
+  } catch (exc: unknown) {
+    return { data: null, url, ...extractAxiosError(exc) };
   }
 }
 
@@ -159,52 +182,54 @@ export async function deleteBookmark(bookmarkId: number): Promise<SuccessResult>
   try {
     await axios.delete(`${apiUrl}/bookmarks/${bookmarkId}`);
     return { success: true };
-  } catch {
-    return { success: false };
+  } catch (exc: unknown) {
+    const { error } = extractAxiosError(exc);
+    return { success: false, error };
   }
 }
 
 export async function getPopularQueries(limit = 10, days = 7): Promise<ApiResult<PopularQuery[]>> {
+  const url = `${apiUrl}/popular?limit=${limit}&days=${days}`;
   try {
-    const response = await axios.get<PopularQuery[]>(`${apiUrl}/popular?limit=${limit}&days=${days}`);
-    return { data: response.data, url: `${apiUrl}/popular` };
-  } catch {
-    return { data: null, url: null };
+    const response = await axios.get<PopularQuery[]>(url);
+    return { data: response.data, url };
+  } catch (exc: unknown) {
+    return { data: null, url, ...extractAxiosError(exc) };
   }
 }
 
 export async function getTrendingQueries(limit = 10): Promise<ApiResult<TrendingQuery[]>> {
+  const url = `${apiUrl}/trending?limit=${limit}`;
   try {
-    const response = await axios.get<TrendingQuery[]>(`${apiUrl}/trending?limit=${limit}`);
-    return { data: response.data, url: `${apiUrl}/trending` };
-  } catch {
-    return { data: null, url: null };
+    const response = await axios.get<TrendingQuery[]>(url);
+    return { data: response.data, url };
+  } catch (exc: unknown) {
+    return { data: null, url, ...extractAxiosError(exc) };
   }
 }
 
 export async function advancedSearch(query: string, filters: AdvancedSearchFilters = { type: 'all', status: 'all', search: '' }): Promise<ApiResult<unknown>> {
-  try {
-    const params = new URLSearchParams({ q: query });
-    if (filters.type && filters.type !== 'all') params.append('type', filters.type);
-    if (filters.status && filters.status !== 'all') params.append('status', filters.status);
-    if (filters.search) params.append('search', filters.search);
+  const params = new URLSearchParams({ q: query });
+  if (filters.type && filters.type !== 'all') params.append('type', filters.type);
+  if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+  if (filters.search) params.append('search', filters.search);
 
-    const response = await axios.get(`${apiUrl}/advanced-search?${params.toString()}`);
-    return { data: response.data, url: `${apiUrl}/advanced-search` };
+  const url = `${apiUrl}/advanced-search?${params.toString()}`;
+  try {
+    const response = await axios.get(url);
+    return { data: response.data, url };
   } catch (exc: unknown) {
-    if (axios.isAxiosError(exc)) {
-      return { data: null, url: null, error: exc.response?.data?.error || 'Search failed' };
-    }
-    return { data: null, url: null, error: 'Search failed' };
+    return { data: null, url, ...extractAxiosError(exc) };
   }
 }
 
 export async function getFilterOptions(): Promise<ApiResult<FilterOptions>> {
+  const url = `${apiUrl}/filter-options`;
   try {
-    const response = await axios.get<FilterOptions>(`${apiUrl}/filter-options`);
-    return { data: response.data, url: `${apiUrl}/filter-options` };
-  } catch {
-    return { data: null, url: null };
+    const response = await axios.get<FilterOptions>(url);
+    return { data: response.data, url };
+  } catch (exc: unknown) {
+    return { data: null, url, ...extractAxiosError(exc) };
   }
 }
 

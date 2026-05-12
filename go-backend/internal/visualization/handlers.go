@@ -7,13 +7,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/httputil"
 )
 
 type vizStore interface {
 	PrefixAllocation(ctx context.Context) ([]RIRCount, error)
 	RIRDistribution(ctx context.Context) ([]RIRCount, error)
 	PrefixDistribution(ctx context.Context) ([]PrefixLengthCount, error)
-	ASNRelationships(ctx context.Context, asn int) ([]ASNEdge, error)
+	ASNRelationships(ctx context.Context, asn int64) ([]ASNEdge, error)
 	Timeline(ctx context.Context) ([]TimelinePoint, error)
 }
 
@@ -60,12 +62,12 @@ func (h *Handlers) prefixDistribution(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) asnRelationships(w http.ResponseWriter, r *http.Request) {
 	raw := strings.TrimPrefix(r.URL.Path, "/api/viz/asn-relationships/")
 	raw = strings.TrimPrefix(strings.ToUpper(raw), "AS")
-	asn, err := strconv.Atoi(raw)
+	asn, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid ASN"})
+		httputil.WriteJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid ASN"})
 		return
 	}
-	key := "go:viz:asn-relationships:" + strconv.Itoa(asn)
+	key := "go:viz:asn-relationships:" + strconv.FormatInt(asn, 10)
 	h.cached(w, r, key, 30*time.Minute, func(ctx context.Context) (any, error) {
 		return h.store.ASNRelationships(ctx, asn)
 	})
@@ -77,11 +79,17 @@ func (h *Handlers) timeline(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// cached serves a response from Redis if available, otherwise calls fn and caches the result.
+// On cache hit the raw JSON bytes are written directly to avoid double-encoding.
 func (h *Handlers) cached(w http.ResponseWriter, r *http.Request, key string, ttl time.Duration, fn func(context.Context) (any, error)) {
 	if h.cache != nil {
 		var raw json.RawMessage
 		if h.cache.Get(r.Context(), key, &raw) {
-			writeJSON(w, http.StatusOK, raw)
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Cache", "HIT")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(raw)
+			_, _ = w.Write([]byte("\n"))
 			return
 		}
 	}
@@ -91,14 +99,7 @@ func (h *Handlers) cached(w http.ResponseWriter, r *http.Request, key string, tt
 		return
 	}
 	if h.cache != nil {
-		// Use context.Background() so the cache write isn't dropped if the client disconnects.
 		h.cache.Set(context.Background(), key, result, ttl)
 	}
-	writeJSON(w, http.StatusOK, result)
-}
-
-func writeJSON(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
+	httputil.WriteJSON(w, http.StatusOK, result)
 }

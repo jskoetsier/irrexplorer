@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/importer"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/importer"
 )
 
 func main() {

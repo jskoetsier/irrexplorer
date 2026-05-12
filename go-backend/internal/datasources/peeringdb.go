@@ -21,7 +21,7 @@ func NewPeeringDBClient(timeout time.Duration) *PeeringDBClient {
 	}
 }
 
-func (c *PeeringDBClient) QueryASN(ctx context.Context, asn int) map[string]any {
+func (c *PeeringDBClient) QueryASN(ctx context.Context, asn int64) map[string]any {
 	data, err := c.get(ctx, fmt.Sprintf("%s/net?asn=%d", c.baseURL, asn))
 	if err != nil {
 		return map[string]any{"asn": asn, "error": err.Error()}

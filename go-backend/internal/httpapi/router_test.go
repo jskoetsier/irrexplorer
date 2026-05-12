@@ -11,9 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/config"
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/domain"
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/irrd"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/config"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/domain"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/irrd"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/middleware"
 )
 
 type fakeIRRDClient struct {
@@ -29,7 +30,7 @@ func (f fakeIRRDClient) QueryLastUpdate(_ context.Context) (map[string]string, e
 	return f.result, f.err
 }
 
-func (f fakeIRRDClient) QueryASN(_ context.Context, _ int) ([]irrd.RouteInfo, error) {
+func (f fakeIRRDClient) QueryASN(_ context.Context, _ int64) ([]irrd.RouteInfo, error) {
 	return f.asnRoutes, nil
 }
 
@@ -52,13 +53,14 @@ type fakeStore struct {
 	queryPrefixErr error
 	queryASNErr    error
 	importedAt     *time.Time
+	rirFreshness   map[string]int64
 }
 
 func (f fakeStore) QueryPrefixesAny(_ context.Context, _ []netip.Prefix) ([]domain.RouteInfo, []domain.RouteInfo, error) {
 	return f.bgpByPrefix, f.rirByPrefix, f.queryPrefixErr
 }
 
-func (f fakeStore) QueryBGPByASN(_ context.Context, _ int, _ int, _ int) ([]domain.RouteInfo, int, error) {
+func (f fakeStore) QueryBGPByASN(_ context.Context, _ int64, _ int, _ int) ([]domain.RouteInfo, int, error) {
 	return f.bgpByASN, len(f.bgpByASN), f.queryASNErr
 }
 
@@ -66,16 +68,35 @@ func (f fakeStore) GetLastImporterUpdate(_ context.Context) (*time.Time, error) 
 	return f.importedAt, nil
 }
 
+func (f fakeStore) QueryRIRFreshness(_ context.Context) (map[string]int64, error) {
+	if f.rirFreshness != nil {
+		return f.rirFreshness, nil
+	}
+	return map[string]int64{}, nil
+}
+
+func newTestServer(cfg config.Config) *Server {
+	s := &Server{
+		cfg:         cfg,
+		logger:      slog.New(slog.NewTextHandler(io.Discard, nil)),
+		mux:         http.NewServeMux(),
+		irrdClient:  fakeIRRDClient{},
+		rateLimiter: middleware.NewRateLimiter(1000),
+	}
+	s.registerRoutes()
+	return s
+}
+
 func TestMetadataHandler(t *testing.T) {
-	s := NewServer(config.Config{
+	s := newTestServer(config.Config{
 		ImporterLastUpdate: "2023-01-02T00:00:00Z",
-	}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	})
 	s.irrdClient = fakeIRRDClient{
 		result: map[string]string{
 			"DEMO": "2023-01-01 00:00:00 +0000 UTC",
 		},
 	}
-	s.importerUTC = func() any { return "2023-01-02 00:00:00+00:00" }
+	s.store = fakeStore{}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/metadata/", nil)
 	rec := httptest.NewRecorder()
@@ -96,16 +117,16 @@ func TestMetadataHandler(t *testing.T) {
 		t.Fatalf("missing last_update object: %v", body)
 	}
 
-	if got := lastUpdate["importer"]; got != "2023-01-02 00:00:00+00:00" {
+	if got := lastUpdate["importer"]; got != "2023-01-02 00:00:00Z" {
 		t.Fatalf("unexpected importer value: %v", got)
 	}
 }
 
 func TestPrefixHandler(t *testing.T) {
-	s := NewServer(config.Config{
+	s := newTestServer(config.Config{
 		MinimumPrefixIPv4: 9,
 		MinimumPrefixIPv6: 29,
-	}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	})
 	s.store = fakeStore{
 		bgpByPrefix: []domain.RouteInfo{
 			{Prefix: netip.MustParsePrefix("192.0.2.0/24"), ASN: 64500},
@@ -161,7 +182,7 @@ func TestPrefixHandler(t *testing.T) {
 }
 
 func TestASNHandlerNoData(t *testing.T) {
-	s := NewServer(config.Config{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	s := newTestServer(config.Config{})
 	s.store = fakeStore{}
 	s.irrdClient = fakeIRRDClient{}
 
@@ -183,7 +204,7 @@ func TestASNHandlerNoData(t *testing.T) {
 }
 
 func TestMemberOfHandler(t *testing.T) {
-	s := NewServer(config.Config{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	s := newTestServer(config.Config{})
 	s.irrdClient = fakeIRRDClient{
 		memberOf: irrd.MemberOfResult{
 			Set: []irrd.MemberOfSet{
@@ -220,7 +241,7 @@ func TestMemberOfHandler(t *testing.T) {
 }
 
 func TestSetExpandHandler(t *testing.T) {
-	s := NewServer(config.Config{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	s := newTestServer(config.Config{})
 	s.irrdClient = fakeIRRDClient{
 		setMembers: []irrd.SetMemberResult{
 			{RPSLPK: "AS-DEMO-1", RootSource: "DEMO", Members: []string{"AS64500", "AS-DEMO-2"}},

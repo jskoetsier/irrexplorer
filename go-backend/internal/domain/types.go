@@ -2,10 +2,8 @@ package domain
 
 import (
 	"encoding/json"
-	"math/big"
 	"net/netip"
 	"slices"
-	"strconv"
 )
 
 type MessageCategory string
@@ -18,7 +16,7 @@ const (
 )
 
 type PrefixIRRDetail struct {
-	ASN           int    `json:"asn"`
+	ASN           int64  `json:"asn"`
 	RPSLText      string `json:"rpslText"`
 	RPSLPK        string `json:"rpslPk,omitempty"`
 	RPKIStatus    string `json:"rpkiStatus,omitempty"`
@@ -31,29 +29,28 @@ type ReportMessage struct {
 }
 
 type PrefixSummary struct {
-	Prefix                        netip.Prefix                 `json:"-"`
-	RIR                           *string                      `json:"rir"`
-	RPKIRoutes                    []PrefixIRRDetail            `json:"rpkiRoutes"`
-	BGPOrigins                    []int                        `json:"bgpOrigins"`
-	IRRRoutes                     map[string][]PrefixIRRDetail `json:"irrRoutes"`
-	Messages                      []ReportMessage              `json:"messages"`
-	CategoryOverall               *MessageCategory             `json:"categoryOverall"`
-	GoodnessOverall               int                          `json:"goodnessOverall"`
-	PrefixSortKeyIPPrefix         string                       `json:"prefixSortKeyIpPrefix"`
-	PrefixSortKeyReverseNetworkIP string                       `json:"prefixSortKeyReverseNetworklenIp"`
+	Prefix          netip.Prefix                 `json:"-"`
+	RIR             *string                      `json:"rir"`
+	RPKIRoutes      []PrefixIRRDetail            `json:"rpkiRoutes"`
+	BGPOrigins      []int64                      `json:"bgpOrigins"`
+	IRRRoutes       map[string][]PrefixIRRDetail `json:"irrRoutes"`
+	Messages        []ReportMessage              `json:"messages"`
+	CategoryOverall *MessageCategory             `json:"categoryOverall"`
+	GoodnessOverall int                          `json:"goodnessOverall"`
 }
 
-type prefixSummaryAlias struct {
-	Prefix                        string                       `json:"prefix"`
-	RIR                           *string                      `json:"rir"`
-	RPKIRoutes                    []PrefixIRRDetail            `json:"rpkiRoutes"`
-	BGPOrigins                    []int                        `json:"bgpOrigins"`
-	IRRRoutes                     map[string][]PrefixIRRDetail `json:"irrRoutes"`
-	Messages                      []ReportMessage              `json:"messages"`
-	CategoryOverall               *MessageCategory             `json:"categoryOverall"`
-	GoodnessOverall               int                          `json:"goodnessOverall"`
-	PrefixSortKeyIPPrefix         string                       `json:"prefixSortKeyIpPrefix"`
-	PrefixSortKeyReverseNetworkIP string                       `json:"prefixSortKeyReverseNetworklenIp"`
+func (p PrefixSummary) MarshalJSON() ([]byte, error) {
+	if p.IRRRoutes == nil {
+		p.IRRRoutes = map[string][]PrefixIRRDetail{}
+	}
+	type Alias PrefixSummary
+	return json.Marshal(struct {
+		Alias
+		Prefix string `json:"prefix"`
+	}{
+		Alias:  Alias(p),
+		Prefix: p.Prefix.String(),
+	})
 }
 
 type ASNPrefixes struct {
@@ -76,7 +73,7 @@ type SetExpansion struct {
 
 type RouteInfo struct {
 	Prefix        netip.Prefix
-	ASN           int
+	ASN           int64
 	RIR           *string
 	RPSLPK        string
 	IRRSource     string
@@ -94,29 +91,7 @@ var RIRExpectedIRR = map[string]string{
 	"Registro.BR": "TC",
 }
 
-func (p PrefixSummary) MarshalJSON() ([]byte, error) {
-	irrRoutes := p.IRRRoutes
-	if irrRoutes == nil {
-		irrRoutes = map[string][]PrefixIRRDetail{}
-	}
-	return json.Marshal(prefixSummaryAlias{
-		Prefix:                        p.Prefix.String(),
-		RIR:                           p.RIR,
-		RPKIRoutes:                    p.RPKIRoutes,
-		BGPOrigins:                    p.BGPOrigins,
-		IRRRoutes:                     irrRoutes,
-		Messages:                      p.Messages,
-		CategoryOverall:               p.CategoryOverall,
-		GoodnessOverall:               p.GoodnessOverall,
-		PrefixSortKeyIPPrefix:         p.PrefixSortKeyIPPrefix,
-		PrefixSortKeyReverseNetworkIP: p.PrefixSortKeyReverseNetworkIP,
-	})
-}
-
 func (p *PrefixSummary) FinalizeStatus() {
-	p.PrefixSortKeyIPPrefix = IPNumericString(p.Prefix.Addr()) + "/" + strconv.Itoa(p.Prefix.Bits())
-	p.PrefixSortKeyReverseNetworkIP = strconv.Itoa(128-p.Prefix.Bits()) + "-" + IPNumericString(p.Prefix.Addr())
-
 	if len(p.Messages) == 0 {
 		p.Success("Everything looks good")
 	}
@@ -147,11 +122,11 @@ func (p *PrefixSummary) Info(text string)    { p.AddMessage(MessageInfo, text) }
 func (p *PrefixSummary) Warning(text string) { p.AddMessage(MessageWarning, text) }
 func (p *PrefixSummary) Danger(text string)  { p.AddMessage(MessageDanger, text) }
 
-func (p *PrefixSummary) IRROrigins() []int {
+func (p *PrefixSummary) IRROrigins() []int64 {
 	return uniqueSortedASNs(flattenDetails(p.IRRRoutes))
 }
 
-func (p *PrefixSummary) RPKIOrigins() []int {
+func (p *PrefixSummary) RPKIOrigins() []int64 {
 	return uniqueSortedASNs(p.RPKIRoutes)
 }
 
@@ -170,11 +145,11 @@ func (p *PrefixSummary) IRRRoutesExpectedRIR() []PrefixIRRDetail {
 	return p.IRRRoutes[expected]
 }
 
-func (p *PrefixSummary) IRROriginsExpectedRIR() []int {
+func (p *PrefixSummary) IRROriginsExpectedRIR() []int64 {
 	return uniqueSortedASNs(p.IRRRoutesExpectedRIR())
 }
 
-func (p *PrefixSummary) IRROriginsNotExpectedRIR() []int {
+func (p *PrefixSummary) IRROriginsNotExpectedRIR() []int64 {
 	expected := p.IRRExpectedRIR()
 	items := make([]PrefixIRRDetail, 0)
 	for source, details := range p.IRRRoutes {
@@ -194,23 +169,15 @@ func flattenDetails(routes map[string][]PrefixIRRDetail) []PrefixIRRDetail {
 	return items
 }
 
-func uniqueSortedASNs(items []PrefixIRRDetail) []int {
-	seen := make(map[int]struct{})
+func uniqueSortedASNs(items []PrefixIRRDetail) []int64 {
+	seen := make(map[int64]struct{})
 	for _, item := range items {
 		seen[item.ASN] = struct{}{}
 	}
-	result := make([]int, 0, len(seen))
+	result := make([]int64, 0, len(seen))
 	for asn := range seen {
 		result = append(result, asn)
 	}
 	slices.Sort(result)
 	return result
-}
-
-func IPNumericString(addr netip.Addr) string {
-	raw := addr.AsSlice()
-	if addr.Is4() {
-		raw = raw[len(raw)-4:]
-	}
-	return new(big.Int).SetBytes(raw).String()
 }

@@ -11,16 +11,9 @@ type Store struct {
 	pool *pgxpool.Pool
 }
 
-func NewStore(ctx context.Context, databaseURL string) (*Store, error) {
-	pool, err := pgxpool.New(ctx, databaseURL)
-	if err != nil {
-		return nil, err
-	}
-	if err := pool.Ping(ctx); err != nil {
-		pool.Close()
-		return nil, err
-	}
-	return &Store{pool: pool}, nil
+// NewStore wraps an existing connection pool. The caller owns the pool's lifecycle.
+func NewStore(pool *pgxpool.Pool) *Store {
+	return &Store{pool: pool}
 }
 
 type RPKIDashboardRow struct {
@@ -30,14 +23,14 @@ type RPKIDashboardRow struct {
 
 type HijackEntry struct {
 	Prefix     string `json:"prefix"`
-	ASN        int    `json:"asn"`
+	ASN        int64  `json:"asn"`
 	RPKIStatus string `json:"rpki_status"`
 }
 
 type PrefixOverlapEntry struct {
 	Prefix      string `json:"prefix"`
 	ContainedBy string `json:"contained_by"`
-	ASN         int    `json:"asn"`
+	ASN         int64  `json:"asn"`
 }
 
 func (s *Store) RPKIDashboard(ctx context.Context) ([]RPKIDashboardRow, error) {
@@ -100,19 +93,16 @@ func (s *Store) HijackDetection(ctx context.Context) ([]HijackEntry, error) {
 
 type ROACoverageRow struct {
 	Prefix     string `json:"prefix"`
-	ASN        int    `json:"asn"`
+	ASN        int64  `json:"asn"`
 	RPKIStatus string `json:"rpki_status"`
-	// IRRFound is not populated by the DB query (requires cross-referencing IRRd GraphQL).
-	// It defaults to false; a follow-up can enrich this via the irrd client.
 }
 
 type IRRConsistencyRow struct {
 	Prefix     string `json:"prefix"`
-	ASN        int    `json:"asn"`
+	ASN        int64  `json:"asn"`
 	RPKIStatus string `json:"rpki_status"`
 }
 
-// ROACoverage returns prefixes in BGP grouped by RPKI status for ROA coverage analysis.
 func (s *Store) ROACoverage(ctx context.Context) ([]ROACoverageRow, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT prefix::text, asn, COALESCE(rpki_status, 'NOT_FOUND')
@@ -142,9 +132,8 @@ func (s *Store) ROACoverage(ctx context.Context) ([]ROACoverageRow, error) {
 	return results, nil
 }
 
-// IRRConsistency is a stub that currently returns INVALID RPKI routes (same semantics as
-// HijackDetection but with a higher LIMIT). A proper implementation would join against
-// IRR route data to identify routes where RPKI and IRR origin ASNs disagree.
+// IRRConsistency returns INVALID RPKI routes. A proper implementation would join
+// against IRR route data to identify routes where RPKI and IRR origin ASNs disagree.
 func (s *Store) IRRConsistency(ctx context.Context) ([]IRRConsistencyRow, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT prefix::text, asn, rpki_status

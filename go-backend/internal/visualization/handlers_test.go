@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/visualization"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/visualization"
 )
 
 type fakeVizStore struct{}
@@ -21,7 +21,7 @@ func (f *fakeVizStore) RIRDistribution(_ context.Context) ([]visualization.RIRCo
 func (f *fakeVizStore) PrefixDistribution(_ context.Context) ([]visualization.PrefixLengthCount, error) {
 	return []visualization.PrefixLengthCount{}, nil
 }
-func (f *fakeVizStore) ASNRelationships(_ context.Context, _ int) ([]visualization.ASNEdge, error) {
+func (f *fakeVizStore) ASNRelationships(_ context.Context, _ int64) ([]visualization.ASNEdge, error) {
 	return []visualization.ASNEdge{}, nil
 }
 func (f *fakeVizStore) Timeline(_ context.Context) ([]visualization.TimelinePoint, error) {

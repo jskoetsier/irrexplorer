@@ -1,22 +1,20 @@
-package httpapi_test
+package httpapi
 
 import (
 	"encoding/json"
-	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/config"
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/httpapi"
 )
 
 func TestOpenAPISchemaEndpoint(t *testing.T) {
-	s := httpapi.NewServer(config.Config{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	mux := http.NewServeMux()
+	s := &Server{}
+	mux.HandleFunc("/api/docs/openapi.json", s.handleOpenAPISchema)
+
 	req := httptest.NewRequest(http.MethodGet, "/api/docs/openapi.json", nil)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, req)
+	mux.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)

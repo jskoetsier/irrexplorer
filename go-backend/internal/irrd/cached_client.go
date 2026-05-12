@@ -6,7 +6,7 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/cache"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/cache"
 )
 
 const (
@@ -31,7 +31,7 @@ func NewCachedClient(client *Client, cache *cache.Cache) *CachedClient {
 }
 
 // QueryASN queries IRRd for routes by ASN (uses cache)
-func (c *CachedClient) QueryASN(ctx context.Context, asn int) ([]RouteInfo, error) {
+func (c *CachedClient) QueryASN(ctx context.Context, asn int64) ([]RouteInfo, error) {
 	if c.cache == nil {
 		return c.client.QueryASN(ctx, asn)
 	}

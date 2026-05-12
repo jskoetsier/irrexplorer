@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/httputil"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -87,9 +88,6 @@ func (h *Handlers) exportCSV(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/csv")
 	w.Header().Set("Content-Disposition", `attachment; filename="export.csv"`)
 	enc := csv.NewWriter(w)
-	// Marshal result to JSON and write as a single CSV cell.
-	// This matches the Python backend's behaviour. Proper column-per-field serialization
-	// is deferred to a future improvement.
 	data, _ := json.Marshal(result)
 	_ = enc.Write([]string{string(data)})
 	enc.Flush()
@@ -137,17 +135,11 @@ func (h *Handlers) bulkQuery(w http.ResponseWriter, r *http.Request) {
 				} else {
 					results[i].Result = res
 				}
-				return nil // never abort the group on individual errors
+				return nil
 			})
 		}
 		_ = g.Wait()
 	}
 
-	writeJSON(w, http.StatusOK, results)
-}
-
-func writeJSON(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
+	httputil.WriteJSON(w, http.StatusOK, results)
 }

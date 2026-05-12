@@ -30,7 +30,7 @@ type Client struct {
 
 type RouteInfo struct {
 	Prefix        netip.Prefix
-	ASN           int
+	ASN           int64
 	RPSLPK        string
 	IRRSource     string
 	RPSLText      string
@@ -52,7 +52,7 @@ type graphqlResponse struct {
 			Source        string `json:"source"`
 			ObjectText    string `json:"objectText"`
 			Prefix        string `json:"prefix"`
-			ASN           *int   `json:"asn"`
+			ASN           *int64 `json:"asn"`
 			RPKIStatus    string `json:"rpkiStatus"`
 			RPKIMaxLength *int   `json:"rpkiMaxLength"`
 		} `json:"rpslObjects"`
@@ -137,14 +137,14 @@ func (c *Client) QueryLastUpdate(ctx context.Context) (map[string]string, error)
 	return result, nil
 }
 
-func (c *Client) QueryASN(ctx context.Context, asn int) ([]RouteInfo, error) {
+func (c *Client) QueryASN(ctx context.Context, asn int64) ([]RouteInfo, error) {
 	if c.endpoint == "" {
 		return []RouteInfo{}, nil
 	}
 
 	var decoded graphqlResponse
 	if err := c.execute(ctx, queryASN, map[string]any{
-		"asn":   []int{asn},
+		"asn":   []int64{asn},
 		"limit": maxIRRdResults,
 	}, &decoded); err != nil {
 		return []RouteInfo{}, err
@@ -320,7 +320,7 @@ func toRouteInfo(decoded graphqlResponse) []RouteInfo {
 		if err != nil {
 			continue
 		}
-		asn := 0
+		var asn int64
 		if obj.ASN != nil {
 			asn = *obj.ASN
 		}

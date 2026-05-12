@@ -3,7 +3,7 @@ package importer_test
 import (
 	"testing"
 
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/importer"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/importer"
 )
 
 func TestParseBGPLine(t *testing.T) {

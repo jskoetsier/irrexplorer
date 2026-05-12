@@ -3,155 +3,105 @@ package store
 import (
 	"context"
 	"net/netip"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/domain"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/domain"
 )
 
 type PostgresStore struct {
 	pool *pgxpool.Pool
 }
 
-func New(ctx context.Context, databaseURL string) (*PostgresStore, error) {
-	pool, err := pgxpool.New(ctx, databaseURL)
-	if err != nil {
-		return nil, err
-	}
-	if err := pool.Ping(ctx); err != nil {
-		pool.Close()
-		return nil, err
-	}
-	return &PostgresStore{pool: pool}, nil
+// New wraps an existing connection pool. The caller owns the pool's lifecycle.
+func New(pool *pgxpool.Pool) *PostgresStore {
+	return &PostgresStore{pool: pool}
 }
 
+// QueryPrefixesAny returns BGP and RIR routes that overlap any of the given prefixes
+// using a single query per table (unnest + GiST index scan).
 func (s *PostgresStore) QueryPrefixesAny(ctx context.Context, prefixes []netip.Prefix) ([]domain.RouteInfo, []domain.RouteInfo, error) {
 	if len(prefixes) == 0 {
-		return []domain.RouteInfo{}, []domain.RouteInfo{}, nil
+		return nil, nil, nil
 	}
 
-	// Use parallel processing for large prefix lists
-	const maxConcurrency = 10
-
-	type queryResult struct {
-		bgp []domain.RouteInfo
-		rir []domain.RouteInfo
-		err error
+	cidrStrings := make([]string, len(prefixes))
+	for i, p := range prefixes {
+		cidrStrings[i] = p.String()
 	}
 
-	resultsChan := make(chan queryResult, len(prefixes))
-	var wg sync.WaitGroup
-	semaphore := make(chan struct{}, maxConcurrency)
-
-	for _, prefix := range prefixes {
-		wg.Add(1)
-		go func(p netip.Prefix) {
-			defer wg.Done()
-
-			semaphore <- struct{}{}
-			defer func() { <-semaphore }()
-
-			bgpResults := make([]domain.RouteInfo, 0)
-			rirResults := make([]domain.RouteInfo, 0)
-
-			// Query BGP table
-			rows, err := s.pool.Query(ctx, `
-				SELECT prefix::text, asn, rpki_status FROM bgp
-				WHERE prefix <<= $1::cidr OR prefix >> $1::cidr
-				LIMIT 10000
-			`, p.String())
-			if err != nil {
-				resultsChan <- queryResult{err: err}
-				return
-			}
-			for rows.Next() {
-				var prefixText string
-				var asn int
-				var rpkiStatus *string
-				if err := rows.Scan(&prefixText, &asn, &rpkiStatus); err != nil {
-					rows.Close()
-					resultsChan <- queryResult{err: err}
-					return
-				}
-				parsed, err := netip.ParsePrefix(prefixText)
-				if err != nil {
-					continue
-				}
-				status := ""
-				if rpkiStatus != nil {
-					status = *rpkiStatus
-				}
-				bgpResults = append(bgpResults, domain.RouteInfo{Prefix: parsed.Masked(), ASN: asn, RPKIStatus: status})
-			}
-			rows.Close()
-			if err := rows.Err(); err != nil {
-				resultsChan <- queryResult{err: err}
-				return
-			}
-
-			// Query RIR stats table
-			rirRows, err := s.pool.Query(ctx, `
-				SELECT prefix::text, rir::text FROM rirstats
-				WHERE prefix <<= $1::cidr OR prefix >> $1::cidr
-				LIMIT 10000
-			`, p.String())
-			if err != nil {
-				resultsChan <- queryResult{err: err}
-				return
-			}
-			for rirRows.Next() {
-				var prefixText string
-				var rirName string
-				if err := rirRows.Scan(&prefixText, &rirName); err != nil {
-					rirRows.Close()
-					resultsChan <- queryResult{err: err}
-					return
-				}
-				parsed, err := netip.ParsePrefix(prefixText)
-				if err != nil {
-					continue
-				}
-				rirValue := rirName
-				rirResults = append(rirResults, domain.RouteInfo{Prefix: parsed.Masked(), RIR: &rirValue})
-			}
-			rirRows.Close()
-			if err := rirRows.Err(); err != nil {
-				resultsChan <- queryResult{err: err}
-				return
-			}
-
-			resultsChan <- queryResult{bgp: bgpResults, rir: rirResults}
-		}(prefix)
+	bgpRows, err := s.pool.Query(ctx, `
+		WITH qp AS (SELECT unnest($1::cidr[]) AS p)
+		SELECT b.prefix::text, b.asn, b.rpki_status
+		FROM bgp b, qp
+		WHERE b.prefix <<= qp.p OR b.prefix >> qp.p
+	`, cidrStrings)
+	if err != nil {
+		return nil, nil, err
 	}
+	defer bgpRows.Close()
 
-	go func() {
-		wg.Wait()
-		close(resultsChan)
-	}()
-
-	allBGP := make([]domain.RouteInfo, 0)
-	allRIR := make([]domain.RouteInfo, 0)
-	for res := range resultsChan {
-		if res.err != nil {
-			return nil, nil, res.err
+	var allBGP []domain.RouteInfo
+	for bgpRows.Next() {
+		var prefixText string
+		var asn int64
+		var rpkiStatus *string
+		if err := bgpRows.Scan(&prefixText, &asn, &rpkiStatus); err != nil {
+			return nil, nil, err
 		}
-		allBGP = append(allBGP, res.bgp...)
-		allRIR = append(allRIR, res.rir...)
+		parsed, err := netip.ParsePrefix(prefixText)
+		if err != nil {
+			continue
+		}
+		status := ""
+		if rpkiStatus != nil {
+			status = *rpkiStatus
+		}
+		allBGP = append(allBGP, domain.RouteInfo{Prefix: parsed.Masked(), ASN: asn, RPKIStatus: status})
+	}
+	if err := bgpRows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	rirRows, err := s.pool.Query(ctx, `
+		WITH qp AS (SELECT unnest($1::cidr[]) AS p)
+		SELECT r.prefix::text, r.rir::text
+		FROM rirstats r, qp
+		WHERE r.prefix <<= qp.p OR r.prefix >> qp.p
+	`, cidrStrings)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rirRows.Close()
+
+	var allRIR []domain.RouteInfo
+	for rirRows.Next() {
+		var prefixText string
+		var rirName string
+		if err := rirRows.Scan(&prefixText, &rirName); err != nil {
+			return nil, nil, err
+		}
+		parsed, err := netip.ParsePrefix(prefixText)
+		if err != nil {
+			continue
+		}
+		rir := rirName
+		allRIR = append(allRIR, domain.RouteInfo{Prefix: parsed.Masked(), RIR: &rir})
+	}
+	if err := rirRows.Err(); err != nil {
+		return nil, nil, err
 	}
 
 	return allBGP, allRIR, nil
 }
 
-func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int, limit, offset int) ([]domain.RouteInfo, int, error) {
-	// Get total count first
+func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int64, limit, offset int) ([]domain.RouteInfo, int, error) {
 	var totalCount int
 	err := s.pool.QueryRow(ctx, `SELECT COUNT(*) FROM bgp WHERE asn = $1`, asn).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Apply pagination limits
 	if limit <= 0 || limit > 10000 {
 		limit = 10000
 	}
@@ -160,10 +110,10 @@ func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int, limit, offse
 	}
 
 	rows, err := s.pool.Query(ctx, `
-		SELECT prefix::text, asn, rpki_status 
-		FROM bgp 
-		WHERE asn = $1 
-		ORDER BY prefix 
+		SELECT prefix::text, asn, rpki_status
+		FROM bgp
+		WHERE asn = $1
+		ORDER BY prefix
 		LIMIT $2 OFFSET $3`, asn, limit, offset)
 	if err != nil {
 		return nil, 0, err
@@ -173,7 +123,7 @@ func (s *PostgresStore) QueryBGPByASN(ctx context.Context, asn int, limit, offse
 	results := make([]domain.RouteInfo, 0)
 	for rows.Next() {
 		var prefixText string
-		var scannedASN int
+		var scannedASN int64
 		var rpkiStatus *string
 		if err := rows.Scan(&prefixText, &scannedASN, &rpkiStatus); err != nil {
 			return nil, 0, err
@@ -201,4 +151,25 @@ func (s *PostgresStore) GetLastImporterUpdate(ctx context.Context) (*time.Time, 
 		return nil, err
 	}
 	return &value, nil
+}
+
+// QueryRIRFreshness returns per-RIR prefix counts from rirstats.
+// Missing RIRs indicate a failed or empty import for that source.
+func (s *PostgresStore) QueryRIRFreshness(ctx context.Context) (map[string]int64, error) {
+	rows, err := s.pool.Query(ctx, `SELECT rir::text, COUNT(*) FROM rirstats GROUP BY rir`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]int64)
+	for rows.Next() {
+		var rir string
+		var count int64
+		if err := rows.Scan(&rir, &count); err != nil {
+			return nil, err
+		}
+		result[rir] = count
+	}
+	return result, rows.Err()
 }

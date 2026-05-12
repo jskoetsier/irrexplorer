@@ -22,14 +22,13 @@ func Run(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logger) error {
 	logger.Info("BGP import complete")
 
 	logger.Info("starting RIR stats import")
-	if err := ImportRIRStats(ctx, pool, httpClient, logger); err != nil {
-		// RIR failure is non-fatal: log but don't abort the timestamp update.
-		logger.Warn("RIR stats import failed (non-fatal)", "error", err)
+	rirErr := ImportRIRStats(ctx, pool, httpClient, logger)
+	if rirErr != nil {
+		logger.Error("RIR stats import failed", "error", rirErr)
 	} else {
 		logger.Info("RIR stats import complete")
 	}
 
-	// Update last_data_import: delete existing row then insert current timestamp.
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		logger.Warn("failed to begin last_data_import transaction", "error", err)
@@ -45,5 +44,8 @@ func Run(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logger) error {
 		}
 	}
 
+	if rirErr != nil {
+		return fmt.Errorf("RIR stats import failed (BGP import succeeded): %w", rirErr)
+	}
 	return nil
 }

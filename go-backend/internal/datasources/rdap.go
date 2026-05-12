@@ -42,7 +42,7 @@ func (c *RDAPClient) QueryIP(ctx context.Context, ipAddress string, rir string) 
 	return map[string]any{"ip": ipAddress, "error": "Not found in any RIR"}
 }
 
-func (c *RDAPClient) QueryASN(ctx context.Context, asn int, rir string) map[string]any {
+func (c *RDAPClient) QueryASN(ctx context.Context, asn int64, rir string) map[string]any {
 	resource := fmt.Sprintf("%d", asn)
 	if rir != "" {
 		if base, ok := rdapBootstrapServers[rir]; ok {

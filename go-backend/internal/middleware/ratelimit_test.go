@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sebastiaan/irrexplorer/go-backend/internal/middleware"
+	"gitlab.int.koetsier.org/sebas/irrexplorer/go-backend/internal/middleware"
 )
 
 func TestRateLimiterAllows(t *testing.T) {
