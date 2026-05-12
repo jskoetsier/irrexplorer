@@ -1,4 +1,4 @@
-import type { MessageCategory, RPKIStatus, QueryCategory, AdvancedSearchFilters } from './api';
+import type { MessageCategory, RPKIStatus, QueryCategory } from './api';
 
 export interface QueryFormProps {
   initialQuery?: string;
@@ -9,16 +9,12 @@ export interface PrefixQueryProps {
   query: string;
   reducedColour: boolean;
   filterWarningError: boolean;
-  queryCategory: QueryCategory;
-  filters: AdvancedSearchFilters;
 }
 
 export interface ASNQueryProps {
   query: string;
   reducedColour: boolean;
   filterWarningError: boolean;
-  queryCategory: QueryCategory;
-  filters: AdvancedSearchFilters;
 }
 
 export interface SetQueryProps {
@@ -92,10 +88,6 @@ export interface QueryProps {
   category?: QueryCategory;
 }
 
-export interface AdvancedSearchFiltersProps {
-  onFilterChange: (filters: AdvancedSearchFilters) => void;
-}
-
 export interface SpinnerProps {
   size?: 'sm' | 'lg';
 }
@@ -120,13 +112,3 @@ export interface HomeProps {
 export interface StatusProps {
   path?: string;
 }
-
-export interface VisualizationsProps {
-  path?: string;
-}
-
-export interface AnalysisProps {
-  path?: string;
-}
-
-export interface FooterProps {}

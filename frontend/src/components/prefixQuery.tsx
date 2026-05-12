@@ -4,14 +4,12 @@ import PrefixTable from './prefixTable/prefixTable';
 import { findLeastSpecific } from '../utils/prefixData';
 import api from '../services/api';
 import DataSourcesModal from './dataSources/DataSourcesModal';
-import type { PrefixData, QueryCategory, AdvancedSearchFilters } from '../types';
+import type { PrefixData } from '../types';
 
 interface PrefixQueryProps {
   query: string;
   reducedColour: boolean;
   filterWarningError: boolean;
-  queryCategory: QueryCategory;
-  filters: AdvancedSearchFilters;
 }
 
 export default function PrefixQuery({ query, reducedColour, filterWarningError }: PrefixQueryProps) {

@@ -2,14 +2,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import QueryForm from './common/queryForm';
-import AdvancedSearchFilters from './advancedSearchFilters';
 import ExportButtons from './exportButtons';
 import logo from '../logo.png';
 import api from '../services/api';
 import PrefixQuery from './prefixQuery';
 import ASNQuery from './asnQuery';
 import SetQuery from './setQuery';
-import type { QueryCategory, AdvancedSearchFilters as Filters } from '../types';
+import type { QueryCategory } from '../types';
 import { setSeo } from '../utils/seo';
 
 export default function Query() {
@@ -19,7 +18,6 @@ export default function Query() {
   const [queryCategory, setQueryCategory] = useState<QueryCategory>('prefix');
   const [reducedColour, setReducedColour] = useState(false);
   const [filterWarningError, setFilterWarningError] = useState(false);
-  const [filters, setFilters] = useState<Filters>({ type: 'all', status: 'all', search: '' });
 
   const queryInput = () => query ?? (query1 && query2 ? `${query1}/${query2}` : '');
 
@@ -40,7 +38,6 @@ export default function Query() {
         description: getQueryDescription(cleanResult.category, cleanResult.cleanedValue),
         path: `/${cleanResult.category}/${cleanResult.cleanedValue}`,
       });
-      api.addSearchHistory(cleanResult.cleanedValue, cleanResult.category);
     }
   }, [query, query1, query2, category, navigate]);
 
@@ -92,7 +89,6 @@ export default function Query() {
           <label htmlFor="filterWarningError">Show only error/warning</label>
         </form>
       </div>
-      <AdvancedSearchFilters onFilterChange={setFilters} />
       {cleanQuery && (
         <div className="mb-3">
           <ExportButtons query={cleanQuery} queryType={queryCategory} />
@@ -104,7 +100,6 @@ export default function Query() {
           reducedColour={reducedColour}
           filterWarningError={filterWarningError}
           queryCategory={queryCategory}
-          filters={filters}
         />
       )}
     </div>

@@ -6,6 +6,22 @@ The format follows Keep a Changelog and the project uses Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-05-12
+
+### Removed
+
+- Data Visualizations page and all chart components (prefix allocation, RIR distribution, ASN relationships, historical timeline)
+- Enhanced Analysis page and all analysis components (RPKI dashboard, hijack detection, prefix overlap)
+- Navigation features from frontend: search history, bookmarks, popular queries, trending queries
+- Advanced search filters UI (rendered but never applied to results)
+- Dead API functions and types for removed features
+- Hardcoded version in footer; now derived from `package.json` at build time
+
+### Fixed
+
+- Footer showing wrong version (hardcoded `v2.4.0` instead of actual version)
+- Footer linking to non-existent GitHub repo; now points to GitLab
+
 ## [2.5.0] - 2026-05-12
 
 ### Changed

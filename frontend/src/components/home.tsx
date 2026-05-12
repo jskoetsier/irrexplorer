@@ -1,9 +1,6 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import logo from '../logo.png';
 import QueryForm from './common/queryForm';
-import PopularQueries from './popularQueries';
-import SearchHistory from './searchHistory';
 import { getWebsiteStructuredData, setSeo } from '../utils/seo';
 
 export default function Home() {
@@ -32,22 +29,6 @@ export default function Home() {
             Enter a prefix, IP address, AS number or AS/route set name.
           </p>
           <QueryForm />
-
-          <div className="text-center my-4">
-            <div className="btn-group" role="group">
-              <Link to="/visualizations" className="btn btn-outline-primary btn-lg">
-                <i className="fas fa-chart-bar me-2"></i>
-                Data Visualizations
-              </Link>
-              <Link to="/analysis" className="btn btn-outline-success btn-lg">
-                <i className="fas fa-microscope me-2"></i>
-                Enhanced Analysis
-              </Link>
-            </div>
-          </div>
-
-          <SearchHistory />
-          <PopularQueries />
         </div>
       </div>
     </div>

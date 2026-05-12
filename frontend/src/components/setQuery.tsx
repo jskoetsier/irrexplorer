@@ -1,13 +1,10 @@
 import SetIncludedTable from './common/setIncludedTable';
 import SetExpansionTable from './setExpansionTable/setExpansionTable';
-import type { QueryCategory, AdvancedSearchFilters } from '../types';
+import type { QueryCategory } from '../types';
 
 interface SetQueryProps {
   query: string;
   queryCategory: QueryCategory;
-  reducedColour?: boolean;
-  filterWarningError?: boolean;
-  filters: AdvancedSearchFilters;
 }
 
 export default function SetQuery({ query, queryCategory }: SetQueryProps) {

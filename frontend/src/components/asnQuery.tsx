@@ -4,14 +4,12 @@ import PrefixTable from './prefixTable/prefixTable';
 import api from '../services/api';
 import SetIncludedTable from './common/setIncludedTable';
 import DataSourcesModal from './dataSources/DataSourcesModal';
-import type { PrefixData, QueryCategory, AdvancedSearchFilters } from '../types';
+import type { PrefixData } from '../types';
 
 interface ASNQueryProps {
   query: string;
   reducedColour: boolean;
   filterWarningError: boolean;
-  queryCategory: QueryCategory;
-  filters: AdvancedSearchFilters;
 }
 
 export default function ASNQuery({ query, reducedColour, filterWarningError }: ASNQueryProps) {

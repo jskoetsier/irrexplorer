@@ -1,15 +1,8 @@
 import type {
   ApiResult,
   CleanQueryResult,
-  SuccessResult,
   QueryCategory,
   AutocompleteResult,
-  SearchResult,
-  Bookmark,
-  PopularQuery,
-  TrendingQuery,
-  FilterOptions,
-  AdvancedSearchFilters,
   PrefixData,
   ASNPrefixesResponse,
   SetExpansionResult,
@@ -129,110 +122,6 @@ export async function autocomplete(query: string, limit = 10): Promise<ApiResult
   }
 }
 
-export async function addSearchHistory(query: string, queryType: QueryCategory): Promise<void> {
-  try {
-    await axios.post(`${apiUrl}/search-history`, { query, query_type: queryType });
-  } catch (exc: unknown) {
-    const { error } = extractAxiosError(exc);
-    console.error('Failed to add search history:', error);
-  }
-}
-
-export async function getSearchHistory(limit = 20): Promise<ApiResult<SearchResult[]>> {
-  const url = `${apiUrl}/search-history?limit=${limit}`;
-  try {
-    const response = await axios.get<SearchResult[]>(url);
-    return { data: response.data, url };
-  } catch (exc: unknown) {
-    return { data: null, url, ...extractAxiosError(exc) };
-  }
-}
-
-export async function clearSearchHistory(): Promise<SuccessResult> {
-  try {
-    await axios.delete(`${apiUrl}/search-history/clear`);
-    return { success: true };
-  } catch (exc: unknown) {
-    const { error } = extractAxiosError(exc);
-    return { success: false, error };
-  }
-}
-
-export async function addBookmark(query: string, queryType: QueryCategory, name = ''): Promise<SuccessResult> {
-  try {
-    await axios.post(`${apiUrl}/bookmarks`, { query, query_type: queryType, name });
-    return { success: true };
-  } catch (exc: unknown) {
-    const { error } = extractAxiosError(exc);
-    return { success: false, error };
-  }
-}
-
-export async function getBookmarks(): Promise<ApiResult<Bookmark[]>> {
-  const url = `${apiUrl}/bookmarks`;
-  try {
-    const response = await axios.get<Bookmark[]>(url);
-    return { data: response.data, url };
-  } catch (exc: unknown) {
-    return { data: null, url, ...extractAxiosError(exc) };
-  }
-}
-
-export async function deleteBookmark(bookmarkId: number): Promise<SuccessResult> {
-  try {
-    await axios.delete(`${apiUrl}/bookmarks/${bookmarkId}`);
-    return { success: true };
-  } catch (exc: unknown) {
-    const { error } = extractAxiosError(exc);
-    return { success: false, error };
-  }
-}
-
-export async function getPopularQueries(limit = 10, days = 7): Promise<ApiResult<PopularQuery[]>> {
-  const url = `${apiUrl}/popular?limit=${limit}&days=${days}`;
-  try {
-    const response = await axios.get<PopularQuery[]>(url);
-    return { data: response.data, url };
-  } catch (exc: unknown) {
-    return { data: null, url, ...extractAxiosError(exc) };
-  }
-}
-
-export async function getTrendingQueries(limit = 10): Promise<ApiResult<TrendingQuery[]>> {
-  const url = `${apiUrl}/trending?limit=${limit}`;
-  try {
-    const response = await axios.get<TrendingQuery[]>(url);
-    return { data: response.data, url };
-  } catch (exc: unknown) {
-    return { data: null, url, ...extractAxiosError(exc) };
-  }
-}
-
-export async function advancedSearch(query: string, filters: AdvancedSearchFilters = { type: 'all', status: 'all', search: '' }): Promise<ApiResult<unknown>> {
-  const params = new URLSearchParams({ q: query });
-  if (filters.type && filters.type !== 'all') params.append('type', filters.type);
-  if (filters.status && filters.status !== 'all') params.append('status', filters.status);
-  if (filters.search) params.append('search', filters.search);
-
-  const url = `${apiUrl}/advanced-search?${params.toString()}`;
-  try {
-    const response = await axios.get(url);
-    return { data: response.data, url };
-  } catch (exc: unknown) {
-    return { data: null, url, ...extractAxiosError(exc) };
-  }
-}
-
-export async function getFilterOptions(): Promise<ApiResult<FilterOptions>> {
-  const url = `${apiUrl}/filter-options`;
-  try {
-    const response = await axios.get<FilterOptions>(url);
-    return { data: response.data, url };
-  } catch (exc: unknown) {
-    return { data: null, url, ...extractAxiosError(exc) };
-  }
-}
-
 const api = {
   getMetadata,
   getPrefixesForPrefix,
@@ -242,16 +131,6 @@ const api = {
   getSetExpansion,
   cancelAllRequests,
   autocomplete,
-  addSearchHistory,
-  getSearchHistory,
-  clearSearchHistory,
-  addBookmark,
-  getBookmarks,
-  deleteBookmark,
-  getPopularQueries,
-  getTrendingQueries,
-  advancedSearch,
-  getFilterOptions,
 };
 
 export default api;

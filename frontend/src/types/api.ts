@@ -45,8 +45,6 @@ export interface PrefixData {
   rpkiRoutes: RPKIRoute[];
   irrRoutes: Record<string, IRRRoute[]>;
   messages: Message[];
-  prefixSortKeyIpPrefix?: string;
-  prefixSortKeyReverseNetworklenIp?: string;
   goodnessOverall?: number;
 }
 
@@ -66,53 +64,11 @@ export interface SetMemberOfResult {
   route_sets: string[];
 }
 
-export interface SearchResult {
-  query: string;
-  query_type: QueryCategory;
-  timestamp: string;
-}
-
-export interface Bookmark {
-  id: number;
-  query: string;
-  query_type: QueryCategory;
-  name: string;
-  created_at: string;
-}
-
-export interface PopularQuery {
-  query: string;
-  query_type: QueryCategory;
-  count: number;
-}
-
-export interface TrendingQuery {
-  query: string;
-  query_type: QueryCategory;
-  trend_score: number;
-}
-
-export interface AdvancedSearchFilters {
-  type: 'all' | 'prefix' | 'asn' | 'as-set' | 'route-set';
-  status: 'all' | 'danger' | 'warning' | 'info' | 'success';
-  search: string;
-}
-
-export interface FilterOptions {
-  types: string[];
-  statuses: string[];
-}
-
 export interface ApiResult<T> {
   data: T | null;
   url: string | null;
   error?: string;
   statusCode?: number;
-}
-
-export interface SuccessResult {
-  success: boolean;
-  error?: string;
 }
 
 export interface AutocompleteResult {
