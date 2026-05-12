@@ -1,4 +1,21 @@
 {{- if .Values.migrations.enabled }}
+{{- /*
+  Migration ConfigMap: every .sql file under charts/irrexplorer/migrations/ is
+  baked into a ConfigMap and applied in lexical order by the migrate Job.
+  Migrations must be idempotent — they run on every helm upgrade.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "irrexplorer.fullname" . }}-migrations-{{ .Release.Revision }}
+  labels:
+    {{- include "irrexplorer.labels" . | nindent 4 }}
+data:
+{{- range $path, $bytes := .Files.Glob "migrations/*.sql" }}
+  {{ base $path }}: |
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -26,18 +43,23 @@ spec:
             - sh
             - -c
             - |
-              psql "$DATABASE_URL" <<'SQL'
-              DROP TABLE IF EXISTS bgp_alert_events CASCADE;
-              DROP TABLE IF EXISTS alert_configurations CASCADE;
-              DROP TABLE IF EXISTS user_monitored_asns CASCADE;
-              DROP TABLE IF EXISTS user_emails CASCADE;
-              DROP TABLE IF EXISTS bgp_users CASCADE;
-              DROP TABLE IF EXISTS system_config CASCADE;
-              SQL
+              set -e
+              for f in $(ls /migrations/*.sql | sort); do
+                echo "Applying $f"
+                psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f "$f"
+              done
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "irrexplorer.fullname" . }}-app
                   key: DATABASE_URL
+          volumeMounts:
+            - name: migrations
+              mountPath: /migrations
+              readOnly: true
+      volumes:
+        - name: migrations
+          configMap:
+            name: {{ include "irrexplorer.fullname" . }}-migrations-{{ .Release.Revision }}
 {{- end }}

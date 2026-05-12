@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/bits"
-	"net"
+	"net/netip"
 	"net/http"
 	"strconv"
 	"strings"
@@ -50,6 +50,7 @@ func ParseRIRLine(line, rir string) (RIREntry, bool) {
 	start := parts[3]
 	valueStr := parts[4]
 
+	var rawPrefix string
 	switch recType {
 	case "ipv4":
 		value, err := strconv.Atoi(valueStr)
@@ -61,26 +62,27 @@ func ParseRIRLine(line, rir string) (RIREntry, bool) {
 			return RIREntry{}, false // not a power of 2
 		}
 		prefixLen := 32 - bits.Len(uint(value)) + 1
-		prefix := fmt.Sprintf("%s/%d", start, prefixLen)
-		if net.ParseIP(start) == nil {
-			return RIREntry{}, false
-		}
-		return RIREntry{Prefix: prefix, RIR: rir}, true
+		rawPrefix = fmt.Sprintf("%s/%d", start, prefixLen)
 
 	case "ipv6":
 		prefixLen, err := strconv.Atoi(valueStr)
 		if err != nil {
 			return RIREntry{}, false
 		}
-		prefix := fmt.Sprintf("%s/%d", start, prefixLen)
-		if net.ParseIP(start) == nil {
-			return RIREntry{}, false
-		}
-		return RIREntry{Prefix: prefix, RIR: rir}, true
+		rawPrefix = fmt.Sprintf("%s/%d", start, prefixLen)
 
 	default:
 		return RIREntry{}, false
 	}
+
+	// Validate and normalize: Postgres CIDR rejects host bits set, so mask off any
+	// stray bits from misaligned RIR entries. A single bad row in pgx CopyFrom kills
+	// the entire batch, so silently skipping unparseable entries is essential.
+	parsed, err := netip.ParsePrefix(rawPrefix)
+	if err != nil {
+		return RIREntry{}, false
+	}
+	return RIREntry{Prefix: parsed.Masked().String(), RIR: rir}, true
 }
 
 // ImportRIRStats downloads all RIR delegation files concurrently, parses them,

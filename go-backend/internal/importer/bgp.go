@@ -16,9 +16,12 @@ const bgpToolsURL = "https://bgp.tools/table.jsonl"
 
 // BGPEntry is one line from bgp.tools/table.jsonl.
 // bgp.tools uses uppercase keys: {"CIDR":"...","ASN":...,"Hits":...}
+// ASN is int64 because 4-byte ASNs (e.g. 4200001401) exceed the 32-bit signed
+// range and pgx COPY rejects them when the destination column is int4. The
+// matching DB column is bigint.
 type BGPEntry struct {
 	Prefix string `json:"CIDR"`
-	ASN    int    `json:"ASN"`
+	ASN    int64  `json:"ASN"`
 }
 
 // ParseBGPLine parses a single JSONL line. Exported for testing.
