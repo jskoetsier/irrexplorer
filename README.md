@@ -53,7 +53,7 @@ Required environment:
 ```bash
 DATABASE_URL=postgresql://irrexplorer:password@localhost:5432/irrexplorer
 REDIS_URL=redis://localhost:6379/0
-IRRD_ENDPOINT=https://rr.ntt.net/graphql/
+IRRD_ENDPOINT=https://rr.rxtx.nl/graphql/
 ALLOWED_ORIGINS=http://localhost:5173
 ```
 

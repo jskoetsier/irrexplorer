@@ -73,7 +73,7 @@ config:
   irrdEndpoint: ""
   lookingGlassUrl: "https://lg.ring.nlnog.net"
   bgpSource: "https://bgp.tools/table.jsonl"
-  additionalIrrSources: "RADB,ALTDB,BELL,LEVEL3,RGNET,APNIC,JPIRR,ARIN,BBOI,NTTCOM"
+  additionalIrrSources: "RADB,ALTDB,BELL,LEVEL3,RGNET,APNIC,JPIRR,ARIN,BBOI,RXTXNL"
   jwtSecretKey: change-me
 
 ingress:
