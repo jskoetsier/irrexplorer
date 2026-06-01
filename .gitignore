@@ -10,6 +10,7 @@ rancher-api.txt
 .gomodcache
 charts/irrexplorer/values.local.yaml
 charts/irrexplorer/values.secrets.yaml
+charts/irrexplorer/values.ws-acc.yaml
 AGENTS.md
 scripts.py
 .claude/
