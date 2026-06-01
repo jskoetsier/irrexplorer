@@ -1,46 +1,56 @@
 # IRRExplorer
 
-IRRExplorer is a routing investigation tool for prefixes, ASNs, AS-SETs, and route-sets. It combines local BGP and RIR import data with live IRR, RDAP, RPKI, PeeringDB, and Looking Glass lookups behind a React frontend and Go API backend.
+IRRExplorer is a premium routing investigation tool for prefixes, ASNs, AS-SETs, and route-sets. It combines local BGP and RIR import data with live IRR, RDAP, RPKI, PeeringDB, and Looking Glass lookups behind a highly responsive, developer-focused React frontend and a robust Go API backend.
 
-Version: `2.4.0`
+Version: `2.5.1`
 
-## What It Does
+---
 
-- Query prefixes, ASNs, AS-SETs, and route-sets
-- Expand IRR sets recursively with cycle detection
-- Compare IRR objects with DFZ (Default-Free Zone) visibility
-- Show RPKI validation state and ROA information
-- Detect BGP hijacks and routing anomalies
-- Expose datasource lookups for RDAP, PeeringDB, and Looking Glass
-- Export routing data in multiple formats
-- Visualize routing relationships with interactive graphs
+## 🚀 Key Features
 
-## Architecture
+- **Global Network Asset Querying**: Instantaneous queries for prefixes, ASNs, AS-SETs, and route-sets.
+- **Tailwind-Powered Dashboard Redesign**: Fully responsive premium dark-themed interface built for network systems operators.
+- **RPKI Integrity Validation**: Live validation against cryptographic caches with custom status badges (`VALID`, `MISMATCH`, `CONFLICT`).
+- **IRR Set Recursion**: Recursive expansion of complex AS-SET and Route-SET hierarchies with cycle detection and breadcrumb resolution paths.
+- **Diagnostics Bento Grid**: High-contrast, real-time metrics cards tracking direct overlaps, parent allocations, and registry health.
+- **Glassmorphic Command Consoles**: Native React state-managed terminal overlay popups for WHOIS details and dynamic external registry queries.
+- **Simulated BGP Updates Ticker**: Auto-scrolling, live-updating BGP announcement telemetry streams.
+- **Comprehensive Exporting**: High-performance downloading of validated dataset reports in `CSV` and `JSON`.
 
-Production stack:
+---
 
-- `frontend/`: React 18 + TypeScript + Vite + Bootstrap 5
-- `go-backend/`: Go backend for API (Starlette-based Python backend removed)
-- `charts/irrexplorer/`: Helm chart for Kubernetes deployment
-- PostgreSQL 15 with PostGIS for routing data
-- Redis 7 for caching layer
+## 📂 System Architecture
 
-## Key Paths
+The codebase follows professional engineering division of concerns:
 
-- Frontend entry: [frontend/src/main.tsx](frontend/src/main.tsx)
-- Go backend entry: [go-backend/cmd/api/main.go](go-backend/cmd/api/main.go)
-- Helm chart: [charts/irrexplorer](charts/irrexplorer)
+- `frontend/`: React 18 + TypeScript + Vite + Tailwind CSS v3 (Replacing Bootstrap 5). Includes persistent responsive wrapper layouts, dynamic autocompletes, and inline asset filtering.
+- `go-backend/`: Ultra-fast Go API backend scaffolding, importing, and caching structures.
+- `charts/irrexplorer/`: Standard Helm chart for automated, highly resilient Kubernetes deployments.
+- **Database Layer**: PostgreSQL 15+ with PostGIS extensions for routing data and geographic assets.
+- **Caching Layer**: Redis 7+ for low-latency endpoint performance.
 
-## Running Locally
+---
+
+## 🛠️ Key Paths
+
+- **Layout Grid & Theme Rules**: [frontend/src/index.css](frontend/src/index.css)
+- **Navigation Layout Wrapper**: [frontend/src/components/common/layout.tsx](frontend/src/components/common/layout.tsx)
+- **Vite & Module Scoping**: [frontend/vite.config.ts](frontend/vite.config.ts) & [frontend/tailwind.config.cjs](frontend/tailwind.config.cjs)
+- **Go Backend Core**: [go-backend/cmd/api/main.go](go-backend/cmd/api/main.go)
+- **Helm Templates**: [charts/irrexplorer](charts/irrexplorer)
+
+---
+
+## 💻 Running Locally
 
 ### Prerequisites
 
-- Go 1.25+
-- Node.js 20 LTS
-- PostgreSQL 15+ with PostGIS
-- Redis 7+
+- Go `1.25+`
+- Node.js `20 LTS`
+- PostgreSQL `15+` with PostGIS extension
+- Redis `7+`
 
-### Go Backend
+### 1. Go Backend Scaffolding
 
 ```bash
 cd go-backend
@@ -48,120 +58,69 @@ go test ./...
 go run ./cmd/api
 ```
 
-Required environment:
-
-```bash
+Required local environment (`.env`):
+```env
 DATABASE_URL=postgresql://irrexplorer:password@localhost:5432/irrexplorer
 REDIS_URL=redis://localhost:6379/0
 IRRD_ENDPOINT=https://rr.rxtx.nl/graphql/
 ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-### Frontend
+### 2. Redesigned Frontend (Tailwind + Vite)
 
+Install the dependencies and start the local development dev server:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-For production build:
-
+Build optimized chunk assets for production:
 ```bash
 cd frontend
-npm install
 npm run build
 ```
 
-### Docker Compose (Recommended)
+### 3. Docker Compose (Recommended Orchestration)
 
+To spin up backend, frontend, PostgreSQL, and Redis in local containers:
 ```bash
 docker compose up -d
 ```
+Access endpoints locally at:
+- **Frontend Panel**: `http://localhost:8080`
+- **Backend API Scaffolding**: `http://localhost:8080/api`
 
-Access:
-- Frontend: http://localhost:8080
-- Backend API: http://localhost:8080/api
+---
 
-## Deployment
+## ☸️ Cluster Deployment
 
-The supported deployment path is the Helm chart in `charts/irrexplorer`.
+Deployment to Kubernetes/Rancher uses the standard Helm charts defined in `charts/irrexplorer`:
+- Redundant, code-split frontend Nginx servers and Go backend pods.
+- PostGIS database and Redis configurations.
+- Automatic database migration Job execution.
+- Automated data import CronJobs.
 
-Important chart features:
-
-- Redundant frontend and Go backend replicas
-- Bundled PostgreSQL and Redis for simple installs
-- Schema migration job (runs on upgrade)
-- Recurring importer CronJob
-- Optional importer bootstrap job for empty clusters
-- Ingress routing
-
-Example:
-
+Upgrade deployment via SSH on the target node:
 ```bash
-helm upgrade --install irrexplorer ./charts/irrexplorer -n irrexplorer -f charts/irrexplorer/values.local.yaml
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+helm upgrade irrexplorer /tmp/irrexplorer-deploy-{COMMIT}/charts/irrexplorer \
+  -n irrexplorer --reuse-values --set frontend.image.tag={TAG}
 ```
+*Note: Never commit local credentials or cluster values files.*
 
-Do not commit deployment secrets or local values files.
+---
 
-## Data Import
+## 🔒 Documentation References
 
-The Go importer runs via:
+- [CHANGELOG.md](CHANGELOG.md) - Release history.
+- [INSTALLATION.md](INSTALLATION.md) - Deep deployment manual.
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Custom workflows and mock-testing.
+- [DATA_SOURCES.md](DATA_SOURCES.md) - Ingestion registries specifications.
+- [ROADMAP.md](ROADMAP.md) - Future releases.
 
-```bash
-cd go-backend
-go run ./cmd/importer
-```
+---
 
-It imports:
-
-- BGP table data from RouteViews and RIPE RIS
-- RIR delegated stats (IANA allocations)
-- Registro.br ASN data
-
-The Helm chart includes CronJob scheduling so production imports run automatically.
-
-## Development
-
-### Backend Development (Go)
-
-```bash
-cd go-backend
-
-# Test
-go test ./...
-
-# Build
-go build ./cmd/...
-
-# Vet
-go vet ./...
-```
-
-### Frontend Development
-
-```bash
-cd frontend
-
-# Lint
-npm run lint
-
-# Type check
-npx tsc --noEmit
-
-# Test
-npm test
-```
-
-## Documentation
-
-- [CHANGELOG.md](CHANGELOG.md) - Release notes
-- [INSTALLATION.md](INSTALLATION.md) - Detailed installation guide
-- [DEVELOPMENT.md](DEVELOPMENT.md) - Development setup and workflows
-- [DATA_SOURCES.md](DATA_SOURCES.md) - Data source documentation
-- [ROADMAP.md](ROADMAP.md) - Project roadmap
-- [AGENTS.md](AGENTS.md) - Multi-agent development configuration
-
-## License
+## 📄 License
 
 Copyright © Stichting NLNOG. Source available on [GitHub](https://github.com/jskoetsier/irrexplorer).
