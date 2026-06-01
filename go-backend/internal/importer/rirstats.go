@@ -125,27 +125,30 @@ func ImportRIRStats(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Cl
 		return fmt.Errorf("all RIR sources failed, aborting rirstats import")
 	}
 
-	// Replace rirstats atomically.
-	if _, err := pool.Exec(ctx, "TRUNCATE rirstats"); err != nil {
-		return fmt.Errorf("truncate rirstats: %w", err)
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin rirstats tx: %w", err)
 	}
 
-	conn, err := pool.Acquire(ctx)
-	if err != nil {
-		return err
+	if _, err := tx.Exec(ctx, "TRUNCATE rirstats"); err != nil {
+		_ = tx.Rollback(ctx)
+		return fmt.Errorf("truncate rirstats: %w", err)
 	}
-	defer conn.Release()
 
 	rows := make([][]any, len(allEntries))
 	for i, e := range allEntries {
 		rows[i] = []any{e.Prefix, e.RIR}
 	}
-	_, err = conn.Conn().CopyFrom(ctx,
+	if _, err := tx.CopyFrom(ctx,
 		pgx.Identifier{"rirstats"},
 		[]string{"prefix", "rir"},
 		pgx.CopyFromRows(rows),
-	)
-	return err
+	); err != nil {
+		_ = tx.Rollback(ctx)
+		return fmt.Errorf("copy rirstats: %w", err)
+	}
+
+	return tx.Commit(ctx)
 }
 
 func fetchRIR(ctx context.Context, client *http.Client, url, rir string) ([]RIREntry, error) {

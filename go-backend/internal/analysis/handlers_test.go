@@ -25,9 +25,6 @@ func (f *fakeAnalysisStore) PrefixOverlap(_ context.Context, _ netip.Prefix) ([]
 func (f *fakeAnalysisStore) ROACoverage(_ context.Context) ([]analysis.ROACoverageRow, error) {
 	return []analysis.ROACoverageRow{}, nil
 }
-func (f *fakeAnalysisStore) IRRConsistency(_ context.Context) ([]analysis.IRRConsistencyRow, error) {
-	return []analysis.IRRConsistencyRow{}, nil
-}
 
 func TestRPKIDashboardHandler(t *testing.T) {
 	h := analysis.NewHandlers(&fakeAnalysisStore{}, nil)

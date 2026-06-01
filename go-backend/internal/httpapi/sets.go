@@ -38,7 +38,7 @@ func (s *Server) handleMemberOf(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := cacheKey("member_of", objectClass, target)
-	if s.tryCache(w, key) {
+	if s.tryCache(w, r, key) {
 		return
 	}
 
@@ -96,7 +96,7 @@ func (s *Server) handleSetExpand(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(r.URL.Path, "/api/sets/expand/")
 
 	key := cacheKey("set_expand", name)
-	if s.tryCache(w, key) {
+	if s.tryCache(w, r, key) {
 		return
 	}
 

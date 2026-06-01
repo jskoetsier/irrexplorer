@@ -24,7 +24,7 @@ func (s *Server) handleLookingGlassASN(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteJSON(w, http.StatusBadRequest, map[string]any{"error": "Invalid ASN format"})
 		return
 	}
-	httputil.WriteJSON(w, http.StatusOK, s.lgClient.QueryASN(r.Context(), asn))
+	httputil.WriteJSON(w, http.StatusOK, s.lgClient.QueryAnnouncedPrefixes(r.Context(), asn))
 }
 
 func (s *Server) handleLookingGlassRoute(w http.ResponseWriter, r *http.Request) {

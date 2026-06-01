@@ -31,7 +31,7 @@ func (s *Server) handlePrefix(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := cacheKey("prefix", prefix.String())
-	if s.tryCache(w, key) {
+	if s.tryCache(w, r, key) {
 		return
 	}
 

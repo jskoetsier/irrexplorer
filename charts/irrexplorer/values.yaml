@@ -45,7 +45,7 @@ postgres:
   database: irrexplorer
   username: irrexplorer
   password: change-me
-  storageClassName: ""
+  storageClassName: longhorn
   storageSize: 10Gi
   resources: {}
 

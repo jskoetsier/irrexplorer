@@ -1,0 +1,44 @@
+# ws-acc / sebas-test-cluster deployment
+# External exposure via shared MetalLB IP 45.14.134.122 (ingress-nginx)
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: 10.15.19.50:30500/irrexplorer/frontend
+    tag: d5a3a4a-rxtxnl
+    pullPolicy: IfNotPresent
+
+goBackend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: 10.15.19.50:30500/irrexplorer/go-backend
+    tag: e6c970d-v2.5.0
+    pullPolicy: IfNotPresent
+
+postgres:
+  enabled: true
+  storageClassName: longhorn
+  storageSize: 10Gi
+  password: 5991b4eb71610586ff43a02adfab4d79
+
+redis:
+  enabled: true
+
+config:
+  allowedOrigins: "https://irrexplorer.int.koetsier.org,http://irrexplorer.int.koetsier.org"
+  irrdEndpoint: "https://rr.rxtx.nl/graphql/"
+  jwtSecretKey: "5ba6117413ab041decbebd83d5feb8145716a28f3bbfdd34afb5e4a0e8858948"
+
+ingress:
+  enabled: true
+  className: nginx
+  host: irrexplorer.int.koetsier.org
+
+importer:
+  enabled: true
+  bootstrap:
+    enabled: false
+
+migrations:
+  enabled: true

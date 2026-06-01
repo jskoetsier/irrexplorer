@@ -54,7 +54,7 @@ func (c *LookingGlassClient) QueryPrefix(ctx context.Context, prefix string) map
 	return map[string]any{"prefix": prefix, "routes": routes, "total_routes": len(routes)}
 }
 
-func (c *LookingGlassClient) QueryASN(ctx context.Context, asn int64) map[string]any {
+func (c *LookingGlassClient) QueryAnnouncedPrefixes(ctx context.Context, asn int64) map[string]any {
 	data, err := c.get(ctx, fmt.Sprintf("https://stat.ripe.net/data/announced-prefixes/data.json?resource=AS%d", asn))
 	if err != nil {
 		return map[string]any{"asn": asn, "prefixes": []any{}, "error": err.Error()}

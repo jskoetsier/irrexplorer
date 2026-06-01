@@ -159,11 +159,11 @@ func (s *Server) handleHealthz(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-func (s *Server) handleMetadata(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) handleMetadata(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=60")
 
 	key := cacheKey("metadata")
-	if s.tryCache(w, key) {
+	if s.tryCache(w, r, key) {
 		return
 	}
 

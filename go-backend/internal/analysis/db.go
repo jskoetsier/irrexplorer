@@ -97,12 +97,6 @@ type ROACoverageRow struct {
 	RPKIStatus string `json:"rpki_status"`
 }
 
-type IRRConsistencyRow struct {
-	Prefix     string `json:"prefix"`
-	ASN        int64  `json:"asn"`
-	RPKIStatus string `json:"rpki_status"`
-}
-
 func (s *Store) ROACoverage(ctx context.Context) ([]ROACoverageRow, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT prefix::text, asn, COALESCE(rpki_status, 'NOT_FOUND')
@@ -128,37 +122,6 @@ func (s *Store) ROACoverage(ctx context.Context) ([]ROACoverageRow, error) {
 	}
 	if results == nil {
 		results = []ROACoverageRow{}
-	}
-	return results, nil
-}
-
-// IRRConsistency returns INVALID RPKI routes. A proper implementation would join
-// against IRR route data to identify routes where RPKI and IRR origin ASNs disagree.
-func (s *Store) IRRConsistency(ctx context.Context) ([]IRRConsistencyRow, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT prefix::text, asn, rpki_status
-		FROM bgp
-		WHERE rpki_status = 'INVALID'
-		ORDER BY prefix
-		LIMIT 2000
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var results []IRRConsistencyRow
-	for rows.Next() {
-		var r IRRConsistencyRow
-		if err := rows.Scan(&r.Prefix, &r.ASN, &r.RPKIStatus); err != nil {
-			return nil, err
-		}
-		results = append(results, r)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	if results == nil {
-		results = []IRRConsistencyRow{}
 	}
 	return results, nil
 }

@@ -16,7 +16,6 @@ type vizStore interface {
 	RIRDistribution(ctx context.Context) ([]RIRCount, error)
 	PrefixDistribution(ctx context.Context) ([]PrefixLengthCount, error)
 	ASNRelationships(ctx context.Context, asn int64) ([]ASNEdge, error)
-	Timeline(ctx context.Context) ([]TimelinePoint, error)
 }
 
 type cacheAccessor interface {
@@ -38,7 +37,6 @@ func (h *Handlers) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/viz/rir-distribution", h.rirDistribution)
 	mux.HandleFunc("/api/viz/prefix-distribution", h.prefixDistribution)
 	mux.HandleFunc("/api/viz/asn-relationships/", h.asnRelationships)
-	mux.HandleFunc("/api/viz/timeline", h.timeline)
 }
 
 func (h *Handlers) prefixAllocation(w http.ResponseWriter, r *http.Request) {
@@ -70,12 +68,6 @@ func (h *Handlers) asnRelationships(w http.ResponseWriter, r *http.Request) {
 	key := "go:viz:asn-relationships:" + strconv.FormatInt(asn, 10)
 	h.cached(w, r, key, 30*time.Minute, func(ctx context.Context) (any, error) {
 		return h.store.ASNRelationships(ctx, asn)
-	})
-}
-
-func (h *Handlers) timeline(w http.ResponseWriter, r *http.Request) {
-	h.cached(w, r, "go:viz:timeline", 15*time.Minute, func(ctx context.Context) (any, error) {
-		return h.store.Timeline(ctx)
 	})
 }
 

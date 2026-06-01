@@ -22,7 +22,7 @@ func (s *Server) handleASN(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := cacheKey("asn", strconv.FormatInt(asn, 10))
-	if s.tryCache(w, key) {
+	if s.tryCache(w, r, key) {
 		return
 	}
 

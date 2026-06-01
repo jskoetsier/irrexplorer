@@ -83,12 +83,12 @@ type RouteInfo struct {
 }
 
 var RIRExpectedIRR = map[string]string{
-	"AFRINIC":     "AFRINIC",
-	"APNIC":       "APNIC",
-	"ARIN":        "ARIN",
-	"LACNIC":      "LACNIC",
-	"RIPE NCC":    "RIPE",
-	"Registro.BR": "TC",
+	"AFRINIC":    "AFRINIC",
+	"APNIC":      "APNIC",
+	"ARIN":       "ARIN",
+	"LACNIC":     "LACNIC",
+	"RIPENCC":    "RIPE",
+	"REGISTROBR": "TC",
 }
 
 func (p *PrefixSummary) FinalizeStatus() {

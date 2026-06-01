@@ -16,7 +16,6 @@ type analysisStore interface {
 	HijackDetection(ctx context.Context) ([]HijackEntry, error)
 	PrefixOverlap(ctx context.Context, prefix netip.Prefix) ([]PrefixOverlapEntry, error)
 	ROACoverage(ctx context.Context) ([]ROACoverageRow, error)
-	IRRConsistency(ctx context.Context) ([]IRRConsistencyRow, error)
 }
 
 type cacheAccessor interface {
@@ -39,7 +38,6 @@ func (h *Handlers) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/analysis/rpki-dashboard", h.cachedHandler("go:analysis:rpki-dashboard", cacheTTL, h.rpkiDashboard))
 	mux.HandleFunc("/api/analysis/hijack-detection", h.cachedHandler("go:analysis:hijack-detection", cacheTTL, h.hijackDetection))
 	mux.HandleFunc("/api/analysis/roa-coverage", h.cachedHandler("go:analysis:roa-coverage", cacheTTL, h.roaCoverage))
-	mux.HandleFunc("/api/analysis/irr-consistency", h.cachedHandler("go:analysis:irr-consistency", cacheTTL, h.irrConsistency))
 	mux.HandleFunc("/api/analysis/prefix-overlap/", h.prefixOverlap)
 	mux.HandleFunc("/api/filter-options", h.filterOptions)
 }
@@ -81,10 +79,6 @@ func (h *Handlers) hijackDetection(ctx context.Context) (any, error) {
 
 func (h *Handlers) roaCoverage(ctx context.Context) (any, error) {
 	return h.store.ROACoverage(ctx)
-}
-
-func (h *Handlers) irrConsistency(ctx context.Context) (any, error) {
-	return h.store.IRRConsistency(ctx)
 }
 
 func (h *Handlers) prefixOverlap(w http.ResponseWriter, r *http.Request) {

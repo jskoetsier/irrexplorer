@@ -39,6 +39,11 @@ func ParseBGPLine(data []byte) (BGPEntry, error) {
 // ImportBGP downloads bgp.tools/table.jsonl, streams into bgp_staging via COPY,
 // builds the GIST index on staging, then atomically swaps bgp_staging → bgp.
 func ImportBGP(ctx context.Context, pool *pgxpool.Pool, httpClient *http.Client, logger *slog.Logger) error {
+	// Clean up bgp_old if a previous run crashed between commit and DROP.
+	if _, err := pool.Exec(ctx, "DROP TABLE IF EXISTS bgp_old"); err != nil {
+		return fmt.Errorf("drop stale bgp_old: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, bgpToolsURL, nil)
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)

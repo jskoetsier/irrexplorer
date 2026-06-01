@@ -24,9 +24,6 @@ func (f *fakeVizStore) PrefixDistribution(_ context.Context) ([]visualization.Pr
 func (f *fakeVizStore) ASNRelationships(_ context.Context, _ int64) ([]visualization.ASNEdge, error) {
 	return []visualization.ASNEdge{}, nil
 }
-func (f *fakeVizStore) Timeline(_ context.Context) ([]visualization.TimelinePoint, error) {
-	return []visualization.TimelinePoint{}, nil
-}
 
 func TestPrefixAllocationHandler(t *testing.T) {
 	h := visualization.NewHandlers(&fakeVizStore{}, nil)

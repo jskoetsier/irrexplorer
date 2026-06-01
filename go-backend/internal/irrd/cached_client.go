@@ -80,10 +80,6 @@ func (c *CachedClient) QueryPrefixesAny(ctx context.Context, prefixes []netip.Pr
 	// Query IRRd for missing prefixes
 	freshResults, err := c.client.QueryPrefixesAny(ctx, missingPrefixes)
 	if err != nil {
-		// Return cached results even if fresh query fails
-		if len(allResults) > 0 {
-			return allResults, nil
-		}
 		return nil, err
 	}
 

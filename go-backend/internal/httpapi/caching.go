@@ -20,12 +20,12 @@ func cacheKey(parts ...string) string {
 	return "go:" + strings.Join(parts, ":")
 }
 
-func (s *Server) tryCache(w http.ResponseWriter, key string) bool {
+func (s *Server) tryCache(w http.ResponseWriter, r *http.Request, key string) bool {
 	if s.cache == nil {
 		return false
 	}
 	var raw json.RawMessage
-	if !s.cache.Get(context.Background(), key, &raw) {
+	if !s.cache.Get(r.Context(), key, &raw) {
 		return false
 	}
 	w.Header().Set("Content-Type", "application/json")

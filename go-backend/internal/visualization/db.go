@@ -31,11 +31,6 @@ type ASNEdge struct {
 	Weight int   `json:"weight"`
 }
 
-type TimelinePoint struct {
-	Date  string `json:"date"`
-	Count int    `json:"count"`
-}
-
 func (s *Store) PrefixAllocation(ctx context.Context) ([]RIRCount, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT rir::text, COUNT(*) FROM rirstats GROUP BY rir ORDER BY COUNT(*) DESC
@@ -121,31 +116,3 @@ func (s *Store) ASNRelationships(ctx context.Context, asn int64) ([]ASNEdge, err
 	return results, nil
 }
 
-func (s *Store) Timeline(ctx context.Context) ([]TimelinePoint, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT date_trunc('day', last_seen)::date::text, COUNT(*)
-		FROM query_stats
-		GROUP BY date_trunc('day', last_seen)
-		ORDER BY 1
-		LIMIT 90
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var results []TimelinePoint
-	for rows.Next() {
-		var p TimelinePoint
-		if err := rows.Scan(&p.Date, &p.Count); err != nil {
-			return nil, err
-		}
-		results = append(results, p)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	if results == nil {
-		results = []TimelinePoint{}
-	}
-	return results, nil
-}
