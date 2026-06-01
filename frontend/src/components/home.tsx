@@ -1,23 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import QueryForm from './common/queryForm';
 import { getWebsiteStructuredData, setSeo } from '../utils/seo';
 import { useNavigate } from 'react-router-dom';
 
-interface BgpUpdate {
-  asn: string;
-  action: string;
-  time: string;
-}
-
 export default function Home() {
   const navigate = useNavigate();
-  const [bgpUpdates, setBgpUpdates] = useState<BgpUpdate[]>([
-    { asn: 'AS2906', action: 'Announced 104.16.0.0/12', time: '2s ago' },
-    { asn: 'AS13335', action: 'Withdrawn 1.1.1.0/24', time: '12s ago' },
-    { asn: 'AS16509', action: 'New Route Object (RIPE)', time: '45s ago' },
-    { asn: 'AS3356', action: 'Path Prepended +2', time: '1m ago' },
-    { asn: 'AS6939', action: 'Prefix 2602:fed2::/32 Validated', time: '2m ago' },
-  ]);
 
   useEffect(() => {
     setSeo({
@@ -27,19 +14,6 @@ export default function Home() {
       path: '/',
       structuredData: getWebsiteStructuredData(),
     });
-  }, []);
-
-  // Simple auto-rotation for live BGP updates stream
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setBgpUpdates((prev) => {
-        const next = [...prev];
-        const first = next.shift();
-        if (first) next.push(first);
-        return next;
-      });
-    }, 4000);
-    return () => clearInterval(timer);
   }, []);
 
   const handleExampleClick = (example: string) => {
@@ -184,45 +158,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Bento Section */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-md h-auto lg:h-[400px]">
-        {/* Latest BGP Updates */}
-        <div className="lg:col-span-8 bg-[#0c0e12] border border-[#3d4a3d]/30 p-md relative overflow-hidden rounded-xl flex flex-col min-h-[250px]">
-          <div className="flex justify-between items-center mb-md border-b border-[#3d4a3d]/20 pb-sm">
-            <h4 className="font-label-caps text-xs text-on-surface-variant font-bold tracking-wider uppercase">LATEST BGP UPDATES</h4>
-            <span className="font-data-mono text-[10px] text-primary font-bold">MONITORING 1.2M ROUTES</span>
-          </div>
-          <div className="space-y-2 font-data-mono text-[12px] overflow-y-auto flex-1 pr-1">
-            {bgpUpdates.map((update, idx) => (
-              <div
-                key={idx}
-                className="flex justify-between items-center p-2 border-b border-[#3d4a3d]/10 hover:bg-[#333539]/10 transition-colors rounded"
-              >
-                <span className="text-secondary font-bold">{update.asn}</span>
-                <span className="text-on-surface-variant flex-1 px-4 truncate">{update.action}</span>
-                <span className="text-on-surface-variant/40 text-[10px]">{update.time}</span>
-              </div>
-            ))}
-          </div>
-          <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#0c0e12] to-transparent pointer-events-none"></div>
+      {/* System Status Banner */}
+      <section className="bg-[#1a1c20] border border-[#3d4a3d]/20 p-md flex items-center justify-between rounded-xl select-none">
+        <div className="flex items-center gap-md">
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(75,226,119,0.6)]"></span>
+          <span className="font-data-mono text-xs text-on-surface font-bold tracking-wider uppercase">SYSTEM STATUS: OPTIMAL</span>
         </div>
-
-        {/* Reachability Map & Status */}
-        <div className="lg:col-span-4 flex flex-col gap-md">
-          <div className="flex-1 bg-[#1a1c20] border border-[#3d4a3d]/20 p-md rounded-xl flex flex-col min-h-[200px]">
-            <h4 className="font-label-caps text-xs text-on-surface-variant font-bold mb-md uppercase tracking-wider">REACHABILITY MAP</h4>
-            <div className="flex-1 bg-[#333539]/20 border border-[#3d4a3d]/20 overflow-hidden rounded-lg aspect-video lg:aspect-auto">
-              <img
-                alt="Dark network map"
-                className="w-full h-full object-cover grayscale brightness-[0.4] contrast-125 hover:brightness-50 transition-all duration-300"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy-99Ft0NC9ADkdhxBteTWCCsJk4jpYifh5gxT_5sfwr50ys9_hAhKg7DtJ4SEeRlIQB74KzHETPcvVg0T1heF_Z1WXlKfQSEwH-jIRTnnBqeRKOYpUvOKPcDq6aVkgzvDHJ96uQLA_k9pP1ha96pnhur6l1CXI7vDqXsqZF33DKD0sbfYvBdeBdjgu8Tqawko3vq3NmcDc1ZnRNx5wZOWCX8a5yHbwFhy67m9jiKLdiFgR_mxeBbzOcM8Ho5ybTmILK1pnr5mNug"
-              />
-            </div>
-          </div>
-          <div className="bg-primary p-4 flex items-center justify-between rounded-xl shadow-lg shadow-primary/5 select-none">
-            <span className="font-data-mono-bold text-on-primary font-bold text-xs">SYSTEM STATUS: OPTIMAL</span>
-            <span className="material-symbols-outlined text-on-primary text-base animate-pulse">check_circle</span>
-          </div>
+        <div className="flex items-center gap-sm font-data-mono text-[10px] text-on-surface-variant">
+          <span>ALL INTEGRATED BACKENDS OPERATIONAL</span>
+          <span className="material-symbols-outlined text-primary text-sm animate-pulse" data-icon="check_circle">check_circle</span>
         </div>
       </section>
     </div>
