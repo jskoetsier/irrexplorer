@@ -1,6 +1,4 @@
 import { useState, useCallback } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 interface PrefixTableHeaderProps {
   irrSourceColumns: string[];
@@ -27,24 +25,32 @@ export default function PrefixTableHeader({ irrSourceColumns, onSort, reducedCol
   );
 
   const renderCell = (label: string, cellSortKey: string | null) => {
-    if (!cellSortKey) return <th key={label}>{label}</th>;
+    if (!cellSortKey) {
+      return (
+        <th key={label} className="px-4 py-3 bg-[#0c0e12] border-b border-[#3d4a3d]/30 text-on-surface-variant font-label-caps text-[10px] uppercase font-bold tracking-wider">
+          {label}
+        </th>
+      );
+    }
 
     const { key: currentKey, order } = sortColumn;
-
-    let sortIcon = faSort;
-    if (cellSortKey === currentKey && order === 'asc') sortIcon = faSortDown;
-    if (cellSortKey === currentKey && order === 'desc') sortIcon = faSortUp;
+    const isActive = cellSortKey === currentKey;
 
     return (
       <th
         key={cellSortKey}
         scope="col"
-        className="clickable nowrap"
-        tabIndex={0}
         onClick={() => handleSort(cellSortKey)}
-        onKeyDown={() => handleSort(cellSortKey)}
+        className="px-4 py-3 bg-[#0c0e12] border-b border-[#3d4a3d]/30 text-on-surface-variant font-label-caps text-[10px] uppercase font-bold tracking-wider cursor-pointer hover:text-on-surface select-none transition-colors"
       >
-        {label} <FontAwesomeIcon icon={sortIcon} />
+        <div className="flex items-center gap-1">
+          <span>{label}</span>
+          <span className={`material-symbols-outlined text-[14px] leading-none transition-transform duration-150 ${
+            isActive ? (order === 'asc' ? 'text-primary rotate-180' : 'text-primary') : 'text-on-surface-variant/30'
+          }`}>
+            arrow_downward
+          </span>
+        </div>
       </th>
     );
   };

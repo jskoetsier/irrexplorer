@@ -17,7 +17,6 @@ interface PrefixTableProps {
   defaultSortSmallestFirst?: boolean;
 }
 
-// Maximum rows to render initially - helps with performance on large ASNs
 const INITIAL_ROW_LIMIT = 500;
 
 export default function PrefixTable({
@@ -41,7 +40,6 @@ export default function PrefixTable({
     return sortPrefixesDataBy(prefixesData, sortKey, sortOrder);
   }, [prefixesData, sortKey, sortOrder]);
 
-  // Limit rows for performance on large datasets
   const displayData = useMemo(() => {
     if (showAllRows || sortedPrefixesData.length <= INITIAL_ROW_LIMIT) {
       return sortedPrefixesData;
@@ -62,10 +60,11 @@ export default function PrefixTable({
   );
 
   const renderTablePlaceholder = (placeholder: React.ReactNode) => {
+    const totalColumns = 5 + irrSourceColumns.length + (reducedColour ? 1 : 0);
     return (
       <tbody>
         <tr>
-          <td colSpan={5} className="text-center">
+          <td colSpan={totalColumns} className="text-center py-8">
             {placeholder}
           </td>
         </tr>
@@ -76,7 +75,7 @@ export default function PrefixTable({
   const renderTableContent = () => {
     if (!hasLoaded) return renderTablePlaceholder(<Spinner />);
     if (!prefixesData.length)
-      return renderTablePlaceholder('No prefixes were found.');
+      return renderTablePlaceholder(<span className="text-xs text-on-surface-variant font-data-mono">No prefixes were found.</span>);
     return (
       <PrefixTableBody
         irrSourceColumns={irrSourceColumns}
@@ -91,29 +90,35 @@ export default function PrefixTable({
   const hasMoreRows = sortedPrefixesData.length > INITIAL_ROW_LIMIT && !showAllRows;
 
   return (
-    <>
-      <div className="table-responsive">
-        <table className="table table-sm mb-2 table-fixed table-striped">
+    <div className="flex flex-col">
+      <div className="overflow-x-auto relative w-full rounded-lg border border-[#3d4a3d]/20 bg-[#0f1115]">
+        <table className="w-full text-left border-collapse min-w-[900px]">
           <PrefixTableHeader
             irrSourceColumns={irrSourceColumns}
             onSort={handleSort}
             reducedColour={reducedColour ?? false}
           />
           {renderTableContent()}
-          <TableFooter url={apiCallUrl} />
         </table>
-        {hasMoreRows && (
-          <div className="text-center mb-4">
-            <button
-              className="btn btn-outline-primary btn-sm"
-              onClick={() => setShowAllRows(true)}
-            >
-              Show all {sortedPrefixesData.length.toLocaleString()} rows (currently showing {INITIAL_ROW_LIMIT})
-            </button>
-          </div>
-        )}
       </div>
+
+      {hasMoreRows && (
+        <div className="text-center mt-md">
+          <button
+            onClick={() => setShowAllRows(true)}
+            className="px-4 py-2 border border-[#3d4a3d]/40 rounded-lg text-xs font-label-caps font-bold hover:bg-[#333539]/30 hover:border-primary/50 text-on-surface-variant hover:text-on-surface transition-all select-none"
+          >
+            Show all {sortedPrefixesData.length.toLocaleString()} rows (currently showing {INITIAL_ROW_LIMIT})
+          </button>
+        </div>
+      )}
+
+      {apiCallUrl && (
+        <div className="mt-2 text-right">
+          <TableFooter url={apiCallUrl} />
+        </div>
+      )}
       <WhoisModal ref={whoisModalRef} />
-    </>
+    </div>
   );
 }

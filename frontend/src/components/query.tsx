@@ -1,9 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
-import QueryForm from './common/queryForm';
 import ExportButtons from './exportButtons';
-import logo from '../logo.png';
 import api from '../services/api';
 import PrefixQuery from './prefixQuery';
 import ASNQuery from './asnQuery';
@@ -45,63 +43,98 @@ export default function Query() {
     cleanAndNavigate();
   }, [cleanAndNavigate]);
 
-  const ContentComponent = (() => {
-    switch (queryCategory) {
-      case 'prefix':
-        return PrefixQuery;
+
+  const formatCategoryTitle = (cat: QueryCategory) => {
+    switch (cat) {
       case 'asn':
-        return ASNQuery;
+        return 'Autonomous System';
+      case 'prefix':
+        return 'IP Prefix';
       case 'as-set':
+        return 'AS Set';
       case 'route-set':
-        return SetQuery;
+        return 'Route Set';
       default:
-        return null;
+        return 'Network Asset';
     }
-  })();
+  };
 
   return (
-    <div className="m-2 m-lg-4">
-      <div className="row d-flex align-items-center mb-5">
-        <div className="col-lg-1">
-          <Link to="/">
-            <img className="brand-logo brand-logo-compact" src={logo} alt="IRR explorer" />
-          </Link>
+    <div className="space-y-lg animate-in fade-in duration-300">
+      {/* Redesigned Query Header */}
+      <section className="border-b border-[#3d4a3d]/20 pb-md flex flex-col lg:flex-row lg:items-center justify-between gap-md">
+        <div>
+          <div className="flex items-center gap-2 mb-xs">
+            <span className="bg-[#1e2024] border border-[#3d4a3d]/40 px-2 py-0.5 font-data-mono text-xs text-primary font-bold uppercase rounded">
+              {formatCategoryTitle(queryCategory)}
+            </span>
+            <span className="text-[10px] text-on-surface-variant font-data-mono bg-[#1e2024] px-2 py-0.5 rounded border border-[#3d4a3d]/20">
+              Validated query
+            </span>
+          </div>
+          <h1 className="font-headline-lg text-2xl lg:text-3xl text-on-surface font-bold tracking-tight">
+            Routing Analysis for <span className="text-primary">{cleanQuery}</span>
+          </h1>
+          <p className="text-on-surface-variant font-body-base mt-1 text-sm">
+            Displaying live aggregate lookup paths, BGP origin announcements, and cryptographic validation records.
+          </p>
         </div>
-        <div className="col-lg-5 offset-lg-1">
-          <QueryForm />
+
+        {/* Action Controls Well */}
+        <div className="flex flex-wrap items-center gap-md bg-[#1e2024]/40 border border-[#3d4a3d]/20 p-sm rounded-xl">
+          {cleanQuery && (
+            <div className="border-r border-[#3d4a3d]/20 pr-md py-1">
+              <ExportButtons query={cleanQuery} queryType={queryCategory} />
+            </div>
+          )}
+          
+          <form className="flex flex-col sm:flex-row gap-md select-none text-xs font-label-caps font-bold text-on-surface-variant">
+            <label className="flex items-center gap-2 cursor-pointer hover:text-on-surface transition-colors">
+              <input
+                type="checkbox"
+                checked={reducedColour}
+                onChange={(e) => setReducedColour(e.target.checked)}
+                className="rounded border-[#3d4a3d] bg-[#1a1c20] text-primary focus:ring-0 focus:ring-offset-0"
+              />
+              <span>REDUCED COLOR MODE</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer hover:text-on-surface transition-colors">
+              <input
+                type="checkbox"
+                checked={filterWarningError}
+                onChange={(e) => setFilterWarningError(e.target.checked)}
+                className="rounded border-[#3d4a3d] bg-[#1a1c20] text-primary focus:ring-0 focus:ring-offset-0"
+              />
+              <span>ERRORS / WARNINGS ONLY</span>
+            </label>
+          </form>
         </div>
-        <form className="text-end">
-          <input
-            type="checkbox"
-            id="reducedColour"
-            className="me-2"
-            checked={reducedColour}
-            onChange={(e) => setReducedColour(e.target.checked)}
+      </section>
+
+      {/* Main Report Container */}
+      <section className="space-y-lg pt-sm">
+        {cleanQuery && queryCategory === 'prefix' && (
+          <PrefixQuery
+            query={cleanQuery}
+            reducedColour={reducedColour}
+            filterWarningError={filterWarningError}
           />
-          <label htmlFor="reducedColour" className="me-4">Reduced colour mode</label>
-          <input
-            type="checkbox"
-            id="filterWarningError"
-            className="me-2"
-            checked={filterWarningError}
-            onChange={(e) => setFilterWarningError(e.target.checked)}
+        )}
+        {cleanQuery && queryCategory === 'asn' && (
+          <ASNQuery
+            query={cleanQuery}
+            reducedColour={reducedColour}
+            filterWarningError={filterWarningError}
           />
-          <label htmlFor="filterWarningError">Show only error/warning</label>
-        </form>
-      </div>
-      {cleanQuery && (
-        <div className="mb-3">
-          <ExportButtons query={cleanQuery} queryType={queryCategory} />
-        </div>
-      )}
-      {cleanQuery && ContentComponent && (
-        <ContentComponent
-          query={cleanQuery}
-          reducedColour={reducedColour}
-          filterWarningError={filterWarningError}
-          queryCategory={queryCategory}
-        />
-      )}
+        )}
+        {cleanQuery && (queryCategory === 'as-set' || queryCategory === 'route-set') && (
+          <SetQuery
+            query={cleanQuery}
+            queryCategory={queryCategory}
+          />
+        )}
+      </section>
     </div>
   );
 }

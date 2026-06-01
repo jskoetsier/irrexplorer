@@ -1,138 +1,98 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { useState } from 'react';
 
 export default function PrefixTableExplanation() {
+  const [openSection, setOpenSection] = useState<string | null>(null);
+
+  const toggleSection = (section: string) => {
+    setOpenSection(openSection === section ? null : section);
+  };
+
   return (
-    <div className="accordion" id="prefixTableExplanationAccordion">
-      <div className="accordion-item">
-        <h2 className="accordion-header" id="headingOne">
-          <button
-            className="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#collapseOne"
-            aria-expanded="true"
-            aria-controls="collapseOne"
-          >
-            What does the prefix table show?
-          </button>
-        </h2>
-        <div
-          id="collapseOne"
-          className="accordion-collapse collapse"
-          aria-labelledby="headingOne"
-          data-bs-parent="#prefixTableExplanationAccordion"
+    <div className="space-y-sm bg-[#1a1c20]/60 border border-[#3d4a3d]/20 rounded-xl p-md">
+      {/* Section 1 */}
+      <div className="border border-[#3d4a3d]/10 rounded-lg overflow-hidden bg-[#1e2024]/40">
+        <button
+          type="button"
+          onClick={() => toggleSection('columns')}
+          className="w-full flex justify-between items-center px-4 py-3 text-left font-label-caps text-xs font-bold text-on-surface hover:bg-[#333539]/30 transition-all select-none uppercase tracking-wider"
         >
-          <div className="accordion-body">
-            <p className="lead">
-              The table with prefixes shows prefixes relating to your query. In some cases, there might be two tables:
-              one with direct overlaps of your query, and a second with all overlaps of the least specific query found
-              in the first table.
+          <span>What does the prefix table show?</span>
+          <span className={`material-symbols-outlined text-lg text-primary transition-transform duration-200 ${openSection === 'columns' ? 'rotate-180' : ''}`}>
+            expand_more
+          </span>
+        </button>
+        
+        {openSection === 'columns' && (
+          <div className="px-4 py-4 border-t border-[#3d4a3d]/10 space-y-md text-xs text-on-surface-variant font-body-sm leading-relaxed animate-in fade-in duration-200">
+            <p className="font-semibold text-on-surface">
+              The table shows prefixes relating to your query. It presents overlapping and direct allocations in a structured format:
             </p>
-            <p>The table has a number of columns:</p>
-            <dl className="row">
-              <dt className="col-sm-2">Prefix</dt>
-              <dd className="col-sm-10">The prefix found in either BGP, RPKI or IRR.</dd>
-              <dt className="col-sm-2">RIR</dt>
-              <dd className="col-sm-10">The RIR that allocated/assigned this prefix.</dd>
-              <dt className="col-sm-2">BGP</dt>
-              <dd className="col-sm-10">The originating AS number(s) seen in the DFZ for this prefix.</dd>
-              <dt className="col-sm-2">RPKI</dt>
-              <dd className="col-sm-10">
-                ASNs seen in RPKI ROAs for this prefix, along with the maximum prefix length in the ROA.
-              </dd>
-              <dt className="col-sm-2">Columns for each IRR</dt>
-              <dd className="col-sm-10">
-                The originating AS number(s) seen in route(6) objects in various IRR databases. For each origin,{' '}
-                <FontAwesomeIcon icon={faCheckCircle} title="Route object is RPKI-valid" /> means the object is valid
-                according to RPKI origin validation,{' '}
-                <FontAwesomeIcon icon={faTimesCircle} title="Route object is RPKI-invalid" /> means it is invalid, and
-                no icon means that no relevant ROA was found.
-              </dd>
-              <dt className="col-sm-2">Advice</dt>
-              <dd className="col-sm-10">
-                Information, warnings, and alerts about this prefix and its BGP, IRR and RPKI status. IRR explorer
-                makes a best effort at identifying possible misconfigurations, but do note that there are unusual
-                setups that may raise false alarms.
-              </dd>
-            </dl>
-            <p>
-              Note that an origin may have an RPKI status, even when there is no RPKI origin, i.e. no ROA, for that
-              exact prefix. For example, let's say there is a ROA for 192.0.2.0/22 AS65540 with a max length of 24,
-              and a route object for 192.0.2.0/24 AS65540. You will see two prefix rows: one for the /22, and one for
-              the /24. The /24 row will not show an RPKI origin, because there is no ROA for 192.0.2.0/24. However,
-              because there is a covering ROA for the /22, the IRR origin will be shown as RPKI valid.
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-md font-data-mono">
+              <div className="bg-[#111317] p-3 rounded border border-[#3d4a3d]/10">
+                <span className="text-primary font-bold block mb-1">PREFIX</span>
+                <span>The prefix found in either BGP, RPKI or IRR.</span>
+              </div>
+              <div className="bg-[#111317] p-3 rounded border border-[#3d4a3d]/10">
+                <span className="text-primary font-bold block mb-1">RIR</span>
+                <span>The authoritative regional internet registry that allocated this block.</span>
+              </div>
+              <div className="bg-[#111317] p-3 rounded border border-[#3d4a3d]/10">
+                <span className="text-primary font-bold block mb-1">BGP ORIGINS</span>
+                <span>The originating AS number(s) seen in the Default Free Zone (DFZ).</span>
+              </div>
+              <div className="bg-[#111317] p-3 rounded border border-[#3d4a3d]/10">
+                <span className="text-primary font-bold block mb-1">RPKI ROAs</span>
+                <span>Cryptographically verified origins in active ROAs, plus maximum length restrictions.</span>
+              </div>
+            </div>
+            <p className="text-[11px] bg-primary/5 border border-primary/20 p-2.5 rounded text-primary/80">
+              Note: An IRR origin is evaluated against covering ROAs. If a covering ROA (e.g. /22 maxlen 24) allows the specific announcement, the IRR record is marked as <strong>RPKI valid</strong> even if no direct ROA for the specific /24 exists.
             </p>
           </div>
-        </div>
+        )}
       </div>
-      <div className="accordion-item">
-        <h2 className="accordion-header" id="headingTwo">
-          <button
-            className="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#collapseTwo"
-            aria-expanded="true"
-            aria-controls="collapseTwo"
-          >
-            Explanation of different messages
-          </button>
-        </h2>
-        <div
-          id="collapseTwo"
-          className="accordion-collapse collapse"
-          aria-labelledby="headingTwo"
-          data-bs-parent="#prefixTableExplanationAccordion"
+
+      {/* Section 2 */}
+      <div className="border border-[#3d4a3d]/10 rounded-lg overflow-hidden bg-[#1e2024]/40">
+        <button
+          type="button"
+          onClick={() => toggleSection('messages')}
+          className="w-full flex justify-between items-center px-4 py-3 text-left font-label-caps text-xs font-bold text-on-surface hover:bg-[#333539]/30 transition-all select-none uppercase tracking-wider"
         >
-          <div className="accordion-body">
-            <dl className="row">
-              <dt className="col-sm-3">Route objects exist, but prefix not seen in DFZ</dt>
-              <dd className="col-sm-9">
-                There are route objects for this prefix, but the prefix is not seen in the DFZ. If the prefix is no
-                longer in use, you should clean up these route objects. If you plan to announce this prefix in the
-                future, this is harmless.
-              </dd>
-              <dt className="col-sm-3">No route objects match DFZ origin</dt>
-              <dd className="col-sm-9">
-                None of the route objects (if there are any) match the origin(s) seen in the DFZ. This can have a
-                significant on reachability, and you should create route objects for this prefix.
-              </dd>
-              <dt className="col-sm-3">RPKI origin does not match BGP origin</dt>
-              <dd className="col-sm-9">
-                The origin(s) in the ROA(s) for this prefix do not match the origin in the DFZ. This means your prefix
-                is not reachable by anyone dropping RPKI-invalid routes, which is increasingly common. You should
-                create the appropriate ROA(s) for this prefix.
-              </dd>
-              <dt className="col-sm-3">RPKI-invalid route objects found</dt>
-              <dd className="col-sm-9">
-                Some or all of the IRR route objects for this prefix are invalid according to RPKI origin validation.
-                This means they are misconfigured or outdated. You should look into whether your ROAs or route objects
-                are wrong or outdated, and update them.
-              </dd>
-              <dt className="col-sm-3">No (covering) RPKI ROA found for route objects</dt>
-              <dd className="col-sm-9">
-                IRR route objects were found, that are not covered by any ROA. Note that to be covered, there does not
-                need to be a ROA for this exact prefix - a less specific ROA with appropriate max length will also
-                suffice.
-              </dd>
-              <dt className="col-sm-3">Expected route object in &lt;IRR&gt;, but only found in other IRRs</dt>
-              <dd className="col-sm-9">
-                No route object is found in the database of the RIR responsible for assigning/allocating the prefix,
-                only in another IRR. You should add a route object in the RIR's database.
-              </dd>
-            </dl>
-            <p>
-              For more guidance on RPKI,{' '}
-              <a href="https://rpki.readthedocs.io/en/latest/rpki/securing-bgp.html">see this very extensive guide</a>
-              .
-            </p>
-            <p>
-              IRR explorer makes a best effort at identifying possible misconfigurations, but do note that there are
-              unusual setups that may raise false alarms.
+          <span>Explanation of Routing Integrity Status Messages</span>
+          <span className={`material-symbols-outlined text-lg text-primary transition-transform duration-200 ${openSection === 'messages' ? 'rotate-180' : ''}`}>
+            expand_more
+          </span>
+        </button>
+
+        {openSection === 'messages' && (
+          <div className="px-4 py-4 border-t border-[#3d4a3d]/10 space-y-3 text-xs text-on-surface-variant font-body-sm leading-relaxed animate-in fade-in duration-200">
+            <div className="space-y-2">
+              <div className="p-3 bg-red-950/20 border-l-4 border-red-500 rounded-r">
+                <strong className="text-red-400 block mb-1">No route objects match DFZ origin</strong>
+                <span>No matching IRR records exist. This causes route filtering by strict upstreams. You should register valid route objects.</span>
+              </div>
+              <div className="p-3 bg-red-950/20 border-l-4 border-red-500 rounded-r">
+                <strong className="text-red-400 block mb-1">RPKI origin does not match BGP origin</strong>
+                <span>The DFZ origin conflicts with cryptographically signed ROAs. Strict validators drop this route completely. Immediate remediation required.</span>
+              </div>
+              <div className="p-3 bg-amber-950/20 border-l-4 border-amber-500 rounded-r">
+                <strong className="text-amber-400 block mb-1">Route objects exist, but prefix not seen in DFZ</strong>
+                <span>Stale IRR objects are still active. If prefix is decomissioned, delete IRR objects to avoid route hijacking exposure.</span>
+              </div>
+              <div className="p-3 bg-amber-950/20 border-l-4 border-amber-500 rounded-r">
+                <strong className="text-amber-400 block mb-1">RPKI-invalid route objects found</strong>
+                <span>IRR records conflict with current ROAs. Update or clean up the obsolete IRR registration.</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-center pt-2">
+              For comprehensive details on RPKI security practices, check the{' '}
+              <a href="https://rpki.readthedocs.io/en/latest/rpki/securing-bgp.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">
+                BGP Security Guide
+              </a>.
             </p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

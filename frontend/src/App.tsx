@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Spinner from './components/common/spinner';
+import Layout from './components/common/layout';
 
 const Home = lazy(() => import('./components/home'));
 const Query = lazy(() => import('./components/query'));
@@ -8,7 +9,7 @@ const Status = lazy(() => import('./components/status'));
 
 export default function App() {
   return (
-    <main className="flex-shrink-0">
+    <Layout>
       <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-    </main>
+    </Layout>
   );
 }
+

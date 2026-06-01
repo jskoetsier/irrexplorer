@@ -1,5 +1,3 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import type { RPKIStatus } from '../../types';
 
 interface AsnWithRPKIStatusProps {
@@ -8,29 +6,32 @@ interface AsnWithRPKIStatusProps {
 }
 
 export default function AsnWithRPKIStatus({ rpkiStatus, asn }: AsnWithRPKIStatusProps) {
-  let rpkiIcon: typeof faCheckCircle | undefined;
-  let text = '';
-  let asnClass = '';
+  let badgeStyles = 'inline-flex items-center gap-1 font-semibold ';
+  let iconName = '';
+  let iconClass = '';
+  let tooltipText = '';
 
   if (rpkiStatus === 'VALID') {
-    rpkiIcon = faCheckCircle;
-    text = 'Route object is RPKI-valid';
+    badgeStyles += 'text-primary ';
+    iconName = 'check_circle';
+    iconClass = 'text-primary';
+    tooltipText = 'Route object is RPKI-valid';
   } else if (rpkiStatus === 'INVALID') {
-    rpkiIcon = faTimesCircle;
-    text = 'Route object is RPKI-invalid';
-    asnClass = 'text-decoration-line-through';
+    badgeStyles += 'text-red-400 line-through ';
+    iconName = 'cancel';
+    iconClass = 'text-red-400';
+    tooltipText = 'Route object is RPKI-invalid';
+  } else {
+    badgeStyles += 'text-on-surface-variant ';
   }
 
   return (
-    <span className="nowrap">
-      <span className={asnClass}>{asn}</span>
-      {rpkiIcon && (
-        <>
-          {' '}
-          <span className="d-inline-block" data-bs-toggle="tooltip" title={text}>
-            <FontAwesomeIcon icon={rpkiIcon} title={text} />
-          </span>
-        </>
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap" title={tooltipText}>
+      <span className={badgeStyles}>AS{asn}</span>
+      {iconName && (
+        <span className={`material-symbols-outlined text-[13px] leading-none ${iconClass}`}>
+          {iconName}
+        </span>
       )}
     </span>
   );

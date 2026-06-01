@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { exportToCSV, exportToJSON } from '../services/exportService';
-import './exportButtons.css';
 import type { QueryCategory } from '../types';
 
 interface ExportButtonsProps {
@@ -33,47 +32,49 @@ export default function ExportButtons({ query, queryType = 'prefix' }: ExportBut
   };
 
   return (
-    <div className="export-buttons">
-      <div className="btn-group" role="group" aria-label="Export options">
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2" role="group" aria-label="Export options">
         <button
           type="button"
-          className="btn btn-sm btn-outline-secondary"
           onClick={() => handleExport('csv')}
           disabled={exporting}
+          className="flex items-center gap-1.5 px-3 py-1.5 border border-[#3d4a3d]/40 rounded-lg text-xs font-label-caps font-bold hover:bg-[#333539]/30 hover:border-primary/50 text-on-surface-variant hover:text-on-surface transition-all select-none disabled:opacity-50"
         >
           {exporting && exportType === 'csv' ? (
             <>
-              <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              Exporting...
+              <div className="animate-spin rounded-full h-3 w-3 border border-primary border-t-transparent"></div>
+              <span>EXPORTING...</span>
             </>
           ) : (
             <>
-              <i className="fas fa-file-csv me-1"></i>
-              Export CSV
+              <span className="material-symbols-outlined text-[15px]">download</span>
+              <span>CSV</span>
             </>
           )}
         </button>
+
         <button
           type="button"
-          className="btn btn-sm btn-outline-secondary"
           onClick={() => handleExport('json')}
           disabled={exporting}
+          className="flex items-center gap-1.5 px-3 py-1.5 border border-[#3d4a3d]/40 rounded-lg text-xs font-label-caps font-bold hover:bg-[#333539]/30 hover:border-primary/50 text-on-surface-variant hover:text-on-surface transition-all select-none disabled:opacity-50"
         >
           {exporting && exportType === 'json' ? (
             <>
-              <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              Exporting...
+              <div className="animate-spin rounded-full h-3 w-3 border border-primary border-t-transparent"></div>
+              <span>EXPORTING...</span>
             </>
           ) : (
             <>
-              <i className="fas fa-file-code me-1"></i>
-              Export JSON
+              <span className="material-symbols-outlined text-[15px]">code</span>
+              <span>JSON</span>
             </>
           )}
         </button>
       </div>
+
       {error && (
-        <div className="alert alert-danger alert-sm mt-2 mb-0" role="alert">
+        <div className="text-[11px] font-data-mono text-red-400 bg-red-950/20 border border-red-900/30 p-2 rounded-lg" role="alert">
           {error}
         </div>
       )}

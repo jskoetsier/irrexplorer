@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../services/api';
-import './autocomplete.css';
 import type { QueryCategory } from '../../types';
 
 interface AutocompleteProps {
@@ -8,6 +7,7 @@ interface AutocompleteProps {
   placeholder?: string;
   onInputChange?: (value: string) => void;
   onSelect?: (query: string, type: QueryCategory) => void;
+  disabled?: boolean;
 }
 
 interface Suggestion {
@@ -16,7 +16,13 @@ interface Suggestion {
   popularity?: number;
 }
 
-export default function Autocomplete({ value, placeholder, onInputChange, onSelect }: AutocompleteProps) {
+export default function Autocomplete({
+  value,
+  placeholder,
+  onInputChange,
+  onSelect,
+  disabled,
+}: AutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -83,32 +89,47 @@ export default function Autocomplete({ value, placeholder, onInputChange, onSele
   }, []);
 
   return (
-    <div className="autocomplete-container">
-      <input
-        type="text"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => handleInputChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        className="form-control"
-      />
+    <div className="relative w-full">
+      <div className="relative flex items-center">
+        <span className="material-symbols-outlined absolute left-4 text-on-surface-variant/70 text-lg pointer-events-none">search</span>
+        <input
+          type="text"
+          value={value}
+          placeholder={placeholder}
+          disabled={disabled}
+          onChange={(e) => handleInputChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          className="block w-full pl-12 pr-32 py-3 bg-[#1a1c20] border border-[#3d4a3d] rounded-lg text-sm text-[#e2e2e8] placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary transition-all font-data-mono"
+        />
+      </div>
+
       {showSuggestions && suggestions.length > 0 && (
-        <div className="autocomplete-suggestions">
+        <div className="absolute top-full left-0 right-0 bg-[#1e2024] border border-[#3d4a3d] rounded-lg shadow-2xl max-h-64 overflow-y-auto z-[1000] mt-1.5 divide-y divide-[#3d4a3d]/20">
           {suggestions.map((suggestion, idx) => (
             <div
               key={idx}
               role="button"
               tabIndex={0}
-              className={`autocomplete-suggestion ${idx === selectedIndex ? 'selected' : ''}`}
+              className={`px-4 py-3 flex items-center justify-between cursor-pointer transition-colors ${
+                idx === selectedIndex
+                  ? 'bg-[#333539] text-primary'
+                  : 'hover:bg-[#1a1c20] text-[#e2e2e8]'
+              }`}
               onClick={() => selectSuggestion(suggestion)}
               onKeyPress={(e) => e.key === 'Enter' && selectSuggestion(suggestion)}
             >
-              <span className="suggestion-query">{suggestion.query}</span>
-              <span className="suggestion-type">{suggestion.type}</span>
-              {suggestion.popularity && suggestion.popularity > 1 && (
-                <span className="suggestion-popularity">({suggestion.popularity})</span>
-              )}
+              <span className="font-data-mono text-sm">{suggestion.query}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                  {suggestion.type}
+                </span>
+                {suggestion.popularity && suggestion.popularity > 1 && (
+                  <span className="text-xs text-on-surface-variant/50">
+                    ({suggestion.popularity})
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
