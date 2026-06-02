@@ -76,8 +76,7 @@ jobs:
       working-directory: frontend
       run: |
         du -sh build/
-        du -sh build/static/js/
-        du -sh build/static/css/
+        du -sh build/assets/
 
   integration:
     name: Integration Tests
